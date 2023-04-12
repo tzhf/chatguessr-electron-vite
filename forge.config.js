@@ -3,14 +3,14 @@ module.exports = {
     asar: true,
     // ignore: '',
     icon: 'build/icon',
-    executableName: 'chatguessr'
+    executableName: 'chatguessr-electron-vite'
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        name: 'chatguessr',
+        name: 'chatguessr-electron-vite',
         setupIcon: 'build/icon.ico',
         loadingGif: 'build/icon_installer.gif',
         iconUrl: 'file://build/icon.ico'
@@ -23,7 +23,7 @@ module.exports = {
     {
       name: '@electron-forge/maker-deb',
       options: {
-        bin: 'chatguessr'
+        bin: 'chatguessr-electron-vite'
       }
     },
     {
