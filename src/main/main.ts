@@ -40,20 +40,21 @@ const createWindow = () => {
     }
   })
 
+  // Open links in default OS browser
+  // Allow login via socials to open a new window
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (
-      url.startsWith('https://www.facebook.com') ||
-      url.startsWith('https://accounts.google.com') ||
-      url.startsWith('https://appleid.apple.com')
-    ) {
-      return { action: 'allow' }
-    } else {
-      shell.openExternal(url)
-      return { action: 'deny' }
-    }
+    const socialUrls = [
+      'https://www.facebook.com',
+      'https://accounts.google.com',
+      'https://appleid.apple.com'
+    ]
+    if (socialUrls.some((_url) => url.startsWith(_url))) return { action: 'allow' }
+
+    shell.openExternal(url)
+    return { action: 'deny' }
   })
 
-  mainWindow.on('ready-to-show', () => {
+  mainWindow.once('ready-to-show', () => {
     mainWindow.show()
     mainWindow.maximize()
     if (isDev) mainWindow.webContents.openDevTools()
@@ -66,7 +67,7 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
+app.whenReady().then(() => {
   createWindow()
   serveAssets()
 })

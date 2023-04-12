@@ -1,5 +1,7 @@
 import fs from 'fs'
 import { join } from 'node:path'
+import { contextBridge } from 'electron'
+import { chatguessrApi } from './chatguessrApi'
 import whenDomReady from 'when-dom-ready'
 import useLoading from './useLoading'
 
@@ -21,7 +23,11 @@ whenDomReady().then(() => {
   document.body.appendChild(css)
 })
 
-window.onmessage = (ev) => {
+window.onmessage = (ev: MessageEvent) => {
   ev.data.payload === 'removeLoading' && removeLoading()
 }
 setTimeout(removeLoading, 4999)
+
+// Expose protected methods off of window in order to use ipcRenderer
+// without exposing the entire object
+contextBridge.exposeInMainWorld('chatguessrApi', chatguessrApi)

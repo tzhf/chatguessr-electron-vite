@@ -25,10 +25,6 @@ module.exports = {
       options: {
         bin: 'chatguessr-electron-vite'
       }
-    },
-    {
-      name: '@electron-forge/maker-rpm',
-      config: {}
     }
   ],
 
