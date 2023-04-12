@@ -39,8 +39,7 @@ module.exports = {
         repository: {
           owner: 'tzhf',
           name: 'chatguessr-electron-vite'
-        },
-        prerelease: true
+        }
       }
     }
   ],
