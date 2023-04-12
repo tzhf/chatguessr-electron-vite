@@ -3,6 +3,8 @@ import { join } from 'path'
 
 const isDev = process.env.npm_lifecycle_event === 'dev'
 
+require('update-electron-app')()
+
 // Serve assets to 'asset:' file protocol
 // assets must be placed in the public folder because rollup cannot resolve urls with `asset:` prefix
 function serveAssets() {

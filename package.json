@@ -2,6 +2,7 @@
   "name": "chatguessr-electron-vite",
   "version": "1.0.0",
   "description": "ChatGuessr electron-vite",
+  "repository": "https://github.com/tzhf/chatguessr-electron-vite",
   "homepage": "https://chatguessr.com",
   "main": ".vite/build/main.js",
   "author": {
@@ -23,6 +24,7 @@
   "dependencies": {
     "axios": "^1.3.5",
     "electron-squirrel-startup": "^1.0.0",
+    "update-electron-app": "^2.0.1",
     "when-dom-ready": "^1.2.12"
   },
   "devDependencies": {

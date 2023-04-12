@@ -1,10 +1,20 @@
 module.exports = {
-  packagerConfig: {},
+  packagerConfig: {
+    asar: true,
+    // ignore: '',
+    icon: 'build/icon',
+    executableName: 'chatguessr'
+  },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {}
+      config: {
+        name: 'chatguessr',
+        setupIcon: 'build/icon.ico',
+        loadingGif: 'build/icon_installer.gif',
+        iconUrl: 'file://build/icon.ico'
+      }
     },
     {
       name: '@electron-forge/maker-zip',
@@ -12,11 +22,26 @@ module.exports = {
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {}
+      options: {
+        bin: 'chatguessr'
+      }
     },
     {
       name: '@electron-forge/maker-rpm',
       config: {}
+    }
+  ],
+
+  publishers: [
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        repository: {
+          owner: 'tzhf',
+          name: 'chatguessr-electron-vite'
+        },
+        prerelease: true
+      }
     }
   ],
   plugins: [
