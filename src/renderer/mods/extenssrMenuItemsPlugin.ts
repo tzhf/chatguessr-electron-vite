@@ -4,7 +4,6 @@
 // https://gitlab.com/nonreviad/extenssr/-/blob/c795a07e0eb64cb5b32d60e6f3784b044becb1c1/src/content_scripts/endpoint_transition_handler.ts
 // @ts-nocheck
 import axios from 'axios'
-import whenDomReady from 'when-dom-ready'
 
 type MapCreator = {
   email?: string
@@ -208,7 +207,7 @@ class MenuItemsPlugin {
 }
 
 const plugin = new MenuItemsPlugin()
-whenDomReady().then(observeNavigation)
+observeNavigation()
 
 function observeNavigation() {
   const pathChange = () => plugin.onEndpointChange(window.location.pathname)

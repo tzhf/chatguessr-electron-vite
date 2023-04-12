@@ -13,27 +13,27 @@ const safeDOM = {
 
 export default function useLoading() {
   const styleContent = `
-        .app-loading-wrap {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #1a1a2e;
-            z-index: 9;
-        }
-        .loader {
-            width: 60px;
-            animation: spin 3s infinite ease-in-out;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg) }
-            100% { transform: rotate(360deg) }
-        }
-    `
+          .app-loading-wrap {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100vw;
+              height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: #1a1a2e;
+              z-index: 9;
+          }
+          .loader {
+              width: 60px;
+              animation: spin 3s infinite ease-in-out;
+          }
+          @keyframes spin {
+              0% { transform: rotate(0deg) }
+              100% { transform: rotate(360deg) }
+          }
+      `
   const style = document.createElement('style')
   const div = document.createElement('div')
 

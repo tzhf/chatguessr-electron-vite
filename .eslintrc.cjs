@@ -14,7 +14,7 @@ module.exports = {
     '@vue/eslint-config-prettier'
   ],
   rules: {
-    // '@typescript-eslint/ban-ts-comment': ['error', { 'ts-ignore': 'allow-with-description' }],
+    '@typescript-eslint/ban-ts-comment': 'off',
     // '@typescript-eslint/explicit-function-return-type': 'error',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }],

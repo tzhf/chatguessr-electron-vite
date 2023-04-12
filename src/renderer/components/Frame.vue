@@ -10,15 +10,17 @@
     <button class="cg-button" title="Center view">
       <span class="cg-icon cg-icon--flag"></span>
     </button>
+    <span style="color: #fff">{{ test }}</span>
   </div>
-  <Scoreboard />
 </template>
 
 <script setup lang="ts">
-import Scoreboard from './Scoreboard.vue'
+import { ref } from 'vue'
 
+const test = ref(0)
 function openSettings() {
-  console.log('allo')
+  test.value++
+  console.log(test.value)
 }
 </script>
 

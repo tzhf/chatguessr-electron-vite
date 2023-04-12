@@ -1,13 +1,12 @@
 import fs from 'fs'
 import { join } from 'node:path'
-import { contextBridge } from 'electron'
-import { chatguessrApi } from './chatguessrApi'
 import whenDomReady from 'when-dom-ready'
 import useLoading from './useLoading'
 
 const { appendLoading, removeLoading } = useLoading()
-const rendererJS = fs.readFileSync(join(__dirname, '../renderer/renderer.js'), 'utf8')
-const rendererCSS = fs.readFileSync(join(__dirname, '../renderer/renderer.css'), 'utf8')
+
+const rendererJS = fs.readFileSync(join(__dirname, 'renderer.js'), 'utf8')
+const rendererCSS = fs.readFileSync(join(__dirname, 'style.css'), 'utf8')
 
 whenDomReady().then(() => {
   appendLoading()
@@ -26,7 +25,3 @@ window.onmessage = (ev) => {
   ev.data.payload === 'removeLoading' && removeLoading()
 }
 setTimeout(removeLoading, 4999)
-
-// Expose protected methods off of window in order to use ipcRenderer
-// without exposing the entire object
-contextBridge.exposeInMainWorld('chatguessrApi', chatguessrApi)

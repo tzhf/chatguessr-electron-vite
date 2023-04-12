@@ -1,12 +1,12 @@
-import { join } from 'node:path'
-import { app, shell, BrowserWindow, protocol } from 'electron'
+import { app, BrowserWindow, protocol } from 'electron'
+import { join } from 'path'
 
 const isDev = process.env.npm_lifecycle_event === 'dev'
 
 // Serve assets to 'asset:' file protocol
 // assets must be placed in the public folder because rollup cannot resolve urls with `asset:` prefix
 function serveAssets() {
-  const assetDir = join(__dirname, '../renderer/assets')
+  const assetDir = join(__dirname, './assets')
   protocol.interceptFileProtocol('asset', (request, callback) => {
     const assetFile = join(assetDir, new URL(request.url).pathname)
     if (!assetFile.startsWith(assetDir)) {
@@ -17,8 +17,13 @@ function serveAssets() {
   })
 }
 
-// Create the browser window.
-function createWindow() {
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (require('electron-squirrel-startup')) {
+  app.quit()
+}
+
+const createWindow = () => {
+  // Create the browser window.
   const mainWindow = new BrowserWindow({
     show: false,
     ...(process.platform === 'linux'
@@ -27,7 +32,7 @@ function createWindow() {
         }
       : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/preload.js'),
+      preload: join(__dirname, './preload.js'),
       devTools: isDev ? true : false,
       sandbox: false
     }
@@ -39,11 +44,6 @@ function createWindow() {
     if (isDev) mainWindow.webContents.openDevTools()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
-
   mainWindow.setMenuBarVisibility(false)
   mainWindow.loadURL('https://www.geoguessr.com/maps')
 }
@@ -51,15 +51,9 @@ function createWindow() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  serveAssets()
+app.on('ready', () => {
   createWindow()
-
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  serveAssets()
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -68,5 +62,13 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
+  }
+})
+
+app.on('activate', () => {
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
   }
 })
