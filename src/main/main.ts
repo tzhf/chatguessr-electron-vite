@@ -1,4 +1,4 @@
-import { app, BrowserWindow, protocol } from 'electron'
+import { app, BrowserWindow, protocol, shell } from 'electron'
 import { join } from 'path'
 
 const isDev = process.env.npm_lifecycle_event === 'dev'
@@ -37,6 +37,19 @@ const createWindow = () => {
       preload: join(__dirname, './preload.js'),
       devTools: isDev ? true : false,
       sandbox: false
+    }
+  })
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (
+      url.startsWith('https://www.facebook.com') ||
+      url.startsWith('https://accounts.google.com') ||
+      url.startsWith('https://appleid.apple.com')
+    ) {
+      return { action: 'allow' }
+    } else {
+      shell.openExternal(url)
+      return { action: 'deny' }
     }
   })
 

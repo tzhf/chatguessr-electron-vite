@@ -66,7 +66,7 @@ type SubMenuItem = {
   textContent: string
 }
 
-class MenuItemsPlugin {
+export default class MenuItemsPlugin {
   private api: MapsApi | undefined
   private myMaps: Map[] | undefined
   private likedMaps: Map[] | undefined
@@ -77,7 +77,7 @@ class MenuItemsPlugin {
     this.api = new MapsApi()
   }
 
-  onEndpointChange(path: string) {
+  onEndpointChange(path: string): void {
     // In-game screens have no `<header>` element
     const header = document.querySelector('header')
     if (document.querySelector('[data-qa="extenssr__nav-item"]') || !header) {
@@ -102,7 +102,7 @@ class MenuItemsPlugin {
       customMenuItemTemplate
     const container =
       referenceElement.closest('ol') ??
-      document.querySelector('[data-qa="header-current-user-pin"]')!.parentNode
+      document.querySelector('[data-qa="header-current-user-pin"]')?.parentNode
 
     const createMenuItem = (props: {
       href: string
@@ -113,7 +113,7 @@ class MenuItemsPlugin {
       li.setAttribute('data-qa', 'extenssr__nav-item')
 
       const { href, textContent } = props
-      Object.assign(li.querySelector('a'), { href, textContent })
+      Object.assign(li.querySelector('a')!, { href, textContent })
 
       if (props.subMenu) {
         const overflows = [
@@ -124,7 +124,7 @@ class MenuItemsPlugin {
         let controller: AbortController
         li.addEventListener('mouseenter', () => {
           controller = new AbortController()
-          this.showMenu(li, props.subMenu, controller.signal)
+          this.showMenu(li, props.subMenu!, controller.signal)
           for (const el of overflows) {
             el.style.overflow = 'visible'
           }
