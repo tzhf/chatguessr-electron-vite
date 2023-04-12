@@ -28,6 +28,11 @@ jobs:
       - name: Publish
         run: npm run publish
         env:
+          CG_PUBLIC_URL: ${{secrets.CG_PUBLIC_URL}}
+          CG_API_URL: ${{secrets.CG_API_URL}}
+          SOCKET_SERVER_URL: ${{secrets.SOCKET_SERVER_URL}}
+          SUPABASE_URL: ${{secrets.SUPABASE_URL}}
+          SUPABASE_ANON_KEY: ${{secrets.SUPABASE_ANON_KEY}}
           GITHUB_TOKEN: ${{github.token}}
       - uses: actions/upload-artifact@v3
         with:
