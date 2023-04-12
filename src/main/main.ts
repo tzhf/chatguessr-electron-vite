@@ -24,8 +24,8 @@ if (require('electron-squirrel-startup')) {
   app.quit()
 }
 
+// Create the browser window.
 const createWindow = () => {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     show: false,
     ...(process.platform === 'linux'
@@ -39,6 +39,9 @@ const createWindow = () => {
       sandbox: false
     }
   })
+
+  mainWindow.setMenuBarVisibility(false)
+  mainWindow.loadURL('https://www.geoguessr.com/maps')
 
   // Open links in default OS browser
   // Allow login via socials to open a new window
@@ -60,8 +63,7 @@ const createWindow = () => {
     if (isDev) mainWindow.webContents.openDevTools()
   })
 
-  mainWindow.setMenuBarVisibility(false)
-  mainWindow.loadURL('https://www.geoguessr.com/maps')
+  mainWindow.on('close', () => BrowserWindow.getAllWindows().forEach((window) => window.destroy()))
 }
 
 // This method will be called when Electron has finished

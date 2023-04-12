@@ -1,7 +1,6 @@
 module.exports = {
   packagerConfig: {
     asar: true,
-    // ignore: '',
     icon: 'build/icon',
     executableName: 'chatguessr-electron-vite'
   },

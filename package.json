@@ -16,7 +16,7 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "vue-tsc --noEmit -p tsconfig.web.json --composite false",
     "format": "prettier --write .",
-    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
+    "lint": "eslint . --ext .js,.cjs,.mjs,.ts,.vue --fix",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish"
