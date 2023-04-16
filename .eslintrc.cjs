@@ -14,6 +14,7 @@ module.exports = {
     '@vue/eslint-config-prettier'
   ],
   rules: {
+    allowEmptyCatch: true,
     '@typescript-eslint/ban-ts-comment': 'off',
     // '@typescript-eslint/explicit-function-return-type': 'error',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
