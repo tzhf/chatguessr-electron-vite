@@ -57,8 +57,6 @@ export async function findFlagFile(id: string): Promise<Electron.ProtocolRespons
 
   // We always return a path to the builtin SVGs because it's easy.
   // electron will return a 404 for us if the file doesn't exist.
-  console.log({ path: path.join(__dirname, `./assets/flags/${id.toUpperCase()}.svg`) })
-
   return { path: path.join(__dirname, `./assets/flags/${id.toUpperCase()}.svg`) }
 }
 
