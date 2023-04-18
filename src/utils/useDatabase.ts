@@ -179,7 +179,6 @@ export default class Database {
 
   constructor(file: string) {
     this.#db = new SQLite(file)
-
     this.#migrate()
   }
 

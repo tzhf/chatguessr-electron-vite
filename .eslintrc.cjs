@@ -14,12 +14,12 @@ module.exports = {
     '@vue/eslint-config-prettier'
   ],
   rules: {
-    allowEmptyCatch: true,
+    'no-empty': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     // '@typescript-eslint/explicit-function-return-type': 'error',
+    '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }],
-    '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     'vue/require-default-prop': 'off',
