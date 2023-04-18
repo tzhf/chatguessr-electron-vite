@@ -29,9 +29,11 @@ export function getAvailableFlags() {
   return [...customFlags, ...countryFlags, ...builtinFlags]
 }
 
-export async function loadCustomFlag() {
+export async function loadCustomFlags() {
   try {
-    customFlags = JSON.parse(await fs.readFile(path.join(customFlagsDir, 'flags.json'), 'utf8'))
+    customFlags = JSON.parse(
+      await fs.readFile(path.join(customFlagsDir, 'customFlags.json'), 'utf8')
+    )
   } catch {
     // it's OK if it doesn't exist
   }
@@ -42,10 +44,7 @@ export function setCustomFlags(flags: Flag[]) {
 }
 
 export async function findFlagFile(id: string): Promise<Electron.ProtocolResponse> {
-  const customFlagPaths = [
-    path.join(customFlagsDir, `${id}.png`),
-    path.join(customFlagsDir, `${id}.svg`)
-  ]
+  const customFlagPaths = [path.join(customFlagsDir, `${id}.svg`)]
 
   for (const customFlagPath of customFlagPaths) {
     try {
@@ -58,7 +57,9 @@ export async function findFlagFile(id: string): Promise<Electron.ProtocolRespons
 
   // We always return a path to the builtin SVGs because it's easy.
   // electron will return a 404 for us if the file doesn't exist.
-  return { path: path.join(__dirname, `../../assets/flags/${id.toUpperCase()}.svg`) }
+  console.log({ path: path.join(__dirname, `./assets/flags/${id.toUpperCase()}.svg`) })
+
+  return { path: path.join(__dirname, `./assets/flags/${id.toUpperCase()}.svg`) }
 }
 
 /**

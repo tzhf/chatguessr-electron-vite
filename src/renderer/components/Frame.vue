@@ -11,6 +11,7 @@
       <span class="cg-icon cg-icon--flag"></span>
     </button>
     <span style="color: #fff">{{ test }}</span>
+    <span class="flag-icon" style="background-image: url(flag:fr)"></span>
   </div>
 </template>
 

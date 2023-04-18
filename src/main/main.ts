@@ -1,6 +1,6 @@
 import { join } from 'path'
 import { app, BrowserWindow, protocol, shell } from 'electron'
-import { loadCustomFlag, findFlagFile } from '../utils/flags'
+import { loadCustomFlags, findFlagFile } from '../utils/flags'
 
 const isDev = process.env.npm_lifecycle_event === 'dev'
 
@@ -21,7 +21,7 @@ function serveAssets() {
 }
 
 async function serveFlags() {
-  await loadCustomFlag()
+  await loadCustomFlags()
 
   protocol.interceptFileProtocol('flag', async (request, callback) => {
     const name = request.url.replace(/^flag:/, '')
