@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { join } from 'node:path'
+import { join } from 'path'
 import { contextBridge } from 'electron'
 import { chatguessrApi } from './chatguessrApi'
 import whenDomReady from 'when-dom-ready'

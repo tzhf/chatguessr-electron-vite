@@ -128,6 +128,12 @@ type Seed = GameSettings & {
   type: GameType
 }
 
+type Flag = {
+  code: string
+  names: string
+  emoji?: string
+}
+
 interface RendererApi {
   drawRoundResults(location: Location, roundResults: Guess[], limit?: number)
   drawGameLocations(locations: Location[])

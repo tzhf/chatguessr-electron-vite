@@ -27,6 +27,7 @@
     "better-sqlite3": "^8.3.0",
     "coordinate_to_country": "^1.1.0",
     "electron-squirrel-startup": "^1.0.0",
+    "match-sorter": "^6.3.1",
     "update-electron-app": "^2.0.1",
     "when-dom-ready": "^1.2.12"
   },

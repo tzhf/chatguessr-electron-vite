@@ -1,5 +1,6 @@
-import { app, BrowserWindow, protocol, shell } from 'electron'
 import { join } from 'path'
+import { app, BrowserWindow, protocol, shell } from 'electron'
+import { loadCustomFlag, findFlagFile } from '../utils/flags'
 
 const isDev = process.env.npm_lifecycle_event === 'dev'
 
@@ -15,6 +16,19 @@ function serveAssets() {
       callback({ statusCode: 404, data: 'Not Found' })
     } else {
       callback({ path: assetFile })
+    }
+  })
+}
+
+async function serveFlags() {
+  await loadCustomFlag()
+
+  protocol.interceptFileProtocol('flag', async (request, callback) => {
+    const name = request.url.replace(/^flag:/, '')
+    try {
+      callback(await findFlagFile(name))
+    } catch (err: any) {
+      callback({ statusCode: 500, data: err.message })
     }
   })
 }
@@ -69,9 +83,10 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow()
   serveAssets()
+  await serveFlags()
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
