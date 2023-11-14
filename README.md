@@ -12,8 +12,6 @@
   </a>
 </p>
 
-Test version using vite
-
 > Play GeoGuessr on Stream with Twitch Chat.
 
 This is the source code for the ChatGuessr application. Are you a streamers or player? Check [the website](https://chatguessr.com) instead.

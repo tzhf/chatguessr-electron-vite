@@ -1,8 +1,9 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  "include": ["src", "src/**/*.json"],
+  "include": ["src", "src/**/*", "src/**/*.json"],
   "exclude": ["src/renderer/*"],
   "compilerOptions": {
-    "composite": true
+    "composite": true,
+    "types":["vite/client"]
   }
 }

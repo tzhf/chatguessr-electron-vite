@@ -1,6 +1,51 @@
+type BrowserWindow = import('electron').BrowserWindow
+
+type IpcMainEvent = import('electron').IpcMainEvent
+
+type Socket = import('socket.io-client').Socket
+
+type Session = import('@supabase/supabase-js').Session
+
+type Database = import('./utils/useDatabase')
+
+interface Settings {
+  channelName: string
+  token: string
+  cgCmd: string
+  cgCmdCooldown: number
+  cgMsg: string
+  flagsCmd: string
+  flagsCmdMsg: string
+  getUserStatsCmd: string
+  getBestStatsCmd: string
+  clearUserStatsCmd: string
+  randomPlonkCmd: string
+  showHasGuessed: boolean
+  showHasAlreadyGuessed: boolean
+  showGuessChanged: boolean
+  showSubmittedPreviousGuess: boolean
+  isMultiGuess: boolean
+  guessMarkersLimit: number
+}
+
+// interface RendererApi {
+//   drawRoundResults(location: Location_, roundResults: Guess[], limit?: number)
+//   drawGameLocations(locations: Location_[])
+//   drawPlayerResults(locations: Location_[], result: GameResult)
+//   focusOnGuess(location: LatLng)
+//   clearMarkers(keepLocationMarkers?: boolean)
+//   drParseNoCar()
+//   blinkMode()
+//   satelliteMode()
+//   showSatelliteMap(location: LatLng)
+//   hideSatelliteMap()
+//   centerSatelliteView(location: LatLng)
+//   getBounds(location: LatLng, limit: number)
+// }
+
 type LatLng = { lat: number; lng: number }
 
-type Location = {
+type Location_ = {
   lat: number
   lng: number
   panoId: string | null
@@ -134,6 +179,11 @@ type Flag = {
   emoji?: string
 }
 
+type ConnectionState =
+  | { state: 'disconnected' }
+  | { state: 'connecting' }
+  | { state: 'connected'; botUsername: string; channelName: string }
+
 interface RendererApi {
   drawRoundResults(location: Location, roundResults: Guess[], limit?: number)
   drawGameLocations(locations: Location[])
@@ -146,16 +196,16 @@ interface RendererApi {
   getBounds(location: LatLng, limit: number)
 }
 
-declare global {
-  interface Window {
-    jQuery: typeof import('jquery')
-    $: typeof import('jquery')
-  }
+// declare global {
+//   interface Window {
+//     jQuery: typeof import('jquery')
+//     $: typeof import('jquery')
+//   }
 
-  namespace DataTables {
-    interface Settings {
-      // From datatables.net-plugins
-      scrollResize?: boolean
-    }
-  }
-}
+//   namespace DataTables {
+//     interface Settings {
+//       // From datatables.net-plugins
+//       scrollResize?: boolean
+//     }
+//   }
+// }

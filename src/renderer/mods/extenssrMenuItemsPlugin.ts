@@ -2,7 +2,7 @@
 // https://gitlab.com/nonreviad/extenssr/-/blob/c795a07e0eb64cb5b32d60e6f3784b044becb1c1/src/api/maps.ts
 // https://gitlab.com/nonreviad/extenssr/-/blob/c795a07e0eb64cb5b32d60e6f3784b044becb1c1/src/content_scripts/plugins/global/menu_items_plugin.ts
 // https://gitlab.com/nonreviad/extenssr/-/blob/c795a07e0eb64cb5b32d60e6f3784b044becb1c1/src/content_scripts/endpoint_transition_handler.ts
-// @ts-nocheck
+
 import axios from 'axios'
 
 type MapCreator = {
@@ -70,7 +70,7 @@ export default class MenuItemsPlugin {
   private api: MapsApi | undefined
   private myMaps: Map[] | undefined
   private likedMaps: Map[] | undefined
-  private observer: MutationObserver | undefined
+  private observer: MutationObserver | undefined | null
   private initialLoad = true
 
   constructor() {
@@ -131,6 +131,7 @@ export default class MenuItemsPlugin {
         })
         li.addEventListener('mouseleave', () => {
           controller?.abort()
+          // @ts-expect-error
           controller = null
           li.querySelector('[data-qa="extenssr__nav-submenu"]')?.remove()
           for (const el of overflows) {
@@ -145,6 +146,7 @@ export default class MenuItemsPlugin {
     const mapMaker = createMenuItem({
       href: '/me/maps',
       textContent: 'My Maps',
+      // @ts-expect-error
       subMenu: async () => {
         this.myMaps ??= await this.api?.getMyMaps(0, 25)
         const maps = this.myMaps?.map((map: Map) => ({
@@ -158,6 +160,7 @@ export default class MenuItemsPlugin {
     const likedMaps = createMenuItem({
       href: '/me/likes',
       textContent: 'Liked Maps',
+      // @ts-expect-error
       subMenu: async () => {
         this.likedMaps ??= await this.api?.getLikedMaps(0, 25)
         return this.likedMaps?.map((map: Map) => ({

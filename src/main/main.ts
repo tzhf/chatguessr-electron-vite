@@ -1,13 +1,158 @@
 import { join } from 'path'
-import { app, BrowserWindow, protocol, shell } from 'electron'
-import { loadCustomFlags, findFlagFile } from '../utils/flags'
+import { app, BrowserWindow, ipcMain, protocol } from 'electron'
+import { updateElectronApp } from 'update-electron-app'
 
-const isDev = process.env.npm_lifecycle_event === 'dev'
+import createMainWindow from './MainWindow'
+import createAuthWindow from '../auth/AuthWindow'
+import GameHandler from '../GameHandler'
+import { database } from '../utils/useDatabase'
+import { supabase } from '../utils/useSupabase'
+import { store } from '../utils/useStore'
+import { loadCustomFlags, findFlagFile } from '../utils/flags/flags'
 
-require('update-electron-app')()
+updateElectronApp()
+
+const appDataPath = app.getPath('userData')
+const dbPath = join(appDataPath, 'scores.db')
+const db = database(dbPath)
+
+// This method will be called when Electron has finished initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.whenReady().then(async () => {
+  serveAssets()
+  await serveFlags()
+
+  const mainWindow = createMainWindow()
+
+  const gameHandler = new GameHandler(db, mainWindow, {
+    async requestAuthentication() {
+      await authenticateWithTwitch(gameHandler, mainWindow)
+    }
+  })
+
+  ipcMain.handle('get-connection-state', () => gameHandler.getConnectionState())
+  ipcMain.handle('replace-session', async () => {
+    await supabase.auth.signOut()
+    await authenticateWithTwitch(gameHandler, mainWindow)
+  })
+
+  // ipcMain.handle('app-data-path-exists', (_event, subdir) => {
+  //   let _path = appDataPath
+  //   if (subdir) _path = path.join(appDataPath, subdir)
+  //   if (!fs.existsSync(_path)) return false
+  //   return _path
+  // })
+
+  // ipcMain.handle('import-audio-file', async () => {
+  //   return new Promise((resolve, reject) => {
+  //     dialog
+  //       .showOpenDialog(mainWindow, {
+  //         title: 'Import audio file',
+  //         buttonLabel: 'Import audio File',
+  //         filters: [{ name: 'Audio Files', extensions: ['mp3', 'wav', 'ogg'] }]
+  //       })
+  //       .then((result) => {
+  //         if (result.canceled) return resolve(null)
+
+  //         const filePath = result.filePaths[0]
+  //         if (!filePath) return reject('Error locating path')
+
+  //         const targetDirectory = path.join(appDataPath, 'timer')
+  //         if (!fs.existsSync(targetDirectory)) {
+  //           fs.mkdir(targetDirectory, (err) => {
+  //             if (err) return reject(err)
+  //           })
+  //         }
+
+  //         const data = fs.readFileSync(filePath)
+  //         // not saving the extension here so we can overwrite audio files having different extensions without extra logic
+  //         fs.writeFile(path.join(targetDirectory, 'timer_alert'), data, (err) => {
+  //           if (err) return reject(err)
+
+  //           resolve(path.join(targetDirectory, 'timer_alert'))
+  //         })
+  //       })
+  //       .catch((err) => {
+  //         reject(err)
+  //       })
+  //   })
+  // })
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN') {
+      store.set('session', session)
+    } else if (event === 'SIGNED_OUT') {
+      store.delete('session')
+    }
+  })
+
+  await authenticateWithTwitch(gameHandler, mainWindow)
+})
+
+async function authenticateWithTwitch(gameHandler: GameHandler, parentWindow: BrowserWindow) {
+  const hasSession = !!store.get('session')?.access_token
+
+  const authConfig = await supabase.auth.signInWithOAuth({
+    provider: 'twitch',
+    options: {
+      redirectTo: new URL('/streamer/redirect', `https://${process.env.CG_PUBLIC_URL}`).href,
+      scopes: ['chat:read', 'chat:edit', 'whispers:read'].join(' ')
+    }
+  })
+
+  // If we have an existing session, we try to go through the login flow without user interaction.
+  // This way users don't have to sign in manually every time they open ChatGuessr.
+  const authUrl = hasSession ? authConfig.data.url : undefined
+
+  const authWindow = await createAuthWindow(parentWindow, {
+    authUrl,
+    clearStorageData: !hasSession
+  })
+
+  const startAuth = () => {
+    supabase.auth.signOut().finally(() => {
+      // @ts-expect-error
+      authWindow.loadURL(authConfig.data.url)
+    })
+  }
+
+  const setSession = (_event: IpcMainEvent, session: Session) => {
+    supabase.auth.setSession(session)
+    gameHandler.authenticate(session)
+
+    authWindow.close()
+  }
+
+  ipcMain.once('set-session', setSession)
+  ipcMain.handle('start-auth', startAuth)
+  authWindow.on('closed', () => {
+    ipcMain.off('set-session', setSession)
+    ipcMain.removeHandler('start-auth')
+  })
+}
+
+// Quit when all windows are closed, except on macOS.
+// It's common for applications and their menu bar to stay active until the user quits explicitly with Cmd + Q.
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+
+app.on('activate', () => {
+  // On OS X it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createMainWindow()
+  }
+})
+
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (require('electron-squirrel-startup')) {
+  app.quit()
+}
 
 // Serve assets to 'asset:' file protocol
-// assets must be placed in the public folder because rollup cannot resolve urls with `asset:` prefix
+// Assets must be placed in the public folder because rollup cannot resolve urls with `asset:` prefix
 function serveAssets() {
   const assetDir = join(__dirname, './assets')
   protocol.interceptFileProtocol('asset', (request, callback) => {
@@ -32,76 +177,3 @@ async function serveFlags() {
     }
   })
 }
-
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  app.quit()
-}
-
-// Create the browser window.
-const createWindow = () => {
-  const mainWindow = new BrowserWindow({
-    show: false,
-    ...(process.platform === 'linux'
-      ? {
-          icon: join(__dirname, '../../build/icon.png')
-        }
-      : {}),
-    webPreferences: {
-      preload: join(__dirname, './preload.js'),
-      devTools: isDev ? true : false,
-      sandbox: false
-    }
-  })
-
-  mainWindow.setMenuBarVisibility(false)
-  mainWindow.loadURL('https://www.geoguessr.com/maps')
-
-  // Open links in default OS browser
-  // Allow login via socials to open a new window
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    const socialUrls = [
-      'https://www.facebook.com',
-      'https://accounts.google.com',
-      'https://appleid.apple.com'
-    ]
-    if (socialUrls.some((_url) => url.startsWith(_url))) return { action: 'allow' }
-
-    shell.openExternal(url)
-    return { action: 'deny' }
-  })
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
-    mainWindow.maximize()
-    if (isDev) mainWindow.webContents.openDevTools()
-  })
-
-  mainWindow.on('close', () => BrowserWindow.getAllWindows().forEach((window) => window.destroy()))
-}
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(async () => {
-  createWindow()
-  serveAssets()
-  await serveFlags()
-})
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
-  }
-})

@@ -4,7 +4,7 @@ import { app } from 'electron'
 import { matchSorter } from 'match-sorter'
 
 import builtinFlags from './builtinFlags.json'
-import countryCodesNames from './countryCodesNames.json'
+import countryCodesNames from '../countryCodesNames.json'
 
 // The fallback to `/tmp/` is so this module can be used in tests outside electron.
 const appDataDir = app?.getPath('userData') ?? '/tmp/'

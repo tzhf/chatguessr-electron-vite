@@ -1,41 +1,56 @@
-// Adapted from :
-// https://openuserjs.org/scripts/drparse/GeoNoCar
+// Adapted from : https://openuserjs.org/scripts/drparse/GeoNoCar
 // @ts-nocheck
 ;(function geoNoCar() {
   const classicGameGuiHTML = `
-    <div class="section_sectionHeader__WQ7Xz section_sizeMedium__yPqLK"><div class="bars_root___G89E bars_center__vAqnw"><div class="bars_before__xAA7R bars_lengthLong__XyWLx"></div><span class="bars_content__UVGlL"><h3>NCNC settings</h3></span><div class="bars_after__Z1Rxt bars_lengthLong__XyWLx"></div></div></div>
-    <div class="start-standard-game_settings__x94PU" style="margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-around;">
-            <div style="display: flex; align-items: center;">
-                <span class="game-options_optionLabel__dJ_Cy" style="margin: 0; padding-right: 6px;">No car</span>
-                <input type="checkbox" id="enableNoCar" onclick="toggleNoCarMode(this)" class="toggle_toggle__hwnyw">
-            </div>
-            <div style="display: flex; align-items: center;">
-                <span class="game-options_optionLabel__dJ_Cy" style="margin: 0; padding-right: 6px;">No compass</span>
-                <input type="checkbox" id="enableNoCompass" onclick="toggleNoCompassMode(this)" class="toggle_toggle__hwnyw">
-            </div>
-        </div>
+    <div class="section_sectionHeader___QLJB section_sizeMedium__CuXRP">
+      <div class="bars_root___G89E bars_center__vAqnw">
+          <div class="bars_before__xAA7R bars_lengthLong__XyWLx"></div>
+          <span class="bars_content__UVGlL"><h3>NCNC settings</h3></span>
+          <div class="bars_after__Z1Rxt bars_lengthLong__XyWLx"></div>
+      </div>
     </div>
-    `
+    <div class="start-standard-game_settings__x94PU" style="margin-bottom: 1rem">
+      <div style="display: flex; justify-content: space-between">
+          <div style="display: flex; align-items: center">
+              <span class="game-options_optionLabel__dJ_Cy" style="margin: 0; padding-right: 6px;">No car</span>
+              <input type="checkbox" id="enableNoCar" onclick="toggleNoCarMode(this)" class="toggle_toggle__hwnyw">
+          </div>
+          <div style="display: flex; align-items: center;">
+              <span class="game-options_optionLabel__dJ_Cy" style="margin: 0; padding-right: 6px;">No compass</span>
+              <input type="checkbox" id="enableNoCompass" onclick="toggleNoCompassMode(this)" class="toggle_toggle__hwnyw">
+          </div>
+      </div>
+    </div>
+  `
 
-  const REMOVE_COMPASS_CSS =
-    '.compass,.game-layout__compass,[class^="panorama-compass_"]{display:none}'
+  const REMOVE_COMPASS_CSS = '[data-qa="compass"], [class^="panorama-compass_"] { display: none; }'
 
   const compassRemover = document.createElement('style')
   compassRemover.textContent = REMOVE_COMPASS_CSS
 
-  if (localStorage.getItem('noCarEnabled') === null) localStorage.setItem('noCarEnabled', 'false')
-  if (localStorage.getItem('noCompassEnabled') === null)
-    localStorage.setItem('noCompassEnabled', 'false')
+  if (localStorage.getItem('noCarEnabled') === null) {
+    localStorage.setItem('noCarEnabled', 'false')
+  }
 
-  if (localStorage.getItem('noCarEnabled') === 'true') noCarScript()
-  if (localStorage.getItem('noCompassEnabled') === 'true') document.head.append(compassRemover)
+  if (localStorage.getItem('noCompassEnabled') === null) {
+    localStorage.setItem('noCompassEnabled', 'false')
+  }
+
+  if (localStorage.getItem('noCarEnabled') === 'true') {
+    noCarScript()
+  }
+
+  if (localStorage.getItem('noCompassEnabled') === 'true') {
+    document.head.append(compassRemover)
+  }
 
   window.toggleNoCarMode = (el: HTMLInputElement) => {
     localStorage.setItem('noCarEnabled', el.checked ? 'true' : 'false')
 
     const noCarCheckbox = document.getElementById('enableNoCar') as HTMLInputElement
-    if (noCarCheckbox) noCarCheckbox.checked = el.checked
+    if (noCarCheckbox) {
+      noCarCheckbox.checked = el.checked
+    }
 
     location.reload()
   }
@@ -44,7 +59,9 @@
     localStorage.setItem('noCompassEnabled', el.checked ? 'true' : 'false')
 
     const noCompassCheckbox = document.getElementById('enableNoCompass') as HTMLInputElement
-    if (noCompassCheckbox) noCompassCheckbox.checked = el.checked
+    if (noCompassCheckbox) {
+      noCompassCheckbox.checked = el.checked
+    }
 
     if (el.checked) {
       document.head.append(compassRemover)
@@ -55,20 +72,19 @@
 
   const checkInsertGui = () => {
     if (
-      document.querySelector('.radio-box_root__ka_9S') &&
-      document.getElementById('enableNoCar') === null
+      document.querySelector('[class^="radio-box_root__"]') &&
+      document.querySelector('#enableNoCar') === null
     ) {
-      const sectionEl = document.querySelector('.section_sectionMedium__yXgE6')
-      sectionEl?.insertAdjacentHTML('beforeend', classicGameGuiHTML)
+      document
+        .querySelector('[class^="section_sectionMedium__"]')
+        .insertAdjacentHTML('beforeend', classicGameGuiHTML)
 
       if (localStorage.getItem('noCarEnabled') === 'true') {
-        const enableNoCar = document.getElementById('enableNoCar') as HTMLInputElement
-        if (enableNoCar) enableNoCar.checked = true
+        document.querySelector('#enableNoCar').checked = true
       }
 
       if (localStorage.getItem('noCompassEnabled') === 'true') {
-        const enableNoCompass = document.getElementById('enableNoCompass') as HTMLInputElement
-        if (enableNoCompass) enableNoCompass.checked = true
+        document.querySelector('#enableNoCompass').checked = true
       }
     }
   }

@@ -38,6 +38,13 @@ export async function fetchSeed(url: string): Promise<Seed | undefined> {
 }
 
 /**
+ * Compare two coordinates
+ */
+export function latLngEqual(a: LatLng, b: LatLng) {
+  return a.lat === b.lat && a.lng === b.lng
+}
+
+/**
  * Get the country code for a coordinate.
  */
 export async function getCountryCode(location: LatLng): Promise<string | undefined> {
@@ -106,7 +113,7 @@ export async function makeLink(
   streamer: string,
   map: string,
   mode: object,
-  locations: LatLng[],
+  locations: Location[],
   gameResults: GameResult[]
 ): Promise<string> {
   const res = await axios.post<{ code: string }>(
@@ -135,13 +142,3 @@ export async function getRandomCoordsInLand(): Promise<LatLng> {
   if (!localResults.length) return await getRandomCoordsInLand()
   return { lat, lng }
 }
-
-// exports.isGameURL = isGameURL
-// exports.fetchSeed = fetchSeed
-// exports.getCountryCode = getCountryCode
-// exports.parseCoordinates = parseCoordinates
-// exports.calculateScale = calculateScale
-// exports.haversineDistance = haversineDistance
-// exports.calculateScore = calculateScore
-// exports.makeLink = makeLink
-// exports.getRandomCoordsInLand = getRandomCoordsInLand
