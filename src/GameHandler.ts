@@ -7,18 +7,22 @@ import TwitchBackend from './utils/useTwitchJS'
 import { store } from './utils/useStore'
 import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/GameHelper'
 import { getEmoji, randomCountryFlag, selectFlag } from './utils/flags/flags'
-import Settings from './utils/Settings'
-import createSettingsWindow from './settings/SettingsWindow'
+// import Settings from './utils/Settings'
+// import createSettingsWindow from './settings/SettingsWindow'
+
+import { useSettings } from './utils/useSettings'
+const { settings, saveSettings } = useSettings()
+console.log('🚀 ~ file: GameHandler.ts:16 ~ settings:', settings.channelName)
 
 const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
-const settings = Settings.read()
+// const settings = Settings.read()
 
 export default class GameHandler {
   #db: Database
 
   #win: BrowserWindow
 
-  #settingsWindow: BrowserWindow | undefined
+  // #settingsWindow: BrowserWindow | undefined
 
   #session: Session | undefined
 
@@ -72,20 +76,19 @@ export default class GameHandler {
     this.#win.loadURL(`https://www.geoguessr.com/maps/${mapUrl}/play`)
   }
 
-  #showRoundResults(location: Location, roundResults: RoundScore[]) {
+  #showRoundResults(location: Location_, roundResults: RoundScore[]) {
     const round = this.#game.isFinished ? this.#game.round : this.#game.round - 1
 
     if (roundResults[0]) roundResults[0].color = '#E3BB39'
     if (roundResults[1]) roundResults[1].color = '#C9C9C9'
     if (roundResults[2]) roundResults[2].color = '#A3682E'
 
-    const { guessMarkersLimit } = Settings.read()
     this.#win.webContents.send(
       'show-round-results',
       round,
       location,
       roundResults,
-      guessMarkersLimit
+      settings.guessMarkersLimit
     )
     this.#backend?.sendMessage(
       `🌎 Round ${round} has finished. Congrats ${getEmoji(roundResults[0].flag)} ${
@@ -223,39 +226,41 @@ export default class GameHandler {
       if (this.#game.guessesOpen) this.closeGuesses()
     })
 
-    ipcMain.on('save-global-settings', (_event, globalSettings) => {
-      settings.saveGlobalSettings(globalSettings)
-      this.#settingsWindow?.close()
+    // ipcMain.on('save-twitch-settings', (_event, channelName: string) => {
+    //   settings.saveTwitchSettings(channelName)
+    //   this.#requestAuthentication()
+    // })
+
+    ipcMain.handle('get-settings', () => {
+      return { ...settings }
     })
 
-    ipcMain.on('save-twitch-settings', (_event, channelName) => {
-      settings.saveTwitchSettings(channelName)
-      this.#requestAuthentication()
+    ipcMain.on('save-settings', (_event, settings_: Settings) => {
+      if (settings_.channelName != settings.channelName) {
+        this.#requestAuthentication()
+      }
+      saveSettings(settings_)
     })
 
-    ipcMain.on('add-banned-user', (_event, username) => {
+    ipcMain.handle('get-banned-users', () => {
+      return this.#db.getBannedUsers()
+    })
+
+    ipcMain.on('add-banned-user', (_event, username: string) => {
       this.#db.addBannedUser(username)
     })
 
-    ipcMain.on('delete-banned-user', (_event, username) => {
+    ipcMain.on('delete-banned-user', (_event, username: string) => {
       this.#db.deleteBannedUser(username)
     })
 
-    ipcMain.on('closeSettings', () => {
-      this.closeSettingsWindow()
-    })
-
-    ipcMain.on('openSettings', () => {
-      this.openSettingsWindow()
-    })
-
-    ipcMain.on('clearStats', async () => {
+    ipcMain.on('clear-stats', async () => {
       await this.#db.clear()
       await this.#backend?.sendMessage('All stats cleared 🗑️', { system: true })
     })
   }
 
-  getConnectionState() {
+  getTwitchConnectionState() {
     if (!this.#backend) {
       return { state: 'disconnected' }
     } else if (this.#backend.isConnected()) {
@@ -264,6 +269,15 @@ export default class GameHandler {
         botUsername: this.#backend.botUsername,
         channelName: this.#backend.channelName
       }
+    }
+    return { state: 'connecting' }
+  }
+
+  getSocketConnectionState() {
+    if (!this.#socket) {
+      return { state: 'disconnected' }
+    } else if (this.#socket.connected) {
+      return { state: 'connected' }
     }
     return { state: 'connecting' }
   }
@@ -291,9 +305,9 @@ export default class GameHandler {
     }
 
     const emitConnectionState = () => {
-      const state = this.getConnectionState()
-      this.#win.webContents.send('connection-state', state)
-      this.#settingsWindow?.webContents.send('connection-state', state)
+      const state = this.getTwitchConnectionState()
+      this.#win.webContents.send('twitch-connection-state', state)
+      // this.#settingsWindow?.webContents.send('connection-state', state)
     }
 
     this.#backend.on('connected', () => {
@@ -324,9 +338,10 @@ export default class GameHandler {
     try {
       await this.#backend.connect()
     } catch (error) {
-      if (this.#settingsWindow) {
-        this.#settingsWindow.webContents.send('twitch-error', error)
-      }
+      // if (this.#settingsWindow) {
+      this.#win.webContents.send('twitch-error', error)
+      // }
+      console.log('errrrrrror', error)
       console.error(error)
     }
   }
@@ -547,7 +562,7 @@ export default class GameHandler {
       this.#socket.disconnect()
     }
 
-    const botUsername = session.user.user_metadata.name
+    const botUsername: string = session.user.user_metadata.name
 
     this.#socket = io(SOCKET_SERVER_URL, {
       transportOptions: {
@@ -563,15 +578,15 @@ export default class GameHandler {
 
     this.#socket.on('connect', () => {
       this.#socket?.emit('join', botUsername)
-      if (this.#settingsWindow) {
-        this.#settingsWindow.webContents.send('socket-connected')
-      }
+      // if (this.#settingsWindow) {
+      this.#win.webContents.send('socket-connected')
+      // }
     })
 
     this.#socket.on('disconnect', () => {
-      if (this.#settingsWindow) {
-        this.#settingsWindow.webContents.send('socket-disconnected')
-      }
+      // if (this.#settingsWindow) {
+      this.#win.webContents.send('socket-disconnected')
+      // }
     })
 
     this.#socket.on('guess', (userData, guess) => {
@@ -583,30 +598,30 @@ export default class GameHandler {
     await once(this.#socket, 'connect')
   }
 
-  openSettingsWindow() {
-    // Initialise the window if it doesn't exist,
-    // especially important in non-windows systems where Chatguessr may not be able
-    // to prevent the window from being completely closed.
-    if (!this.#settingsWindow) {
-      this.#settingsWindow = createSettingsWindow(this.#win).on('closed', () => {
-        this.#settingsWindow = undefined
-      })
+  // openSettingsWindow() {
+  //   // Initialise the window if it doesn't exist,
+  //   // especially important in non-windows systems where Chatguessr may not be able
+  //   // to prevent the window from being completely closed.
+  //   if (!this.#settingsWindow) {
+  //     this.#settingsWindow = createSettingsWindow(this.#win).on('closed', () => {
+  //       this.#settingsWindow = undefined
+  //     })
 
-      this.#settingsWindow.webContents.on('did-finish-load', () => {
-        this.#settingsWindow?.webContents.send(
-          'render-settings',
-          settings,
-          this.#db.getBannedUsers(),
-          this.getConnectionState(),
-          this.#socket?.connected
-        )
+  //     this.#settingsWindow.webContents.on('did-finish-load', () => {
+  //       this.#settingsWindow?.webContents.send(
+  //         'render-settings',
+  //         settings,
+  //         this.#db.getBannedUsers(),
+  //         this.getTwitchConnectionState(),
+  //         this.#socket?.connected
+  //       )
 
-        this.#settingsWindow?.show()
-      })
-    }
-  }
+  //       this.#settingsWindow?.show()
+  //     })
+  //   }
+  // }
 
-  closeSettingsWindow() {
-    this.#settingsWindow?.close()
-  }
+  // closeSettingsWindow() {
+  //   this.#settingsWindow?.close()
+  // }
 }

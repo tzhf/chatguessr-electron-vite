@@ -829,6 +829,11 @@ class Database {
     deleteEverything()
   }
 
+  getBannedUsers() {
+    const bannedUsers = this.#db.prepare(`SELECT username FROM banned_users`).all()
+    return bannedUsers
+  }
+
   addBannedUser(username: string) {
     this.#db
       .prepare(
@@ -849,11 +854,6 @@ class Database {
       `
       )
       .run({ username: username })
-  }
-
-  getBannedUsers() {
-    const bannedUsers = this.#db.prepare(`SELECT username FROM banned_users`).all()
-    return bannedUsers
   }
 
   /**

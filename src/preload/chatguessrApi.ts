@@ -17,19 +17,35 @@ export const chatguessrApi = {
     ipcRenderer.send('return-to-map-page')
   },
 
-  openSettings() {
-    ipcRenderer.send('openSettings')
+  getSettings(): Promise<Settings> {
+    return ipcRenderer.invoke('get-settings')
   },
 
-  getConnectionState(): Promise<ConnectionState> {
-    return ipcRenderer.invoke('get-connection-state')
+  saveSettings(settings: Settings) {
+    ipcRenderer.send('save-settings', settings)
   },
+
+  getBannedUsers(): Promise<{ username: string }[]> {
+    return ipcRenderer.invoke('get-banned-users')
+  },
+
+  addBannedUser(username: string) {
+    ipcRenderer.send('add-banned-user', username)
+  },
+
+  deleteBannedUser(username: string) {
+    ipcRenderer.send('delete-banned-user', username)
+  },
+
+  // saveTwitchSettings(channelName: string): void {
+  //   ipcRenderer.send('save-twitch-settings', channelName)
+  // },
 
   appDataPathExists(subdir?: string): Promise<string | false> {
     return ipcRenderer.invoke('app-data-path-exists', subdir)
   },
 
-  importAudioFile() {
+  importAudioFile(): Promise<unknown> {
     return ipcRenderer.invoke('import-audio-file')
   },
 
@@ -86,8 +102,40 @@ export const chatguessrApi = {
     }
   },
 
-  onConnectionStateChange(callback: (state: ConnectionState) => void) {
-    return ipcRendererOn('connection-state', callback)
+  replaceSession(): void {
+    ipcRenderer.invoke('replace-session')
+  },
+
+  getTwitchConnectionState(): Promise<TwitchConnectionState> {
+    return ipcRenderer.invoke('get-twitch-connection-state')
+  },
+
+  onTwitchConnectionStateChange(callback: (state: TwitchConnectionState) => void) {
+    return ipcRendererOn('twitch-connection-state', callback)
+  },
+
+  onTwitchError(callback: (error) => void) {
+    return ipcRendererOn('twitch-error', callback)
+  },
+
+  getSocketConnectionState(): Promise<SocketConnectionState> {
+    return ipcRenderer.invoke('get-socket-connection-state')
+  },
+
+  onSocketConnected(callback: () => void) {
+    return ipcRendererOn('socket-connected', callback)
+  },
+
+  onSocketDisconnected(callback: () => void) {
+    return ipcRendererOn('socket-disconnected', callback)
+  },
+
+  clearStats(): void {
+    ipcRenderer.send('clear-stats')
+  },
+
+  getCurrentVersion(): Promise<string> {
+    return ipcRenderer.invoke('get-current-version')
   }
 }
 
@@ -104,6 +152,6 @@ export type ChatguessrApi = typeof chatguessrApi
 
 declare global {
   interface Window {
-    chatguessrApi: ChatguessrApi
+    ChatguessrApi: ChatguessrApi
   }
 }

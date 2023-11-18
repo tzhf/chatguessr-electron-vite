@@ -179,15 +179,20 @@ type Flag = {
   emoji?: string
 }
 
-type ConnectionState =
+type TwitchConnectionState =
   | { state: 'disconnected' }
   | { state: 'connecting' }
   | { state: 'connected'; botUsername: string; channelName: string }
 
+type SocketConnectionState =
+  | { state: 'disconnected' }
+  | { state: 'connecting' }
+  | { state: 'connected' }
+
 interface RendererApi {
-  drawRoundResults(location: Location, roundResults: Guess[], limit?: number)
-  drawGameLocations(locations: Location[])
-  drawPlayerResults(locations: Location[], result: GameResult)
+  drawRoundResults(location: Location_, roundResults: Guess[], limit?: number)
+  drawGameLocations(locations: Location_[])
+  drawPlayerResults(locations: Location_[], result: GameResult)
   focusOnGuess(location: LatLng)
   clearMarkers(keepLocationMarkers?: boolean)
   showSatelliteMap(location: LatLng)

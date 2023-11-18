@@ -1,5 +1,6 @@
+import fs from 'fs'
 import { join } from 'path'
-import { app, BrowserWindow, ipcMain, protocol } from 'electron'
+import { app, BrowserWindow, ipcMain, protocol, dialog } from 'electron'
 import { updateElectronApp } from 'update-electron-app'
 
 import createMainWindow from './MainWindow'
@@ -9,6 +10,9 @@ import { database } from '../utils/useDatabase'
 import { supabase } from '../utils/useSupabase'
 import { store } from '../utils/useStore'
 import { loadCustomFlags, findFlagFile } from '../utils/flags/flags'
+
+import { version } from '../../package.json'
+console.log('🚀 ~ file: main.ts:15 ~ version:', version)
 
 updateElectronApp()
 
@@ -30,53 +34,56 @@ app.whenReady().then(async () => {
     }
   })
 
-  ipcMain.handle('get-connection-state', () => gameHandler.getConnectionState())
+  ipcMain.handle('get-twitch-connection-state', () => gameHandler.getTwitchConnectionState())
+  ipcMain.handle('get-socket-connection-state', () => gameHandler.getSocketConnectionState())
   ipcMain.handle('replace-session', async () => {
     await supabase.auth.signOut()
     await authenticateWithTwitch(gameHandler, mainWindow)
   })
 
-  // ipcMain.handle('app-data-path-exists', (_event, subdir) => {
-  //   let _path = appDataPath
-  //   if (subdir) _path = path.join(appDataPath, subdir)
-  //   if (!fs.existsSync(_path)) return false
-  //   return _path
-  // })
+  ipcMain.handle('app-data-path-exists', (_event, subdir) => {
+    let _path = appDataPath
+    if (subdir) _path = join(appDataPath, subdir)
+    if (!fs.existsSync(_path)) return false
+    return _path
+  })
 
-  // ipcMain.handle('import-audio-file', async () => {
-  //   return new Promise((resolve, reject) => {
-  //     dialog
-  //       .showOpenDialog(mainWindow, {
-  //         title: 'Import audio file',
-  //         buttonLabel: 'Import audio File',
-  //         filters: [{ name: 'Audio Files', extensions: ['mp3', 'wav', 'ogg'] }]
-  //       })
-  //       .then((result) => {
-  //         if (result.canceled) return resolve(null)
+  ipcMain.handle('import-audio-file', async () => {
+    return new Promise((resolve, reject) => {
+      dialog
+        .showOpenDialog(mainWindow, {
+          title: 'Import audio file',
+          buttonLabel: 'Import audio File',
+          filters: [{ name: 'Audio Files', extensions: ['mp3', 'wav', 'ogg'] }]
+        })
+        .then((result) => {
+          if (result.canceled) return resolve(null)
 
-  //         const filePath = result.filePaths[0]
-  //         if (!filePath) return reject('Error locating path')
+          const filePath = result.filePaths[0]
+          if (!filePath) return reject('Error locating path')
 
-  //         const targetDirectory = path.join(appDataPath, 'timer')
-  //         if (!fs.existsSync(targetDirectory)) {
-  //           fs.mkdir(targetDirectory, (err) => {
-  //             if (err) return reject(err)
-  //           })
-  //         }
+          const targetDirectory = join(appDataPath, 'timer')
+          if (!fs.existsSync(targetDirectory)) {
+            fs.mkdir(targetDirectory, (err) => {
+              if (err) return reject(err)
+            })
+          }
 
-  //         const data = fs.readFileSync(filePath)
-  //         // not saving the extension here so we can overwrite audio files having different extensions without extra logic
-  //         fs.writeFile(path.join(targetDirectory, 'timer_alert'), data, (err) => {
-  //           if (err) return reject(err)
+          const data = fs.readFileSync(filePath)
+          // not saving the extension here so we can overwrite audio files having different extensions without extra logic
+          fs.writeFile(join(targetDirectory, 'timer_alert'), data, (err) => {
+            if (err) return reject(err)
 
-  //           resolve(path.join(targetDirectory, 'timer_alert'))
-  //         })
-  //       })
-  //       .catch((err) => {
-  //         reject(err)
-  //       })
-  //   })
-  // })
+            resolve(join(targetDirectory, 'timer_alert'))
+          })
+        })
+        .catch((err) => {
+          reject(err)
+        })
+    })
+  })
+
+  ipcMain.handle('get-current-version', () => version)
 
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN') {
@@ -141,9 +148,7 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createMainWindow()
-  }
+  if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
 })
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.

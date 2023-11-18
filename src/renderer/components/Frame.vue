@@ -7,30 +7,45 @@
   </div>
 
   <div class="cg-menu">
-    <button :class="['cg-button', twitchConnectionState]" title="settings" @click="openSettings">
-      <span class="cg-icon cg-icon--gear"></span>
+    <button :class="['cg-button', twitchConnectionState.state]" title="settings" @click="openSettings">
+      <span class="icon cg-icon--gear"></span>
     </button>
     <button class="cg-button" title="Show/Hide timer" @click="toggleTimer" :hidden="gameState === 'none'">
-      <span :class="['cg-icon', timerVisible ? 'cg-icon--timerVisible' : 'cg-icon--timerHidden']"></span>
+      <span :class="['icon', timerVisible ? 'cg-icon--timerVisible' : 'cg-icon--timerHidden']"></span>
     </button>
     <button class="cg-button" title="Show/Hide scoreboard" @click="toggleScoreboard" :hidden="gameState === 'none'">
-      <span :class="['cg-icon', scoreboardVisible ? 'cg-icon--scoreboardVisible' : 'cg-icon--scoreboardHidden']"></span>
+      <span :class="['icon', scoreboardVisible ? 'cg-icon--scoreboardVisible' : 'cg-icon--scoreboardHidden']"></span>
     </button>
     <button class="cg-button" title="Center view" @click="centerSatelliteView"
       :hidden="satelliteModeEnabled.value !== 'enabled' || gameState !== 'in-round'">
-      <span class="cg-icon cg-icon--flag"></span>
+      <span class="icon cg-icon--flag"></span>
     </button>
   </div>
+
+  <Suspense>
+    <transition name="modal">
+      <Settings :chatguessrApi="chatguessrApi" :socketConnectionState="socketConnectionState"
+        :twitchConnectionState="twitchConnectionState" v-if="isSettingsVisible" @close="isSettingsVisible = false" />
+    </transition>
+  </Suspense>
 </template>
 
 <script lang="ts" setup>
 import { ref, shallowRef, onMounted, onBeforeUnmount, watch, computed } from "vue"
 import { useStyleTag } from "@vueuse/core"
+import Settings from "./Settings.vue";
 // import type { LatLng, Location, GameResult, Guess } from "../types";
 // Only import the type here, we have to import Scoreboard on mount so jQuery has access to all the elements it needs.
 // import Scoreboard from "./Scoreboard";
 // import Timer from "./Timer.vue"
 import type { ChatguessrApi } from "../../preload/chatguessrApi"
+
+
+const isSettingsVisible = ref<boolean>(false);
+
+function openSettings() {
+  isSettingsVisible.value = true;
+}
 
 const {
   chatguessrApi,
@@ -50,6 +65,7 @@ const {
 const gameState = ref<"in-round" | "round-results" | "game-results" | "none">("none");
 const currentLocation = shallowRef<LatLng | null>(null);
 const twitchConnectionState = useTwitchConnectionState();
+const socketConnectionState = useSocketConnectionState();
 
 const CGFrameContainer = ref<HTMLDivElement | null>(null);
 const isCGFrameContainerVisible = computed(() => gameState.value !== "none");
@@ -234,22 +250,38 @@ onBeforeUnmount(chatguessrApi.onStartRound((isMultiGuess, location) => {
 
 /** Load and update twitch connection state. */
 function useTwitchConnectionState() {
-  const conn = ref<"connected" | 'connecting' | 'disconnected'>("disconnected");
+  const conn = ref<TwitchConnectionState>({ state: "disconnected" });
 
   onMounted(async () => {
-    const { state } = await chatguessrApi.getConnectionState();
+    const state = await chatguessrApi.getTwitchConnectionState();
     conn.value = state;
   });
 
-  onBeforeUnmount(chatguessrApi.onConnectionStateChange(({ state }) => {
+  onBeforeUnmount(chatguessrApi.onTwitchConnectionStateChange((state) => {
     conn.value = state;
   }));
 
   return conn;
 }
 
-function openSettings() {
-  chatguessrApi.openSettings();
+
+/** Load and update twitch connection state. */
+function useSocketConnectionState() {
+  const conn = ref<SocketConnectionState>({ state: "disconnected" });
+
+  onMounted(async () => {
+    const state = await chatguessrApi.getSocketConnectionState();
+    conn.value = state;
+  });
+
+  onBeforeUnmount(chatguessrApi.onSocketConnected(() => {
+    conn.value.state = "connected";
+  }));
+  onBeforeUnmount(chatguessrApi.onSocketDisconnected(() => {
+    conn.value.state = "disconnected";
+  }));
+
+  return conn;
 }
 
 function toggleScoreboard() {
@@ -332,12 +364,6 @@ function openSettings() {
   background: blue;
 }
 
-.cg-icon {
-  background-size: contain;
-  width: 100%;
-  height: 100%;
-}
-
 .cg-icon--gear {
   background-image: url(asset:icons/gear.svg);
 }
@@ -362,4 +388,4 @@ function openSettings() {
   background-image: url(asset:icons/start_flag.svg);
 }
 </style>
-../../preload/chatguessrApi
+

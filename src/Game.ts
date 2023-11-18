@@ -36,7 +36,7 @@ export default class Game {
 
   mapScale: number | undefined
 
-  location: Location | undefined
+  location: Location_ | undefined
 
   isInGame = false
   guessesOpen = false
@@ -290,11 +290,11 @@ export default class Game {
     }
   }
 
-  getLocation(): Location {
+  getLocation(): Location_ {
     return this.seed.rounds.at(-1)
   }
 
-  getLocations(): Location[] {
+  getLocations(): Location_[] {
     return this.seed.rounds.map((round) => ({
       lat: round.lat,
       lng: round.lng,

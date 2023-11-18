@@ -12,7 +12,7 @@
             <div class="bars_after__Z1Rxt bars_lengthLong__XyWLx"></div>
         </div>
     </div>
-    <div class="start-standard-game_settings__x94PU" style="margin-bottom: 1rem">
+    <div class="start-standard-game_settings__x94PU">
         <div class="game-options_optionGroup__qNKx1">
             <div style="display: flex; justify-content: space-between">
                 <div style="display: flex; align-items: center">

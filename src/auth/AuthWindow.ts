@@ -42,10 +42,9 @@ export default async function createAuthWindow(
 
   win.loadURL(options.authUrl ?? `file://${path.join(__dirname, `../../src/auth/index.html`)}`)
 
-  console.log('🚀 ~ file: authWindow.ts:46 ~ process.env.NODE_ENV :', process.env.NODE_ENV)
-  if (process.env.NODE_ENV === 'development') {
-    win.webContents.openDevTools()
-  }
+  // if (process.env.NODE_ENV === 'development') {
+  //   win.webContents.openDevTools()
+  // }
 
   return win
 }

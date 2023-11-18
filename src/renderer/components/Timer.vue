@@ -38,44 +38,44 @@
     </div>
 
     <div :hidden="!settingsVisibility" :class="settingsVisibility ? 'expanded' : 'collapsed'" class="timer__settings">
-      <div class="form__field">
+      <div class="form__group">
         <label class="radio__label">Start timer at round start</label>
         <input type="checkbox" v-model="settings.autoStart" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label class="radio__label">Close guesses when time's up</label>
         <input type="checkbox" v-model="settings.autoCloseGuesses" />
       </div>
 
       <hr>
 
-      <div class="form__field">
+      <div class="form__group">
         <label>Time ({{ settings.timeLimit }} sec) :</label>
         <input v-model="settings.timeLimit" type="range" min="5" max="600" step="5" @input="reset()" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Time's up message :</label>
         <input type="text" v-model="settings.timesUpMsg" spellcheck="false" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Time to plonk ({{ settings.timeToPlonk }} sec) :</label>
         <input v-model="settings.timeToPlonk" type="range" min="5" :max="settings.timeLimit" step="5" @input="reset()" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Time to plonk message :</label>
         <input type="text" v-model="settings.timeToPlonkMsg" spellcheck="false" />
       </div>
 
       <hr>
 
-      <div class="form__field">
+      <div class="form__group">
         <label class="radio__label">Play sound when it's time to plonk</label>
         <input type="checkbox" v-model="settings.playAudio" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label class="radio__label">Load audio file</label>
         <div class="flex_center">
-          <button type="button" @click="importAudioFile">Import</button>
+          <button class="btn" type="button" @click="importAudioFile">Import</button>
           <svg class="icon" v-if="audioPath" @click="playAudio()" fill="#59f3b3" viewBox="0 0 260 228">
             <path
               d="M170.81,78.043l15.653-15.653c14.848,12.299,24.323,30.868,24.323,51.61c0,21.04-9.757,39.836-24.974,52.128l-15.68-15.68 c11.291-8.184,18.655-21.469,18.655-36.448C188.786,99.32,181.719,86.262,170.81,78.043z M236,114 c0,28.068-12.569,53.253-32.371,70.231l15.584,15.584C242.982,178.82,258,148.133,258,114c0-33.836-14.757-64.286-38.168-85.265 L204.257,44.31C223.696,61.28,236,86.229,236,114z M146,2L56.4,66H2v96h54.4l89.6,64V2z">
@@ -83,14 +83,14 @@
           </svg>
         </div>
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Sound volume ({{ settings.audioVolume * 100 }} %) :</label>
         <input type="range" min="0" max="1" step="0.1" v-model="settings.audioVolume" />
       </div>
 
       <hr />
 
-      <div class="form__field">
+      <div class="form__group">
         <label>Font :</label>
         <select v-model="settings.fontFamily">
           <option v-for="font in availableFonts" :value="font" :key="font" :style="{ fontFamily: font }">
@@ -98,39 +98,39 @@
           </option>
         </select>
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Font size ({{ settings.fontSize }}px) :</label>
         <input type="range" min="10" max="170" v-model="settings.fontSize" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Color :</label>
         <input type="color" v-model="settings.color" />
       </div>
       <hr />
-      <div class="form__field">
+      <div class="form__group">
         <label>Border width ({{ settings.borderWidth }}px) :</label>
         <input type="range" min="0" max="10" step="0.1" v-model="settings.borderWidth" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Border color :</label>
         <input type="color" v-model="settings.borderColor" />
       </div>
 
       <hr />
 
-      <div class="form__field">
+      <div class="form__group">
         <label>Shadow offset X ({{ settings.shadowOffsetX }}px) :</label>
         <input type="range" min="-20" max="20" step="1" v-model="settings.shadowOffsetX" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Shadow offset Y ({{ settings.shadowOffsetY }}px) :</label>
         <input type="range" min="-20" max="20" step="1" v-model="settings.shadowOffsetY" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Shadow blur ({{ settings.shadowBlur }}px) :</label>
         <input type="range" min="0" max="20" step="1" v-model="settings.shadowBlur" />
       </div>
-      <div class="form__field">
+      <div class="form__group">
         <label>Shadow color :</label>
         <input type="color" v-model="settings.shadowColor" />
       </div>
@@ -143,9 +143,9 @@ import { ref, reactive, watch, onMounted } from "vue";
 import "jquery-ui-dist/jquery-ui";
 
 const props = defineProps<{
-  importAudioFile: Window['chatguessrApi']["importAudioFile"],
-  appDataPathExists: Window['chatguessrApi']["appDataPathExists"]
-  setGuessesOpen: Window['chatguessrApi']["setGuessesOpen"]
+  importAudioFile: Window['ChatguessrApi']["importAudioFile"],
+  appDataPathExists: Window['ChatguessrApi']["appDataPathExists"]
+  setGuessesOpen: Window['ChatguessrApi']["setGuessesOpen"]
 }>();
 
 const audioPath = ref<string | false>(false);
@@ -485,13 +485,6 @@ defineExpose({
   border-radius: 0.5rem;
 }
 
-.flex_center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .icon {
   width: 20px;
   height: 20px;
@@ -507,7 +500,57 @@ defineExpose({
   transform: scale(0.8);
 }
 
-.form__field {
+.expanded {
+  opacity: 1;
+  animation: fadeIn 150ms ease-out forwards;
+}
+
+.collapsed {
+  opacity: 0;
+  animation: fadeOut 150ms ease-out forwards;
+}
+
+@keyframes fadeIn {
+  0% {
+    display: none;
+    opacity: 0;
+  }
+
+  1% {
+    display: block;
+  }
+
+  100% {
+    display: block;
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    display: block;
+    opacity: 1;
+  }
+
+  99% {
+    display: block;
+  }
+
+  100% {
+    display: none;
+    opacity: 0;
+  }
+}
+
+
+/* .flex_center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form__group {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -687,7 +730,5 @@ hr {
     display: none;
     opacity: 0;
   }
-}
+} */
 </style>
-../../preload/chatguessrApi
-../../preload/chatguessrApi

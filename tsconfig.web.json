@@ -3,9 +3,7 @@
   "include": [
     "src/types.d.ts",
     "src/preload/chatguessrApi.ts",
-    "src/renderer/*",
-    "src/renderer/**/*",
-    "src/renderer/**/*.vue",
+    "src/renderer/**/*"
   ],
   "compilerOptions": {
     "composite": true,

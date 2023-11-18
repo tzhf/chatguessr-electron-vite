@@ -113,7 +113,7 @@ export async function makeLink(
   streamer: string,
   map: string,
   mode: object,
-  locations: Location[],
+  locations: Location_[],
   gameResults: GameResult[]
 ): Promise<string> {
   const res = await axios.post<{ code: string }>(
