@@ -5,7 +5,7 @@ const isDev = process.env.npm_lifecycle_event === 'dev'
 
 // Create the Main window.
 export default function createWindow() {
-  const mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     show: false,
     ...(process.platform === 'linux'
       ? {
@@ -15,16 +15,20 @@ export default function createWindow() {
     webPreferences: {
       preload: join(__dirname, './preload.js'),
       devTools: isDev ? true : false,
-      sandbox: false
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      // only needed for timer sound alert
+      webSecurity: false
     }
   })
 
-  mainWindow.setMenuBarVisibility(false)
-  mainWindow.loadURL('https://www.geoguessr.com/community/maps')
+  win.setMenuBarVisibility(false)
+  win.loadURL('https://www.geoguessr.com/community/maps')
 
   // Open links in default OS browser
   // Allow login via socials to open a new window
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+  win.webContents.setWindowOpenHandler(({ url }) => {
     const socialUrls = [
       'https://www.facebook.com',
       'https://accounts.google.com',
@@ -36,13 +40,13 @@ export default function createWindow() {
     return { action: 'deny' }
   })
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
-    mainWindow.maximize()
-    if (isDev) mainWindow.webContents.openDevTools()
+  win.once('ready-to-show', () => {
+    win.show()
+    win.maximize()
+    if (isDev) win.webContents.openDevTools()
   })
 
-  mainWindow.on('close', () => BrowserWindow.getAllWindows().forEach((window) => window.destroy()))
+  win.on('close', () => BrowserWindow.getAllWindows().forEach((window) => window.destroy()))
 
-  return mainWindow
+  return win
 }

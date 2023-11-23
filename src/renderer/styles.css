@@ -5,6 +5,12 @@
   --main-color: #59f3b3;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 @font-face {
   font-family: Montserrat;
   src:
@@ -36,7 +42,6 @@
 }
 
 .form__group {
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;

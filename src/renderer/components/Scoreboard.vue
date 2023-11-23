@@ -1,12 +1,44 @@
+<template>
+  <Vue3DraggableResizable v-model:x="scoreboardState.x" v-model:y="scoreboardState.y" v-model:w="scoreboardState.w"
+    v-model:h="scoreboardState.h" :minW="380" :minH="180" :parent="true" id="scoreboard">
+    <div>AAAAAAAAAA</div>
+  </Vue3DraggableResizable>
+</template>
+
+<script setup lang="ts">
+import { reactive, watch, onMounted } from "vue"
+import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
+
+const scoreboardState = reactive({
+  x: 200,
+  y: 50,
+  w: 380,
+  h: 180
+})
+
+onMounted(async () => {
+  Object.assign(scoreboardState, getLocalStorage({
+    x: 200,
+    y: 50,
+    w: 380,
+    h: 180
+  }, "cg_scoreboard__position"))
+
+  watch(scoreboardState, () => {
+    setLocalStorage(scoreboardState, "cg_scoreboard__position");
+  })
+})
+
+</script>
+
 <style scoped>
-/* SCOREBOARD */
 #scoreboard {
   font-family: Montserrat, sans-serif;
-  position: relative;
-  min-width: 380px;
+  /* position: relative; */
+  /* min-width: 380px;
   min-height: 180px;
   max-width: 1800px;
-  max-height: 1000px;
+  max-height: 1000px; */
   padding: 5px;
   background-color: rgba(0, 0, 0, 0.4);
   box-shadow: 2px 2px 7px -2px #000;
@@ -20,9 +52,9 @@
   z-index: 999999;
 }
 
-.dataTables_scrollHeadInner {
+/* .dataTables_scrollHeadInner {
   width: 100% !important;
-}
+} */
 
 #scoreboardHeader {
   display: grid;
@@ -476,4 +508,5 @@ input:checked+.switch:before {
   z-index: 1;
   width: 100%;
   height: 100%;
-}</style>
+}
+</style>

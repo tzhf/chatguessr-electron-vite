@@ -39,7 +39,7 @@ export default function useLoading() {
 
   style.innerHTML = styleContent
   div.className = 'app-loading-wrap'
-  div.innerHTML = `<img class="loader" src="asset:cg-icon.svg" alt="Chatguessr logo" />`
+  div.innerHTML = `<img class="loader" src="asset:icons/cg_icon.svg" alt="Chatguessr logo" />`
 
   return {
     appendLoading() {

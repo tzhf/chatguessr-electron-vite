@@ -10,9 +10,7 @@ import { database } from '../utils/useDatabase'
 import { supabase } from '../utils/useSupabase'
 import { store } from '../utils/useStore'
 import { loadCustomFlags, findFlagFile } from '../utils/flags/flags'
-
 import { version } from '../../package.json'
-console.log('🚀 ~ file: main.ts:15 ~ version:', version)
 
 updateElectronApp()
 

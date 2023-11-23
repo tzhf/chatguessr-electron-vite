@@ -1,9 +1,14 @@
 <template>
   <div id="CGFrameContainer" ref="CGFrameContainer"
     :style="isCGFrameContainerVisible ? 'visibility: visible' : 'visibility: hidden'">
-    <!-- <Timer :style="timerVisible && gameState === 'in-round' ? 'visibility: visible' : 'visibility: hidden'"
+
+    <Scoreboard />
+    <!-- <Vue3DraggableResizable v-model:x="timerPosition.x" v-model:y="timerPosition.y" :draggable="true" :resizable="false"
+      drag-cancel=".timer__settings" :parent="true"> -->
+    <Timer :style="timerVisible && gameState === 'in-round' ? 'visibility: visible' : 'visibility: hidden'"
       :importAudioFile="chatguessrApi.importAudioFile" :appDataPathExists="chatguessrApi.appDataPathExists"
-      :setGuessesOpen="chatguessrApi.setGuessesOpen" ref="timer" /> -->
+      :setGuessesOpen="chatguessrApi.setGuessesOpen" ref="timer" />
+    <!-- </Vue3DraggableResizable> -->
   </div>
 
   <div class="cg-menu">
@@ -31,15 +36,16 @@
 </template>
 
 <script lang="ts" setup>
+defineOptions({
+  inheritAttrs: false
+})
+
 import { ref, shallowRef, onMounted, onBeforeUnmount, watch, computed } from "vue"
 import { useStyleTag } from "@vueuse/core"
 import Settings from "./Settings.vue";
-// import type { LatLng, Location, GameResult, Guess } from "../types";
-// Only import the type here, we have to import Scoreboard on mount so jQuery has access to all the elements it needs.
-// import Scoreboard from "./Scoreboard";
-// import Timer from "./Timer.vue"
+import Scoreboard from "./Scoreboard.vue"
+import Timer from "./Timer.vue"
 import type { ChatguessrApi } from "../../preload/chatguessrApi"
-
 
 const isSettingsVisible = ref<boolean>(false);
 
@@ -82,14 +88,14 @@ const satelliteModeEnabled = {
   },
 };
 
-// const timer = ref<typeof Timer | null>(null);
+const timer = ref<typeof Timer | null>(null);
 const timerVisible = ref(true);
 
 // let scoreboard: Scoreboard | null = null;
 const scoreboardVisible = ref(true);
 
 onMounted(async () => {
-  // timerVisible.value = timer.value!.settings.visible;
+  timerVisible.value = timer.value!.settings.visible;
 
   // scoreboard = new Scoreboard(CGFrameContainer.value!, {
   //   focusOnGuess(location) {
@@ -169,8 +175,8 @@ onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess, restoredGuesses, loca
   //   }
   // }
 
-  // timer.value!.reset();
-  // if (timer.value!.settings.autoStart) timer.value!.start()
+  timer.value!.reset();
+  if (timer.value!.settings.autoStart) timer.value!.start()
 }));
 
 onBeforeUnmount(chatguessrApi.onRefreshRound((location) => {
@@ -182,7 +188,7 @@ onBeforeUnmount(chatguessrApi.onRefreshRound((location) => {
 
 onBeforeUnmount(chatguessrApi.onGameQuit(() => {
   gameState.value = "none";
-  // timer.value!.reset();
+  timer.value!.reset();
   rendererApi.clearMarkers();
 }));
 
@@ -207,7 +213,7 @@ onBeforeUnmount(chatguessrApi.onShowRoundResults((round, location, roundResults,
   // scoreboard.setTitle(`ROUND ${round} RESULTS (${roundResults.length})`);
   // scoreboard.showSwitch(false);
 
-  // timer.value!.reset();
+  timer.value!.reset();
 }));
 
 onBeforeUnmount(chatguessrApi.onShowGameResults((locations, gameResults) => {
@@ -240,8 +246,8 @@ onBeforeUnmount(chatguessrApi.onStartRound((isMultiGuess, location) => {
   // scoreboard.reset(isMultiGuess);
   // scoreboard.showSwitch(true);
 
-  // timer.value!.reset();
-  // if (timer.value!.settings.autoStart) timer.value!.start()
+  timer.value!.reset();
+  if (timer.value!.settings.autoStart) timer.value!.start()
 }));
 
 // onBeforeUnmount(chatguessrApi.onGuessesOpenChanged((open) => {
@@ -290,7 +296,7 @@ function toggleScoreboard() {
 
 function toggleTimer() {
   timerVisible.value = !timerVisible.value;
-  // timer.value!.settings.visible = !timer.value!.settings.visible;
+  timer.value!.settings.visible = !timer.value!.settings.visible;
 }
 
 function centerSatelliteView() {
@@ -300,19 +306,6 @@ function centerSatelliteView() {
 }
 </script>
 
-<!-- <script lang="ts" setup>
-// import type { ChatguessrApi } from "../../preload/chatguessrApi"
-
-const {
-  chatguessrApi,
-} = defineProps<{
-  chatguessrApi: Window['chatguessrApi']
-}>();
-
-function openSettings() {
-  chatguessrApi.openSettings();
-}
-</script> -->
 <style scoped>
 [hidden] {
   display: none !important;
@@ -326,6 +319,14 @@ function openSettings() {
   bottom: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+.drv {
+  border: none
+}
+
+.vdr-container {
+  border: none
 }
 
 .cg-menu {
