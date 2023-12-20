@@ -149,7 +149,6 @@
         </div>
 
         <div v-show="currentTab === 3" class="modal-content">
-
           <div class="form__group gap-05">
             <input class="form__group w-full" type="text" spellcheck="false" v-model.trim="newBannedUser"
               @keyup.enter="addBannedUser()" />
@@ -182,7 +181,7 @@ const currentVerion = ref(await chatguessrApi.getCurrentVersion())
 
 const newChannelName = ref(settings.channelName)
 const newBannedUser = ref('')
-const currentTab = ref(twitchConnectionState.state === 'disconnected' ? 2 : 1);
+const currentTab = ref(twitchConnectionState.state === 'disconnected' ? 2 : 1)
 const clearStatsBtn = reactive({ state: 0, text: "🗑️ Clear user stats" })
 
 watch(settings, () => {
@@ -202,7 +201,7 @@ const addBannedUser = () => {
 
 const removeBannedUser = (index: number, user: { username: string }) => {
   chatguessrApi.deleteBannedUser(user.username)
-  bannedUsers.splice(index, 1);
+  bannedUsers.splice(index, 1)
 }
 // onBeforeUnmount(chatguessrApi.onTwitchError(() => {
 //   console.log("error")
@@ -212,30 +211,30 @@ const clearStats = () => {
   if (clearStatsBtn.state === 2) return
   if (clearStatsBtn.state === 0) {
     clearStatsBtn.text = "⚠️ Are you sure ?"
-    clearStatsBtn.state = 1;
+    clearStatsBtn.state = 1
   } else {
     clearStatsBtn.text = "✔️ All stats cleared"
-    clearStatsBtn.state = 2;
+    clearStatsBtn.state = 2
     chatguessrApi.clearStats()
 
     setTimeout(() => {
-      clearStatsBtn.state = 0;
+      clearStatsBtn.state = 0
       clearStatsBtn.text = "🗑️ Clear user stats"
-    }, 2000);
+    }, 2000)
   }
 }
 </script>
 <style scoped>
 .modal-mask {
   position: fixed;
-  z-index: 9998;
+  display: table;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.3);
-  display: table;
   transition: opacity 0.3s ease;
+  z-index: 99999;
 }
 
 .modal-wrapper {
@@ -278,7 +277,6 @@ const clearStats = () => {
 
 .tab button {
   cursor: pointer;
-  /* padding: 0.5rem 0; */
   transition: 0.5s;
   letter-spacing: 1px;
   background-color: rgb(58, 58, 58);
@@ -315,44 +313,43 @@ const clearStats = () => {
   position: relative;
 }
 
-[data-tip]:before {
-  content: "";
-  display: none;
-  content: "";
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 8px solid rgb(71, 71, 71);
-  position: absolute;
-  top: 24px;
-  right: 4px;
-  z-index: 8;
-  font-size: 0;
-  line-height: 0;
-  width: 0;
-  height: 0;
-}
-
-[data-tip]:after {
-  width: 200px;
-  display: none;
-  content: attr(data-tip);
-  position: absolute;
-  top: 32px;
-  right: 0;
-  padding: 12px;
-  background: rgb(71, 71, 71);
-  color: #ffffff;
-  z-index: 999;
-  font-size: 14px;
-  font-weight: 700;
-  border-radius: 4px;
-  word-wrap: break-word;
-  text-align: center;
-}
-
 [data-tip]:hover:after,
 [data-tip]:hover:before {
   display: block;
+}
+
+[data-tip]:before {
+  content: "";
+  display: none;
+  position: absolute;
+  top: 24px;
+  right: 4px;
+  width: 0;
+  height: 0;
+  /* font-size: 0; */
+  /* line-height: 0; */
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid rgb(99, 99, 99);
+  z-index: 9;
+}
+
+[data-tip]:after {
+  content: attr(data-tip);
+  display: none;
+  position: absolute;
+  top: 32px;
+  right: 0;
+  min-width: 200px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  word-wrap: break-word;
+  color: #ffffff;
+  background: rgb(99, 99, 99);
+  border-radius: 4px;
+  z-index: 999;
 }
 
 .btn.connected {

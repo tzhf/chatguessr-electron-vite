@@ -1,6 +1,7 @@
 <template>
-  <Vue3DraggableResizable v-model:x="timerPosition.x" v-model:y="timerPosition.y" :draggable="!settingsVisibility"
-    :resizable="false" :parent="true" style="transform: translateX(50%)">
+  <Vue3DraggableResizable v-model:x="position.x" v-model:y="position.y" :draggable="!settingsVisibility"
+    @drag-end="setLocalStorage(position, 'cg_timer__position')" :resizable="false" :parent="true"
+    style="transform: translateX(50%)">
     <div id="timer" @mouseover="iconsVisibility = true"
       @mouseleave="!settingsVisibility ? iconsVisibility = false : true">
       <div :style="{
@@ -71,7 +72,7 @@
         <div class="form__group">
           <label>Load audio file :</label>
           <div class="flex flex-center gap-05">
-            <button class="btn" type="button" @click="importAudioFile">Import</button>
+            <button class="btn" type="button" @click="handleImportAudioFile">Import</button>
             <svg class="icon" v-if="audioPath" @click="playAudio()" fill="#59f3b3" viewBox="0 0 260 228">
               <path
                 d="M170.81,78.043l15.653-15.653c14.848,12.299,24.323,30.868,24.323,51.61c0,21.04-9.757,39.836-24.974,52.128l-15.68-15.68 c11.291-8.184,18.655-21.469,18.655-36.448C188.786,99.32,181.719,86.262,170.81,78.043z M236,114 c0,28.068-12.569,53.253-32.371,70.231l15.584,15.584C242.982,178.82,258,148.133,258,114c0-33.836-14.757-64.286-38.168-85.265 L204.257,44.31C223.696,61.28,236,86.229,236,114z M146,2L56.4,66H2v96h54.4l89.6,64V2z">
@@ -129,6 +130,7 @@ import { ref, watch, reactive, onMounted } from "vue"
 import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
 
 const props = defineProps<{
+  gameState: GameState
   importAudioFile: Window['ChatguessrApi']["importAudioFile"],
   appDataPathExists: Window['ChatguessrApi']["appDataPathExists"]
   setGuessesOpen: Window['ChatguessrApi']["setGuessesOpen"]
@@ -150,7 +152,6 @@ const settingsVisibility = ref(false)
 const iconsVisibility = ref(false)
 
 const settings = reactive(getLocalStorage({
-  visible: true,
   timeLimit: 90,
   timeToPlonk: 30,
   timesUpMsg: "Time's Up",
@@ -170,18 +171,25 @@ const settings = reactive(getLocalStorage({
   shadowColor: "#a159ff"
 }, "cg_timer__settings"))
 
-const timerPosition = reactive(getLocalStorage({
-  x: 300,
-  y: 50
-}, "cg_timer__position"))
-
 watch(settings, () => {
   if (parseInt(settings.timeToPlonk.toString()) >= parseInt(settings.timeLimit.toString())) settings.timeToPlonk = settings.timeLimit
   setLocalStorage(settings, "cg_timer__settings")
 })
 
-watch(timerPosition, () => {
-  setLocalStorage(timerPosition, "cg_timer__position")
+const position = reactive(getLocalStorage({
+  x: 300,
+  y: 50
+}, "cg_timer__position"))
+
+watch(() => props.gameState, (gameState) => {
+  switch (gameState) {
+    case "in-round":
+      reset()
+      if (settings.autoStart) start()
+      break
+    case "none":
+      reset()
+  }
 })
 
 onMounted(async () => {
@@ -344,7 +352,6 @@ const start = () => {
 
     if (targetTimestamp - Date.now() < 1) {
       reset()
-
       if (settings.timesUpMsg) display.value = settings.timesUpMsg
       if (settings.autoCloseGuesses) props.setGuessesOpen(false)
     } else updateDisplay()
@@ -385,7 +392,6 @@ const updateDisplay = (targetTime?: number) => {
   const time = Math.abs(Date.now() - targetTimestamp) / 1000
   const numM = Math.floor(time / 60) % 60
   const numS = Math.floor(time % 60)
-
   display.value = numM.toString().padStart(2, "0") + ":" + numS.toString().padStart(2, "0")
 }
 
@@ -396,7 +402,7 @@ const playAudio = () => {
   audio.play()
 }
 
-const importAudioFile = async () => {
+const handleImportAudioFile = async () => {
   try {
     const path = await props.importAudioFile()
     if (path) {
@@ -406,25 +412,22 @@ const importAudioFile = async () => {
     console.error(err)
   }
 }
-
-defineExpose({
-  settings,
-  start,
-  reset
-})
 </script>
 
 <style scoped>
+.vdr-container {
+  z-index: 99999;
+}
+
 #timer {
   height: 30px;
   width: fit-content;
   line-height: 1;
   text-align: center;
-  user-select: none;
-  /* pointer-events: auto; */
-  /* cursor: move; */
-  transform: translateX(-50%);
   text-wrap: nowrap;
+  transform: translateX(-50%);
+  user-select: none;
+  z-index: 999999;
 }
 
 #timer * {
@@ -432,11 +435,11 @@ defineExpose({
 }
 
 .timer__settings {
-  font-family: 'Montserrat';
-  font-size: 14px;
   width: 380px;
   margin: 0.5rem auto;
   padding: 0.8rem;
+  font-family: 'Montserrat';
+  font-size: 14px;
   color: #FFFFFF;
   background-color: rgba(0, 0, 0, 0.4);
   box-shadow: rgb(0, 0, 0) 2px 2px 7px -2px;
@@ -499,194 +502,4 @@ defineExpose({
     opacity: 0;
   }
 }
-
-
-/* .flex_center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.form__group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 28px;
-}
-
-input,
-select {
-  padding: 0;
-  height: 24px;
-  font-family: inherit;
-  font-size: inherit;
-  background: rgba(0, 0, 0, 0.5);
-  color: #FFFFFF;
-  text-align: center;
-  border-radius: 4px;
-  overflow: hidden;
-  outline: 0;
-  cursor: pointer;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
-input[type="color"] {
-  padding: 1px 2px;
-}
-
-input:hover,
-select:hover {
-  filter: brightness(120%);
-}
-
-input[type="text"],
-input[type="range"],
-select {
-  width: 160px;
-}
-
-input[type="text"],
-select {
-  border: 1px solid var(--main-color);
-}
-
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  border: none;
-}
-
-input[type="range"]::-webkit-slider-runnable-track {
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 4px;
-  height: 0.5rem;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 14px;
-  width: 14px;
-  margin-top: -3px;
-  border-radius: 50%;
-  background-color: var(--main-color);
-}
-
-input[type="checkbox"] {
-  -webkit-appearance: none;
-  appearance: none;
-  margin: 0;
-  color: var(--main-color);
-  width: 1.15rem;
-  height: 1.15rem;
-  border: 1px solid var(--main-color);
-  border-radius: 2px;
-  display: grid;
-  place-content: center;
-  outline: none;
-}
-
-input[type="checkbox"]::before {
-  content: "";
-  width: 0.65rem;
-  height: 0.65rem;
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-  transform: scale(0);
-  transform-origin: bottom left;
-  transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em var(--main-color);
-}
-
-input[type="checkbox"]:checked::before {
-  transform: scale(1);
-}
-
-select option {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-select::-webkit-scrollbar {
-  width: 10px;
-}
-
-select::-webkit-scrollbar-track {
-  border-radius: 10px;
-}
-
-select::-webkit-scrollbar-thumb {
-  background: var(--main-color);
-}
-
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  background-color: var(--main-color);
-  padding: 0 0.5rem;
-  height: 28px;
-  font-weight: 700;
-  border-radius: 3px;
-}
-
-button:hover {
-  background: rgba(88, 243, 178, 0.9);
-}
-
-button:active {
-  background: rgba(88, 243, 178, 0.8);
-}
-
-hr {
-  width: 80%;
-  height: 1px;
-  margin: 0.5rem auto;
-  background-color: var(--main-color);
-  border: none;
-}
-
-.expanded {
-  opacity: 1;
-  animation: fadeIn 150ms ease-out forwards;
-}
-
-.collapsed {
-  opacity: 0;
-  animation: fadeOut 150ms ease-out forwards;
-}
-
-@keyframes fadeIn {
-  0% {
-    display: none;
-    opacity: 0;
-  }
-
-  1% {
-    display: block;
-  }
-
-  100% {
-    display: block;
-    opacity: 1;
-  }
-}
-
-@keyframes fadeOut {
-  0% {
-    display: block;
-    opacity: 1;
-  }
-
-  99% {
-    display: block;
-  }
-
-  100% {
-    display: none;
-    opacity: 0;
-  }
-} */
 </style>

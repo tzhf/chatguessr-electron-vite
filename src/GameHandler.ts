@@ -549,6 +549,7 @@ export default class GameHandler {
             'user-id': `123450${i}`,
             username: `fake_${i}`,
             'display-name': `fake_${i}`,
+            flag: randomCountryFlag(),
             color: `#${Math.random().toString(16).slice(2, 8).padStart(6, '0')}`
           },
           `!g ${lat},${lng}`

@@ -55,6 +55,7 @@ type Location_ = {
 }
 
 type Guess = {
+  index?: number
   user: string
   username: string
   color: string
@@ -65,6 +66,7 @@ type Guess = {
   distance: number
   score: number
   time?: number
+  animationActive?: boolean
 }
 
 type MultiGuess = {
@@ -110,7 +112,9 @@ type GameMode = 'standard' | 'streak'
 
 type GameType = 'standard' | 'streak'
 
-type GameState = 'started' | 'finished'
+type GameStatus = 'started' | 'finished'
+
+type GameState = 'in-round' | 'round-results' | 'game-results' | 'none'
 
 type GameRound = {
   lat: number
@@ -169,7 +173,7 @@ type Seed = GameSettings & {
   roundCount: number
   rounds: GameRound[]
   player: GamePlayer
-  state: GameState
+  state: GameStatus
   type: GameType
 }
 
@@ -200,17 +204,3 @@ interface RendererApi {
   centerSatelliteView(location: LatLng)
   getBounds(location: LatLng, limit: number)
 }
-
-// declare global {
-//   interface Window {
-//     jQuery: typeof import('jquery')
-//     $: typeof import('jquery')
-//   }
-
-//   namespace DataTables {
-//     interface Settings {
-//       // From datatables.net-plugins
-//       scrollResize?: boolean
-//     }
-//   }
-// }

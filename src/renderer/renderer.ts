@@ -1,9 +1,7 @@
 // @ts-nocheck
 import { createApp } from 'vue'
-// import DraggableResizableVue from 'draggable-resizable-vue3'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
-//default styles
-import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
+// import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 import Frame from './components/Frame.vue'
 import './styles.css'
 

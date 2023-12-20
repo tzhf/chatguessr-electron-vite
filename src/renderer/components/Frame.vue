@@ -1,25 +1,24 @@
 <template>
-  <div id="CGFrameContainer" ref="CGFrameContainer"
-    :style="isCGFrameContainerVisible ? 'visibility: visible' : 'visibility: hidden'">
+  <div id="CGFrameContainer" :style="gameState !== 'none' ? 'visibility: visible' : 'visibility: hidden'">
 
-    <Scoreboard />
-    <!-- <Vue3DraggableResizable v-model:x="timerPosition.x" v-model:y="timerPosition.y" :draggable="true" :resizable="false"
-      drag-cancel=".timer__settings" :parent="true"> -->
-    <Timer :style="timerVisible && gameState === 'in-round' ? 'visibility: visible' : 'visibility: hidden'"
-      :importAudioFile="chatguessrApi.importAudioFile" :appDataPathExists="chatguessrApi.appDataPathExists"
-      :setGuessesOpen="chatguessrApi.setGuessesOpen" ref="timer" />
-    <!-- </Vue3DraggableResizable> -->
+    <Scoreboard ref="scoreboard" :setGuessesOpen="chatguessrApi.setGuessesOpen"
+      :style="widgetVisibility.scoreboardVisible && gameState != 'none' ? 'visibility: visible' : 'visibility: hidden'" />
+
+    <Timer :gameState="gameState" :importAudioFile="chatguessrApi.importAudioFile"
+      :appDataPathExists="chatguessrApi.appDataPathExists" :setGuessesOpen="chatguessrApi.setGuessesOpen"
+      :style="widgetVisibility.timerVisible && gameState === 'in-round' ? 'visibility: visible' : 'visibility: hidden'" />
   </div>
 
   <div class="cg-menu">
-    <button :class="['cg-button', twitchConnectionState.state]" title="settings" @click="openSettings">
+    <button :class="['cg-button', twitchConnectionState.state]" title="settings" @click="settingsVisible = true">
       <span class="icon cg-icon--gear"></span>
     </button>
     <button class="cg-button" title="Show/Hide timer" @click="toggleTimer" :hidden="gameState === 'none'">
-      <span :class="['icon', timerVisible ? 'cg-icon--timerVisible' : 'cg-icon--timerHidden']"></span>
+      <span :class="['icon', widgetVisibility.timerVisible ? 'cg-icon--timerVisible' : 'cg-icon--timerHidden']"></span>
     </button>
     <button class="cg-button" title="Show/Hide scoreboard" @click="toggleScoreboard" :hidden="gameState === 'none'">
-      <span :class="['icon', scoreboardVisible ? 'cg-icon--scoreboardVisible' : 'cg-icon--scoreboardHidden']"></span>
+      <span
+        :class="['icon', widgetVisibility.scoreboardVisible ? 'cg-icon--scoreboardVisible' : 'cg-icon--scoreboardHidden']"></span>
     </button>
     <button class="cg-button" title="Center view" @click="centerSatelliteView"
       :hidden="satelliteModeEnabled.value !== 'enabled' || gameState !== 'in-round'">
@@ -29,35 +28,29 @@
 
   <Suspense>
     <transition name="modal">
-      <Settings :chatguessrApi="chatguessrApi" :socketConnectionState="socketConnectionState"
-        :twitchConnectionState="twitchConnectionState" v-if="isSettingsVisible" @close="isSettingsVisible = false" />
+      <Settings v-if="settingsVisible" @close="settingsVisible = false" :chatguessrApi="chatguessrApi"
+        :socketConnectionState="socketConnectionState" :twitchConnectionState="twitchConnectionState" />
     </transition>
   </Suspense>
 </template>
 
 <script lang="ts" setup>
-defineOptions({
-  inheritAttrs: false
-})
-
-import { ref, shallowRef, onMounted, onBeforeUnmount, watch, computed } from "vue"
+import { ref, reactive, shallowRef, onMounted, onBeforeUnmount, watch, computed } from "vue"
 import { useStyleTag } from "@vueuse/core"
 import Settings from "./Settings.vue";
 import Scoreboard from "./Scoreboard.vue"
 import Timer from "./Timer.vue"
-import type { ChatguessrApi } from "../../preload/chatguessrApi"
+import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
 
-const isSettingsVisible = ref<boolean>(false);
-
-function openSettings() {
-  isSettingsVisible.value = true;
-}
+defineOptions({
+  inheritAttrs: false
+})
 
 const {
   chatguessrApi,
   ...rendererApi
 } = defineProps<{
-  chatguessrApi: ChatguessrApi,
+  chatguessrApi: Window['ChatguessrApi'],
   drawRoundResults: (location: Location, roundResults: Guess[], limit?: number) => void,
   drawGameLocations: (locations: Location[]) => void,
   drawPlayerResults: (locations: Location[], result: GameResult) => void,
@@ -68,13 +61,25 @@ const {
   centerSatelliteView: (location: LatLng) => void,
 }>();
 
-const gameState = ref<"in-round" | "round-results" | "game-results" | "none">("none");
+const scoreboard = ref<typeof Scoreboard | null>(null);
+const settingsVisible = ref(false);
+
+const gameState = ref<GameState>("none");
 const currentLocation = shallowRef<LatLng | null>(null);
 const twitchConnectionState = useTwitchConnectionState();
 const socketConnectionState = useSocketConnectionState();
 
-const CGFrameContainer = ref<HTMLDivElement | null>(null);
-const isCGFrameContainerVisible = computed(() => gameState.value !== "none");
+// const CGFrameContainer = ref<HTMLDivElement | null>(null);
+// const isCGFrameContainerVisible = computed(() => gameState.value !== "none");
+
+const widgetVisibility = reactive(getLocalStorage({
+  scoreboardVisible: true,
+  timerVisible: true
+}, 'cg_widget_visibility'))
+
+watch(widgetVisibility, () => {
+  setLocalStorage(widgetVisibility, "cg_widget_visibility")
+})
 
 const satelliteModeEnabled = {
   // Manual implementation of `ref()` API
@@ -88,15 +93,7 @@ const satelliteModeEnabled = {
   },
 };
 
-const timer = ref<typeof Timer | null>(null);
-const timerVisible = ref(true);
-
-// let scoreboard: Scoreboard | null = null;
-const scoreboardVisible = ref(true);
-
 onMounted(async () => {
-  timerVisible.value = timer.value!.settings.visible;
-
   // scoreboard = new Scoreboard(CGFrameContainer.value!, {
   //   focusOnGuess(location) {
   //     rendererApi.focusOnGuess(location);
@@ -139,14 +136,6 @@ watch(removeGameControls, (load) => {
   }
 }, { immediate: true });
 
-// watch(scoreboardVisible, (value) => {
-//   if (scoreboard === null) return
-//   if (value) {
-//     scoreboard.show();
-//   } else {
-//     scoreboard.hide();
-//   }
-// }, { immediate: true });
 // @ts-expect-error
 onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess, restoredGuesses, location) => {
   gameState.value = "in-round";
@@ -162,7 +151,7 @@ onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess, restoredGuesses, loca
   //   return;
   // }
 
-  // scoreboard.reset(isMultiGuess);
+  scoreboard.value!.reset(isMultiGuess);
 
   // if (restoredGuesses.length > 0) {
   //   if (isMultiGuess) {
@@ -175,8 +164,8 @@ onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess, restoredGuesses, loca
   //   }
   // }
 
-  timer.value!.reset();
-  if (timer.value!.settings.autoStart) timer.value!.start()
+  // timer.value!.reset();
+  // if (timer.value!.settings.autoStart) timer.value!.start()
 }));
 
 onBeforeUnmount(chatguessrApi.onRefreshRound((location) => {
@@ -188,18 +177,19 @@ onBeforeUnmount(chatguessrApi.onRefreshRound((location) => {
 
 onBeforeUnmount(chatguessrApi.onGameQuit(() => {
   gameState.value = "none";
-  timer.value!.reset();
+  // timer.value!.reset();
   rendererApi.clearMarkers();
 }));
 
-// onBeforeUnmount(chatguessrApi.onReceiveGuess((guess) => {
-//   scoreboard?.renderGuess(guess);
-// }));
+onBeforeUnmount(chatguessrApi.onReceiveGuess((guess) => {
+  scoreboard.value!.renderGuess(guess);
+}));
 
 // onBeforeUnmount(chatguessrApi.onReceiveMultiGuesses((guesses) => {
 //   scoreboard?.renderMultiGuess(guesses);
 // }));
-// @ts-expect-error
+
+
 onBeforeUnmount(chatguessrApi.onShowRoundResults((round, location, roundResults, guessMarkersLimit) => {
   gameState.value = "round-results";
 
@@ -210,10 +200,10 @@ onBeforeUnmount(chatguessrApi.onShowRoundResults((round, location, roundResults,
   // }
 
   // scoreboard.displayRoundResults(roundResults, guessMarkersLimit);
-  // scoreboard.setTitle(`ROUND ${round} RESULTS (${roundResults.length})`);
-  // scoreboard.showSwitch(false);
+  scoreboard.value!.setTitle(`ROUND ${round} RESULTS (${roundResults.length})`)
+  scoreboard.value!.showSwitch(false);
 
-  timer.value!.reset();
+  // timer.value!.reset();
 }));
 
 onBeforeUnmount(chatguessrApi.onShowGameResults((locations, gameResults) => {
@@ -226,10 +216,10 @@ onBeforeUnmount(chatguessrApi.onShowGameResults((locations, gameResults) => {
   // }
 
   // scoreboard.displayGameResults(locations, gameResults);
-  // scoreboard.setTitle(`HIGHSCORES (${gameResults.length})`);
-  // scoreboard.showSwitch(false);
+  scoreboard.value!.setTitle(`HIGHSCORES (${gameResults.length})`);
+  scoreboard.value!.showSwitch(false);
 }));
-// @ts-expect-error
+
 onBeforeUnmount(chatguessrApi.onStartRound((isMultiGuess, location) => {
   gameState.value = "in-round";
   currentLocation.value = location;
@@ -243,67 +233,58 @@ onBeforeUnmount(chatguessrApi.onStartRound((isMultiGuess, location) => {
   //   return;
   // }
 
-  // scoreboard.reset(isMultiGuess);
-  // scoreboard.showSwitch(true);
+  scoreboard.value!.reset(isMultiGuess);
+  scoreboard.value!.showSwitch(true);
 
-  timer.value!.reset();
-  if (timer.value!.settings.autoStart) timer.value!.start()
+  // timer.value!.reset();
+  // if (timer.value!.settings.autoStart) timer.value!.start()
 }));
 
-// onBeforeUnmount(chatguessrApi.onGuessesOpenChanged((open) => {
-//   scoreboard?.switchOn(open);
-// }));
+onBeforeUnmount(chatguessrApi.onGuessesOpenChanged((open) => {
+  scoreboard.value!.setSwitchOn(open);
+}));
 
 /** Load and update twitch connection state. */
 function useTwitchConnectionState() {
-  const conn = ref<TwitchConnectionState>({ state: "disconnected" });
+  const conn = ref<TwitchConnectionState>({ state: "disconnected" })
 
   onMounted(async () => {
-    const state = await chatguessrApi.getTwitchConnectionState();
-    conn.value = state;
+    const state = await chatguessrApi.getTwitchConnectionState()
+    conn.value = state
   });
 
   onBeforeUnmount(chatguessrApi.onTwitchConnectionStateChange((state) => {
-    conn.value = state;
+    conn.value = state
   }));
 
-  return conn;
+  return conn
 }
 
-
-/** Load and update twitch connection state. */
+/** Load and update socket connection state. */
 function useSocketConnectionState() {
-  const conn = ref<SocketConnectionState>({ state: "disconnected" });
+  const conn = ref<SocketConnectionState>({ state: "disconnected" })
 
   onMounted(async () => {
-    const state = await chatguessrApi.getSocketConnectionState();
-    conn.value = state;
+    const state = await chatguessrApi.getSocketConnectionState()
+    conn.value = state
   });
 
   onBeforeUnmount(chatguessrApi.onSocketConnected(() => {
-    conn.value.state = "connected";
-  }));
+    conn.value.state = "connected"
+  }))
   onBeforeUnmount(chatguessrApi.onSocketDisconnected(() => {
-    conn.value.state = "disconnected";
-  }));
+    conn.value.state = "disconnected"
+  }))
 
-  return conn;
+  return conn
 }
 
-function toggleScoreboard() {
-  scoreboardVisible.value = !scoreboardVisible.value;
+const centerSatelliteView = () => {
+  if (currentLocation.value) rendererApi.centerSatelliteView(currentLocation.value)
 }
 
-function toggleTimer() {
-  timerVisible.value = !timerVisible.value;
-  timer.value!.settings.visible = !timer.value!.settings.visible;
-}
-
-function centerSatelliteView() {
-  if (currentLocation.value) {
-    rendererApi.centerSatelliteView(currentLocation.value);
-  }
-}
+const toggleScoreboard = () => { widgetVisibility.scoreboardVisible = !widgetVisibility.scoreboardVisible }
+const toggleTimer = () => { widgetVisibility.timerVisible = !widgetVisibility.timerVisible }
 </script>
 
 <style scoped>
@@ -319,6 +300,14 @@ function centerSatelliteView() {
   bottom: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+#satelliteCanvas {
+  z-index: 9;
+  display: none;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
 }
 
 .drv {
