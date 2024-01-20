@@ -20,7 +20,8 @@
 }
 
 /* Hide promo and daily challenge from menu  */
-[class^='promo-deal-button_root__'] {
+[class^='promo-deal-button_root__'],
+[class^='header_promoDealButtonWrapper'] {
   display: none !important;
 }
 
@@ -63,25 +64,29 @@
 }
 
 /* CG Guess Markers InfoWindow */
-.gm-ui-hover-effect {
-  display: none !important;
-}
-.gm-style-iw-tc::after {
-  top: -4px !important;
-}
 .gm-style .gm-style-iw-c,
 .gm-style .gm-style-iw-tc::after {
   background: rgba(0, 0, 0, 0.5) !important;
 }
+
+.gm-style .gm-style-iw-c {
+  padding-right: 12px !important;
+  padding-bottom: 12px !important;
+}
+
 .gm-style .gm-style-iw-d {
+  overflow: auto !important;
   color: #ffffff;
   text-align: center;
   font-weight: 700;
-  padding-left: 7px;
 }
 .gm-style-iw-d .username {
-  font-size: 1rem;
+  font-weight: 400;
 }
+.gm-ui-hover-effect {
+  display: none !important;
+}
+
 .gm-style .gm-style-iw-d::-webkit-scrollbar-track,
 .gm-style .gm-style-iw-d::-webkit-scrollbar-track-piece {
   background: transparent !important;

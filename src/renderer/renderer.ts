@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { createApp } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
-// import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 import Frame from './components/Frame.vue'
 import './styles.css'
 
@@ -17,9 +16,6 @@ createApp(Frame, {
   chatguessrApi: window.chatguessrApi,
   drawRoundResults,
   clearMarkers,
-  // drParseNoCar,
-  // blinkMode,
-  // satelliteMode,
   showSatelliteMap,
   hideSatelliteMap,
   centerSatelliteView,

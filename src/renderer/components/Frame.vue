@@ -1,7 +1,8 @@
 <template>
   <div id="CGFrameContainer" :style="gameState !== 'none' ? 'visibility: visible' : 'visibility: hidden'">
 
-    <Scoreboard ref="scoreboard" :setGuessesOpen="chatguessrApi.setGuessesOpen"
+    <Scoreboard ref="scoreboard" :isMultiGuess="isMultiGuess" :gameState="gameState"
+      :setGuessesOpen="chatguessrApi.setGuessesOpen" :onPlayerRowClick="onPlayerRowClick"
       :style="widgetVisibility.scoreboardVisible && gameState != 'none' ? 'visibility: visible' : 'visibility: hidden'" />
 
     <Timer :gameState="gameState" :importAudioFile="chatguessrApi.importAudioFile"
@@ -65,20 +66,23 @@ const scoreboard = ref<typeof Scoreboard | null>(null);
 const settingsVisible = ref(false);
 
 const gameState = ref<GameState>("none");
+const isMultiGuess = ref<boolean>(false);
 const currentLocation = shallowRef<LatLng | null>(null);
+const gameResultLocations = shallowRef<Location[] | null>(null);
+
 const twitchConnectionState = useTwitchConnectionState();
 const socketConnectionState = useSocketConnectionState();
 
-// const CGFrameContainer = ref<HTMLDivElement | null>(null);
-// const isCGFrameContainerVisible = computed(() => gameState.value !== "none");
-
-const widgetVisibility = reactive(getLocalStorage({
+const widgetVisibility = reactive(getLocalStorage('cg_widget_visibility', {
   scoreboardVisible: true,
   timerVisible: true
-}, 'cg_widget_visibility'))
+}))
+
+const toggleScoreboard = () => widgetVisibility.scoreboardVisible = !widgetVisibility.scoreboardVisible
+const toggleTimer = () => widgetVisibility.timerVisible = !widgetVisibility.timerVisible
 
 watch(widgetVisibility, () => {
-  setLocalStorage(widgetVisibility, "cg_widget_visibility")
+  setLocalStorage("cg_widget_visibility", widgetVisibility)
 })
 
 const satelliteModeEnabled = {
@@ -86,26 +90,12 @@ const satelliteModeEnabled = {
   // As `useLocalStorage` does not receive storage events from the non-vue UI script
   // TODO(@ReAnnannanna): Replace this with `useLocalStorage` when the pregame UI script is using Vue
   get value(): "enabled" | "disabled" {
-    return localStorage.getItem("satelliteModeEnabled") === "enabled" ? "enabled" : "disabled";
+    return localStorage.getItem("satelliteModeEnabled") === "enabled" ? "enabled" : "disabled"
   },
   set value(value: "enabled" | "disabled") {
-    localStorage.setItem("satelliteModeEnabled", value);
+    setLocalStorage("satelliteModeEnabled", value)
   },
 };
-
-onMounted(async () => {
-  // scoreboard = new Scoreboard(CGFrameContainer.value!, {
-  //   focusOnGuess(location) {
-  //     rendererApi.focusOnGuess(location);
-  //   },
-  //   drawPlayerResults(locations, result) {
-  //     rendererApi.drawPlayerResults(locations, result);
-  //   },
-  //   onToggleGuesses(open) {
-  //     chatguessrApi.setGuessesOpen(open);
-  //   },
-  // });
-});
 
 // Remove the game's own markers while on a results screen (where we draw our own)
 const markerRemover = useStyleTag('[data-qa="result-view-top"] [data-qa="guess-marker"], [data-qa="result-view-top"] [data-qa="correct-location-marker"], [class^="coordinate-result-map_line__"] { display: none; }', {
@@ -136,8 +126,8 @@ watch(removeGameControls, (load) => {
   }
 }, { immediate: true });
 
-// @ts-expect-error
-onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess, restoredGuesses, location) => {
+onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess_, restoredGuesses, location) => {
+  isMultiGuess.value = isMultiGuess_
   gameState.value = "in-round";
   currentLocation.value = location;
 
@@ -147,25 +137,31 @@ onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess, restoredGuesses, loca
     rendererApi.hideSatelliteMap();
   }
 
-  // if (!scoreboard) {
-  //   return;
-  // }
+  scoreboard.value!.onStartRound();
 
-  scoreboard.value!.reset(isMultiGuess);
+  if (restoredGuesses.length > 0) {
+    if (isMultiGuess) {
+      scoreboard.value!.renderMultiGuess(restoredGuesses);
+    } else {
+      // Not very fast KEKW
+      for (const guess of restoredGuesses) {
+        scoreboard.value!.renderGuess(guess);
+      }
+    }
+  }
+}));
 
-  // if (restoredGuesses.length > 0) {
-  //   if (isMultiGuess) {
-  //     scoreboard.renderMultiGuess(restoredGuesses);
-  //   } else {
-  //     // Not very fast KEKW
-  //     for (const guess of restoredGuesses) {
-  //       scoreboard.renderGuess(guess);
-  //     }
-  //   }
-  // }
+// @ts-expect-error
+onBeforeUnmount(chatguessrApi.onStartRound((isMultiGuess, location) => {
+  gameState.value = "in-round";
+  currentLocation.value = location;
 
-  // timer.value!.reset();
-  // if (timer.value!.settings.autoStart) timer.value!.start()
+  rendererApi.clearMarkers();
+  if (satelliteModeEnabled.value === "enabled") {
+    rendererApi.showSatelliteMap(location);
+  }
+
+  scoreboard.value!.onStartRound();
 }));
 
 onBeforeUnmount(chatguessrApi.onRefreshRound((location) => {
@@ -177,7 +173,6 @@ onBeforeUnmount(chatguessrApi.onRefreshRound((location) => {
 
 onBeforeUnmount(chatguessrApi.onGameQuit(() => {
   gameState.value = "none";
-  // timer.value!.reset();
   rendererApi.clearMarkers();
 }));
 
@@ -185,64 +180,42 @@ onBeforeUnmount(chatguessrApi.onReceiveGuess((guess) => {
   scoreboard.value!.renderGuess(guess);
 }));
 
-// onBeforeUnmount(chatguessrApi.onReceiveMultiGuesses((guesses) => {
-//   scoreboard?.renderMultiGuess(guesses);
-// }));
-
+onBeforeUnmount(chatguessrApi.onReceiveMultiGuesses((guesses) => {
+  scoreboard.value!.renderMultiGuess(guesses);
+}));
 
 onBeforeUnmount(chatguessrApi.onShowRoundResults((round, location, roundResults, guessMarkersLimit) => {
   gameState.value = "round-results";
 
   rendererApi.drawRoundResults(location, roundResults, guessMarkersLimit);
-
-  // if (!scoreboard) {
-  //   return;
-  // }
-
-  // scoreboard.displayRoundResults(roundResults, guessMarkersLimit);
-  scoreboard.value!.setTitle(`ROUND ${round} RESULTS (${roundResults.length})`)
-  scoreboard.value!.showSwitch(false);
-
-  // timer.value!.reset();
+  scoreboard.value!.showRoundResults(round, roundResults, guessMarkersLimit);
 }));
 
 onBeforeUnmount(chatguessrApi.onShowGameResults((locations, gameResults) => {
   gameState.value = "game-results";
+  gameResultLocations.value = locations
+
   rendererApi.drawGameLocations(locations);
   rendererApi.drawPlayerResults(locations, gameResults[0]);
-
-  // if (!scoreboard) {
-  //   return;
-  // }
-
-  // scoreboard.displayGameResults(locations, gameResults);
-  scoreboard.value!.setTitle(`HIGHSCORES (${gameResults.length})`);
-  scoreboard.value!.showSwitch(false);
-}));
-
-onBeforeUnmount(chatguessrApi.onStartRound((isMultiGuess, location) => {
-  gameState.value = "in-round";
-  currentLocation.value = location;
-
-  rendererApi.clearMarkers();
-  if (satelliteModeEnabled.value === "enabled") {
-    rendererApi.showSatelliteMap(location);
-  }
-
-  // if (!scoreboard) {
-  //   return;
-  // }
-
-  scoreboard.value!.reset(isMultiGuess);
-  scoreboard.value!.showSwitch(true);
-
-  // timer.value!.reset();
-  // if (timer.value!.settings.autoStart) timer.value!.start()
+  scoreboard.value!.showGameResults(gameResults);
 }));
 
 onBeforeUnmount(chatguessrApi.onGuessesOpenChanged((open) => {
   scoreboard.value!.setSwitchOn(open);
 }));
+
+function onPlayerRowClick(guessOrGameResult: Guess | GameResult) {
+  if ('position' in guessOrGameResult && gameState.value === 'round-results') {
+    rendererApi.focusOnGuess(guessOrGameResult.position)
+  }
+  else if ('guesses' in guessOrGameResult && gameState.value === 'game-results') {
+    if (gameResultLocations.value) rendererApi.drawPlayerResults(gameResultLocations.value, guessOrGameResult)
+  }
+}
+
+function centerSatelliteView() {
+  if (currentLocation.value) rendererApi.centerSatelliteView(currentLocation.value)
+}
 
 /** Load and update twitch connection state. */
 function useTwitchConnectionState() {
@@ -278,13 +251,6 @@ function useSocketConnectionState() {
 
   return conn
 }
-
-const centerSatelliteView = () => {
-  if (currentLocation.value) rendererApi.centerSatelliteView(currentLocation.value)
-}
-
-const toggleScoreboard = () => { widgetVisibility.scoreboardVisible = !widgetVisibility.scoreboardVisible }
-const toggleTimer = () => { widgetVisibility.timerVisible = !widgetVisibility.timerVisible }
 </script>
 
 <style scoped>
@@ -310,16 +276,8 @@ const toggleTimer = () => { widgetVisibility.timerVisible = !widgetVisibility.ti
   height: 100%;
 }
 
-.drv {
-  border: none
-}
-
-.vdr-container {
-  border: none
-}
-
 .cg-menu {
-  z-index: 99998;
+  z-index: 23;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -376,6 +334,12 @@ const toggleTimer = () => { widgetVisibility.timerVisible = !widgetVisibility.ti
 
 .cg-icon--flag {
   background-image: url(asset:icons/start_flag.svg);
+}
+
+/* Vue draggable-resizable tweak */
+.drv,
+.vdr-container {
+  border: none
 }
 </style>
 

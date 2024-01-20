@@ -1,6 +1,6 @@
 <template>
   <Vue3DraggableResizable v-model:x="position.x" v-model:y="position.y" :draggable="!settingsVisibility"
-    @drag-end="setLocalStorage(position, 'cg_timer__position')" :resizable="false" :parent="true"
+    @drag-end="setLocalStorage('cg_timer__position', position)" :resizable="false" :parent="true"
     style="transform: translateX(50%)">
     <div id="timer" @mouseover="iconsVisibility = true"
       @mouseleave="!settingsVisibility ? iconsVisibility = false : true">
@@ -151,35 +151,34 @@ const availableFonts = ref()
 const settingsVisibility = ref(false)
 const iconsVisibility = ref(false)
 
-const settings = reactive(getLocalStorage({
-  timeLimit: 90,
-  timeToPlonk: 30,
-  timesUpMsg: "Time's Up",
-  timeToPlonkMsg: "🌍 Plonk Now 🌍",
-  autoStart: false,
-  autoCloseGuesses: false,
-  playAudio: false,
-  audioVolume: 1,
-  fontFamily: "Lucida Console",
-  fontSize: "50",
-  color: "#59f3b3",
-  borderWidth: "0.7",
-  borderColor: "#ffffff",
-  shadowOffsetX: "4",
-  shadowOffsetY: "4",
-  shadowBlur: "0",
-  shadowColor: "#a159ff"
-}, "cg_timer__settings"))
+const settings = reactive(getLocalStorage("cg_timer__settings",
+  {
+    timeLimit: 90,
+    timeToPlonk: 30,
+    timesUpMsg: "Time's Up",
+    timeToPlonkMsg: "🌍 Plonk Now 🌍",
+    autoStart: false,
+    autoCloseGuesses: false,
+    playAudio: false,
+    audioVolume: 1,
+    fontFamily: "Lucida Console",
+    fontSize: "50",
+    color: "#59f3b3",
+    borderWidth: "0.7",
+    borderColor: "#ffffff",
+    shadowOffsetX: "4",
+    shadowOffsetY: "4",
+    shadowBlur: "0",
+    shadowColor: "#a159ff"
+  })
+)
 
 watch(settings, () => {
   if (parseInt(settings.timeToPlonk.toString()) >= parseInt(settings.timeLimit.toString())) settings.timeToPlonk = settings.timeLimit
-  setLocalStorage(settings, "cg_timer__settings")
+  setLocalStorage("cg_timer__settings", settings)
 })
 
-const position = reactive(getLocalStorage({
-  x: 300,
-  y: 50
-}, "cg_timer__position"))
+const position = reactive(getLocalStorage("cg_timer__position", { x: 300, y: 50 }))
 
 watch(() => props.gameState, (gameState) => {
   switch (gameState) {
