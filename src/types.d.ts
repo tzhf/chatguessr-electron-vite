@@ -55,7 +55,7 @@ type Location_ = {
 }
 
 type Guess = {
-  index?: number
+  index?: number | string
   user: string
   username: string
   color: string

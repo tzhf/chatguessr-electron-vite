@@ -12,7 +12,6 @@ import { getEmoji, randomCountryFlag, selectFlag } from './utils/flags/flags'
 
 import { useSettings } from './utils/useSettings'
 const { settings, saveSettings } = useSettings()
-console.log('🚀 ~ file: GameHandler.ts:16 ~ settings:', settings.channelName)
 
 const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
 // const settings = Settings.read()

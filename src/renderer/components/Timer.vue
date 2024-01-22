@@ -414,9 +414,9 @@ const handleImportAudioFile = async () => {
 </script>
 
 <style scoped>
-.vdr-container {
+/* .vdr-container {
   z-index: 99999;
-}
+} */
 
 #timer {
   height: 30px;

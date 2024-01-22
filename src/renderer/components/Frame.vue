@@ -62,7 +62,7 @@ const {
   centerSatelliteView: (location: LatLng) => void,
 }>();
 
-const scoreboard = ref<typeof Scoreboard | null>(null);
+const scoreboard = ref<InstanceType<typeof Scoreboard> | null>(null);
 const settingsVisible = ref(false);
 
 const gameState = ref<GameState>("none");
@@ -188,7 +188,7 @@ onBeforeUnmount(chatguessrApi.onShowRoundResults((round, location, roundResults,
   gameState.value = "round-results";
 
   rendererApi.drawRoundResults(location, roundResults, guessMarkersLimit);
-  scoreboard.value!.showRoundResults(round, roundResults, guessMarkersLimit);
+  scoreboard.value!.showRoundResults(round, roundResults);
 }));
 
 onBeforeUnmount(chatguessrApi.onShowGameResults((locations, gameResults) => {
@@ -204,6 +204,7 @@ onBeforeUnmount(chatguessrApi.onGuessesOpenChanged((open) => {
   scoreboard.value!.setSwitchOn(open);
 }));
 
+// TODO make sure this works with guessMarkersLimit
 function onPlayerRowClick(guessOrGameResult: Guess | GameResult) {
   if ('position' in guessOrGameResult && gameState.value === 'round-results') {
     rendererApi.focusOnGuess(guessOrGameResult.position)

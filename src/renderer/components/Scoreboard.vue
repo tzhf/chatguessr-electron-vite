@@ -1,6 +1,6 @@
 <template>
   <Vue3DraggableResizable :draggable="isDraggable" v-model:x="position.x" v-model:y="position.y" v-model:w="position.w"
-    v-model:h="position.h" :minW="340" :minH="180" :parent="true" classNameHandle="scoreboard-handle" class="scoreboard"
+    v-model:h="position.h" :minW="340" :minH="194" :parent="true" classNameHandle="scoreboard-handle" class="scoreboard"
     @drag-end="savePosition" @resize-end="savePosition">
     <div class="scoreboard__header">
       <div class="scoreboard__settings">
@@ -43,7 +43,7 @@
       <div v-if="isMultiGuess && gameState === 'in-round'" class="scoreboard__hint">Ordered by guess time</div>
     </div>
     <input type="range" v-model="settings.scrollSpeed" @mouseover="isDraggable = false" @mouseleave="isDraggable = true"
-      min="0.5" step="0.1" max="2" class="scrollSpeedSlider" :class="{ invisible: !settings.isAutoScroll }">
+      min="0.5" step="0.1" max="2" class="scrollSpeedSlider" :class="{ hidden: !settings.isAutoScroll }">
 
     <table>
       <thead>
@@ -62,7 +62,14 @@
               <span v-if="guess.flag" class="flag-icon" :style='{ backgroundImage: `url("flag:${guess.flag}")` }'></span>
               {{ guess.username }}
             </span>
-            <span v-else-if="field.value === 'distance'">{{ toMeter(guess.distance) }}</span>
+            <span v-else-if="field.value === 'distance'">
+              {{ gameState === 'round-results' && guess.score === 5000 ? toMeter(guess.distance) + ` [` +
+                formatDuration(guess.time! * 1000) + `]` : toMeter(guess.distance) }}
+            </span>
+            <span v-else-if="field.value === 'streak'">
+              {{ gameState === 'round-results' && guess.lastStreak ? guess.streak + ` [` + guess.lastStreak + `]` :
+                guess.streak }}
+            </span>
             <span v-else>{{ guess[field.value] }}</span>
           </td>
         </tr>
@@ -75,13 +82,13 @@
 import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { useScroll } from '@vueuse/core'
 import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
+import formatDuration from 'format-duration'
 
 const props = defineProps<{
   gameState: GameState,
   isMultiGuess: boolean
   setGuessesOpen: Window['ChatguessrApi']['setGuessesOpen'],
   onPlayerRowClick: (guess: Guess) => void,
-  // drawPlayerResults: (locations: Location[], result: GameResult) => void,
 }>()
 
 const tBody = ref<HTMLDivElement | null>(null)
@@ -146,7 +153,6 @@ function renderGuess(guess: Guess) {
 }
 
 function renderMultiGuess(guesses_: Guess[]) {
-  console.log(guesses)
   Object.assign(guesses, [...guesses_])
 
   // guess.animationActive = true
@@ -171,7 +177,7 @@ function showRoundResults(round: number, roundResults: RoundScore[]) {
 function showGameResults(gameResults: GameResult[]) {
   const newGameResults = gameResults.map((gameResult, i) => {
     return {
-      index: i + 1,
+      index: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1,
       username: gameResult.username,
       color: gameResult.color,
       flag: gameResult.flag,
@@ -276,19 +282,18 @@ defineExpose({
 </script>
 
 <style scoped>
-.vdr-container {
+/* .vdr-container {
   border: none !important;
-}
+} */
 
-#CGFrameContainer {
+/* #CGFrameContainer {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   overflow: hidden;
-  /* pointer-events: none; */
-}
+} */
 
 .scoreboard {
   font-family: Montserrat, sans-serif;
@@ -311,8 +316,6 @@ defineExpose({
     "settings title switch"
     "hint hint hint";
   grid-template-columns: 90px auto 80px;
-  /* grid-template-rows: 40px; */
-  /* justify-items: center; */
   margin-top: 10px;
   font-size: 18px;
   align-items: center;
@@ -373,22 +376,6 @@ defineExpose({
   height: 22px;
 }
 
-/* .column__visibility .btn {
-    font-size: 12px;
-} */
-
-/* .btn:hover {
-  background-position: right center;
-  box-shadow: 2px 2px 5px -2px #000;
-} */
-
-/* .btn.active {
-  background-image: linear-gradient(to right,
-      #1cd997 0%,
-      #33b09b 51%,
-      #1cd997 100%);
-} */
-
 .btn[disabled] {
   cursor: not-allowed;
   color: #8f8f8f;
@@ -406,7 +393,6 @@ defineExpose({
       #1cd997 100%);
 }
 
-
 .switchContainer {
   grid-area: switch;
   position: relative;
@@ -416,7 +402,6 @@ defineExpose({
   margin-left: auto;
   transition: 0.3s;
   -webkit-transition: 0.3s;
-  /* z-index: 99; */
 }
 
 .switchContainer:hover {
@@ -437,7 +422,6 @@ defineExpose({
   border: 1px solid #000;
   border-radius: 4px;
   background-color: #e04352;
-  /* transition: 0.1s; */
 }
 
 .switch:before {
@@ -454,7 +438,6 @@ defineExpose({
 
 input:checked+.switch {
   background-color: #1cd997;
-  /* box-shadow: 2px 2px 7px -2px #000; */
 }
 
 input:checked+.switch:before {
@@ -463,15 +446,11 @@ input:checked+.switch:before {
 
 table {
   position: relative;
-  height: calc(100% - 80px);
+  height: calc(100% - 93px);
   margin: 0 auto;
   border-collapse: collapse;
   table-layout: fixed;
   word-wrap: break-word;
-  /* overflow-y:hidden; */
-  /* -ms-overflow-style: none; */
-  /* scrollbar-width: none; */
-  /* scroll-behavior: smooth; */
 }
 
 tbody {
@@ -479,13 +458,6 @@ tbody {
   position: absolute;
   overflow-y: scroll;
   overflow-x: hidden;
-  /* font-weight: 800; */
-  /* width: 100%; */
-  /* display:block; */
-  /* overflow-y:scroll; */
-  /* -ms-overflow-style: none; */
-  /* scrollbar-width: none; */
-  /* scroll-behavior: smooth; */
 }
 
 tbody::-webkit-scrollbar {
@@ -545,12 +517,10 @@ th.sortable:hover {
   -webkit-appearance: none;
   width: 100%;
   border-radius: 5px;
-  /* background: #fff; */
   outline: none;
   opacity: 0.2;
   -webkit-transition: 0.3s;
   transition: opacity 0.3s;
-  /* direction: rtl; */
 }
 
 .scrollSpeedSlider:hover {
@@ -575,7 +545,7 @@ th.sortable:hover {
   border-radius: 5px;
 }
 
-.invisible {
+.hidden {
   visibility: hidden;
 }
 
@@ -590,8 +560,8 @@ th.sortable:hover {
   }
 }
 
-.flex {
-  display: flex;
-  gap: 0.5rem;
+.medal {
+  font-size: 20px;
+  line-height: 0;
 }
 </style>
