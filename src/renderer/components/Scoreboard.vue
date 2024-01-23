@@ -35,7 +35,7 @@
           </button>
         </div>
       </div>
-      <div class="scoreboard__title">{{ title }} ({{ guesses.length }})</div>
+      <div class="scoreboard__title">{{ title }} ({{ rows.length }})</div>
       <label v-if="switchVisible" class="switchContainer">
         <input class="switchBtn" type="checkbox" :checked="switchOn" @input="(event) => toggleGuesses(event)" />
         <div class="switch"></div>
@@ -55,22 +55,26 @@
         </tr>
       </thead>
       <tbody ref="tBody">
-        <tr v-for="guess in guesses" :key='guess.username' :class="{ expand: guess.animationActive }"
-          @click="props.onPlayerRowClick(guess)">
+        <tr v-for="row in rows" :key='row.username' :class="{ expand: row.animationActive }"
+          @click="props.onRowClick(row)">
+
           <td v-for="field in activeFields" :key='field.value' :style="{ width: field.width }">
-            <span v-if="field.value === 'player'" :style="{ color: guess.color }" class="username">
-              <span v-if="guess.flag" class="flag-icon" :style='{ backgroundImage: `url("flag:${guess.flag}")` }'></span>
-              {{ guess.username }}
+            <span v-if="field.value === 'player'" :style="{ color: row.color }" class="username">
+              <span v-if="row.flag" class="flag-icon" :style='{ backgroundImage: `url("flag:${row.flag}")` }'></span>
+              {{ row.username }}
+            </span>
+            <!-- <span v-if="field.value === 'player'" v-html="row.player"></span> -->
+            <span v-else-if="field.value === 'streak'">{{ row.streak.display }}
+              <!-- {{ gameState === 'round-results' && row.lastStreak ? row.streak + ` [` + row.lastStreak + `]` :
+                row.streak }} -->
             </span>
             <span v-else-if="field.value === 'distance'">
-              {{ gameState === 'round-results' && guess.score === 5000 ? toMeter(guess.distance) + ` [` +
-                formatDuration(guess.time! * 1000) + `]` : toMeter(guess.distance) }}
+              {{ row.distance.display }}
+              <!-- {{ gameState === 'round-results' && row.score === 5000 ? toMeter(row.distance) + ` [` +
+                formatDuration(row.time! * 1000) + `]` : toMeter(row.distance) }} -->
             </span>
-            <span v-else-if="field.value === 'streak'">
-              {{ gameState === 'round-results' && guess.lastStreak ? guess.streak + ` [` + guess.lastStreak + `]` :
-                guess.streak }}
-            </span>
-            <span v-else>{{ guess[field.value] }}</span>
+            <span v-else-if="field.value === 'score'">{{ row.score.display }}</span>
+            <span v-else>{{ row[field.value] }}</span>
           </td>
         </tr>
       </tbody>
@@ -88,7 +92,7 @@ const props = defineProps<{
   gameState: GameState,
   isMultiGuess: boolean
   setGuessesOpen: Window['ChatguessrApi']['setGuessesOpen'],
-  onPlayerRowClick: (guess: Guess) => void,
+  onRowClick: (row: ScoreboardRow) => void,
 }>()
 
 const tBody = ref<HTMLDivElement | null>(null)
@@ -102,7 +106,7 @@ const switchOn = ref(true)
 const switchVisible = ref(true)
 
 onMounted(async () => {
-  Object.assign(position, getLocalStorage("cg_scoreboard__position", { x: 200, y: 50, w: 380, h: 180 }))
+  Object.assign(position, getLocalStorage('cg_scoreboard__position', { x: 200, y: 50, w: 380, h: 180 }))
 })
 
 const settings = reactive(getLocalStorage('cg_scoreboard__settings',
@@ -119,41 +123,66 @@ watch(settings, () => {
   setLocalStorage('cg_scoreboard__settings', settings)
 })
 
-const fields = [
-  { name: '#', value: 'index', width: "30px", sortable: true },
+type Field = { name: string, value: string, width?: string, sortable: boolean }
+
+const fields: Field[] = [
+  { name: '#', value: 'index', width: '30px', sortable: true },
   { name: 'Player', value: 'player', sortable: false },
-  { name: 'Streak', value: 'streak', width: "60px", sortable: true },
-  { name: 'Distance', value: 'distance', width: "85px", sortable: true },
-  { name: 'Score', value: 'score', width: "60px", sortable: true }
+  { name: 'Streak', value: 'streak', width: '60px', sortable: true },
+  { name: 'Distance', value: 'distance', width: '85px', sortable: true },
+  { name: 'Score', value: 'score', width: '60px', sortable: true }
 ]
 
 const activeFields = computed(() => props.gameState === 'in-round' ? (props.isMultiGuess ? [fields[1]] : fields.filter(f => f.value === 'index' || f.value === 'player' || settings[f.value] === true)) : fields)
 const sortType = ref<'desc' | 'asc'>('desc')
 
-const guesses = reactive<Guess[]>([])
+const rows = reactive<ScoreboardRow[]>([])
 
 function onStartRound() {
-  guesses.length = 0
+  rows.length = 0
   title.value = 'GUESSES'
   showSwitch(true)
 }
 
 function renderGuess(guess: Guess) {
-  guess.animationActive = true
-  guesses.push(guess)
-  guesses.sort((a, b) => a.distance - b.distance)
+  console.log("🚀 ~ renderGuess ~ guess:", guess)
+  const formatedRow = {
+    index: '',
+    username: guess.username,
+    flag: guess.flag,
+    color: guess.color,
+    streak: { value: guess.streak, display: guess.streak },
+    distance: { value: guess.distance, display: toMeter(guess.distance) },
+    score: { value: guess.score, display: guess.score },
+    animationActive: true
+  }
 
-  for (let i = 0; i < guesses.length; i++) {
-    guesses[i].index = i + 1
+  rows.push(formatedRow)
+  rows.sort((a, b) => a.distance.value - b.distance.value)
+
+  for (let i = 0; i < rows.length; i++) {
+    rows[i].index = i + 1
   }
 
   setTimeout(() => {
-    guess.animationActive = false
+    formatedRow.animationActive = false
   }, 500)
 }
 
-function renderMultiGuess(guesses_: Guess[]) {
-  Object.assign(guesses, [...guesses_])
+function renderMultiGuess(guesses: Guess[]) {
+  console.log("🚀 ~ renderMultiGuess ~ guesses:", guesses)
+  const formatedRows = guesses.map((guess) => {
+    return {
+      index: '',
+      username: guess.username,
+      flag: guess.flag,
+      color: guess.color,
+      streak: { value: 0, display: '' },
+      distance: { value: 0, display: '' },
+      score: { value: 0, display: '' }
+    }
+  })
+  Object.assign(rows, formatedRows)
 
   // guess.animationActive = true
 
@@ -163,39 +192,67 @@ function renderMultiGuess(guesses_: Guess[]) {
 }
 
 
-function showRoundResults(round: number, roundResults: RoundScore[]) {
-  Object.assign(guesses, roundResults)
-  for (let i = 0; i < guesses.length; i++) {
-    guesses[i].index = i + 1
-  }
+function showRoundResults(round: number, roundResults: RoundResult[]) {
+  console.log("🚀 ~ showRoundResults ~ roundResults:", roundResults)
+  const formatedRows = roundResults.map((result, i) => {
+    return {
+      index: i + 1,
+      username: result.username,
+      flag: result.flag,
+      color: result.color,
+      streak: {
+        value: result.streak,
+        display: result.lastStreak ? result.streak + ` [` + result.lastStreak + `]` : result.streak
+      },
+      distance: {
+        value: result.distance,
+        display: result.score === 5000 ? toMeter(result.distance) + ` [` + formatDuration(result.time * 1000) + `]` : toMeter(result.distance)
+      },
+      score: {
+        value: result.score,
+        display: result.score
+      },
+      position: result.position
+    }
+  })
+  Object.assign(rows, formatedRows)
 
   title.value = `ROUND ${round} RESULTS`
   showSwitch(false)
 }
 
-
 function showGameResults(gameResults: GameResult[]) {
-  const newGameResults = gameResults.map((gameResult, i) => {
+  console.log("🚀 ~ showGameResults ~ gameResults:", gameResults)
+  const formatedRows = gameResults.map((result, i) => {
     return {
       index: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1,
-      username: gameResult.username,
-      color: gameResult.color,
-      flag: gameResult.flag,
-      streak: gameResult.streak,
-      guesses: gameResult.guesses,
-      scores: gameResult.scores,
-      distances: gameResult.distances,
-      score: gameResult.totalScore,
-      distance: gameResult.totalDistance
+      username: result.username,
+      flag: result.flag,
+      color: result.color,
+      guesses: result.guesses,
+      scores: result.scores,
+      distances: result.distances,
+      streak: {
+        value: result.streak,
+        display: result.streak
+      },
+      distance: {
+        value: result.totalDistance,
+        display: toMeter(result.totalDistance)
+      },
+      score: {
+        value: result.totalScore,
+        display: `${result.totalScore} [${result.guesses.filter(Boolean).length}]`
+      },
     }
   })
-  Object.assign(guesses, newGameResults)
+  Object.assign(rows, formatedRows)
 
   title.value = `HIGHSCORES`
   showSwitch(false)
 }
 
-function sortByCol(col) {
+function sortByCol(col: Field) {
   if (!col.sortable) return
 
   sortGuessesBy(col.value, sortType.value)
@@ -204,9 +261,9 @@ function sortByCol(col) {
 
 function sortGuessesBy(col: string, sortType: 'desc' | 'asc') {
   if (sortType === 'asc') {
-    guesses.sort((a, b) => a[col] - b[col])
+    rows.sort((a, b) => a[col].value - b[col].value)
   } else {
-    guesses.sort((a, b) => b[col] - a[col])
+    rows.sort((a, b) => b[col].value - a[col].value)
   }
 }
 
@@ -282,19 +339,6 @@ defineExpose({
 </script>
 
 <style scoped>
-/* .vdr-container {
-  border: none !important;
-} */
-
-/* #CGFrameContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-} */
-
 .scoreboard {
   font-family: Montserrat, sans-serif;
   text-align: center;

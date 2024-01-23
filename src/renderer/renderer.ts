@@ -42,7 +42,7 @@ let guessMarkers: google.maps.Marker[] = []
 let locationMarkers: google.maps.Marker[] = []
 let polylines: google.maps.Polyline[] = []
 
-function drawRoundResults(location: Location_, roundResults: Guess[], limit: number = 100) {
+function drawRoundResults(location: Location_, roundResults: RoundResult[], limit: number = 100) {
   const map = globalMap
   const infowindow = new google.maps.InfoWindow()
 

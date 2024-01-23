@@ -71,7 +71,7 @@ export const chatguessrApi = {
     callback: (
       round: number,
       location: Location,
-      roundResults: RoundScore[],
+      roundResults: RoundResult[],
       markerLimit: number
     ) => void
   ) {

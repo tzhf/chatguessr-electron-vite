@@ -75,7 +75,7 @@ export default class GameHandler {
     this.#win.loadURL(`https://www.geoguessr.com/maps/${mapUrl}/play`)
   }
 
-  #showRoundResults(location: Location_, roundResults: RoundScore[]) {
+  #showRoundResults(location: Location_, roundResults: RoundResult[]) {
     const round = this.#game.isFinished ? this.#game.round : this.#game.round - 1
 
     if (roundResults[0]) roundResults[0].color = '#E3BB39'

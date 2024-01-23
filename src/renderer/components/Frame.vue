@@ -1,8 +1,8 @@
 <template>
   <div id="CGFrameContainer" :style="gameState !== 'none' ? 'visibility: visible' : 'visibility: hidden'">
 
-    <Scoreboard ref="scoreboard" :isMultiGuess="isMultiGuess" :gameState="gameState"
-      :setGuessesOpen="chatguessrApi.setGuessesOpen" :onPlayerRowClick="onPlayerRowClick"
+    <Scoreboard ref="scoreboard" :isMultiGuess="isMultiGuess" :gameState="gameState" :onRowClick="onRowClick"
+      :setGuessesOpen="chatguessrApi.setGuessesOpen"
       :style="widgetVisibility.scoreboardVisible && gameState != 'none' ? 'visibility: visible' : 'visibility: hidden'" />
 
     <Timer :gameState="gameState" :importAudioFile="chatguessrApi.importAudioFile"
@@ -140,7 +140,7 @@ onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess_, restoredGuesses, loc
   scoreboard.value!.onStartRound();
 
   if (restoredGuesses.length > 0) {
-    if (isMultiGuess) {
+    if (isMultiGuess.value) {
       scoreboard.value!.renderMultiGuess(restoredGuesses);
     } else {
       // Not very fast KEKW
@@ -205,12 +205,12 @@ onBeforeUnmount(chatguessrApi.onGuessesOpenChanged((open) => {
 }));
 
 // TODO make sure this works with guessMarkersLimit
-function onPlayerRowClick(guessOrGameResult: Guess | GameResult) {
-  if ('position' in guessOrGameResult && gameState.value === 'round-results') {
-    rendererApi.focusOnGuess(guessOrGameResult.position)
+function onRowClick(row: ScoreboardRow) {
+  if (row.position && gameState.value === 'round-results') {
+    rendererApi.focusOnGuess(row.position)
   }
-  else if ('guesses' in guessOrGameResult && gameState.value === 'game-results') {
-    if (gameResultLocations.value) rendererApi.drawPlayerResults(gameResultLocations.value, guessOrGameResult)
+  else if (row.guesses && gameState.value === 'game-results') {
+    if (gameResultLocations.value) rendererApi.drawPlayerResults(gameResultLocations.value, row)
   }
 }
 
@@ -270,11 +270,10 @@ function useSocketConnectionState() {
 }
 
 #satelliteCanvas {
-  z-index: 9;
   display: none;
-  z-index: 1;
   width: 100%;
   height: 100%;
+  z-index: 9;
 }
 
 .cg-menu {
@@ -337,7 +336,7 @@ function useSocketConnectionState() {
   background-image: url(asset:icons/start_flag.svg);
 }
 
-/* Vue draggable-resizable tweak */
+/* Vue draggable-resizable */
 .drv,
 .vdr-container {
   border: none
