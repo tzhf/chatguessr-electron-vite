@@ -94,7 +94,7 @@ type RoundResult = {
 type GameResult = {
   username: string
   color: string
-  flag: string
+  flag: string | null
   streak: number
   guesses: (LatLng | null)[]
   scores: (number | null)[]
@@ -104,7 +104,7 @@ type GameResult = {
 }
 
 type ScoreboardRow = {
-  index: number | string
+  index: { value: number; display: string }
   username: string
   flag: string | null
   color: string
@@ -122,9 +122,22 @@ type ScoreboardRow = {
   }
   position?: LatLng
   guesses?: (LatLng | null)[]
+  totalScore?: number
+  totalDistance?: number
   scores?: (number | null)[]
   distances?: (number | null)[]
-  animationActive: boolean
+  animationActive?: boolean
+}
+
+type GameResultDisplay = {
+  username: string
+  flag: string | null
+  color: string
+  guesses: (LatLng | null)[]
+  distances: (number | null)[]
+  scores: (number | null)[]
+  // totalDistance: number
+  // totalScore: number
 }
 
 type Bounds = {
@@ -220,7 +233,7 @@ type SocketConnectionState =
 interface RendererApi {
   drawRoundResults(location: Location_, roundResults: Guess[], limit?: number)
   drawGameLocations(locations: Location_[])
-  drawPlayerResults(locations: Location_[], result: GameResult)
+  drawPlayerResults(locations: Location_[], result: GameResultDisplay)
   focusOnGuess(location: LatLng)
   clearMarkers(keepLocationMarkers?: boolean)
   showSatelliteMap(location: LatLng)

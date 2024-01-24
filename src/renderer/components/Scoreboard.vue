@@ -1,6 +1,6 @@
 <template>
   <Vue3DraggableResizable :draggable="isDraggable" v-model:x="position.x" v-model:y="position.y" v-model:w="position.w"
-    v-model:h="position.h" :minW="340" :minH="194" :parent="true" classNameHandle="scoreboard-handle" class="scoreboard"
+    v-model:h="position.h" :minW="340" :minH="190" :parent="true" classNameHandle="scoreboard-handle" class="scoreboard"
     @drag-end="savePosition" @resize-end="savePosition">
     <div class="scoreboard__header">
       <div class="scoreboard__settings">
@@ -57,24 +57,21 @@
       <tbody ref="tBody">
         <tr v-for="row in rows" :key='row.username' :class="{ expand: row.animationActive }"
           @click="props.onRowClick(row)">
-
           <td v-for="field in activeFields" :key='field.value' :style="{ width: field.width }">
+            <!-- <span v-if="field.value === 'index'">{{ row.index.display }}</span> -->
             <span v-if="field.value === 'player'" :style="{ color: row.color }" class="username">
               <span v-if="row.flag" class="flag-icon" :style='{ backgroundImage: `url("flag:${row.flag}")` }'></span>
               {{ row.username }}
             </span>
             <!-- <span v-if="field.value === 'player'" v-html="row.player"></span> -->
-            <span v-else-if="field.value === 'streak'">{{ row.streak.display }}
-              <!-- {{ gameState === 'round-results' && row.lastStreak ? row.streak + ` [` + row.lastStreak + `]` :
+            <!-- <span v-else-if="field.value === 'streak'">{{ row.streak.display }}</span> -->
+            <!-- {{ gameState === 'round-results' && row.lastStreak ? row.streak + ` [` + row.lastStreak + `]` :
                 row.streak }} -->
-            </span>
-            <span v-else-if="field.value === 'distance'">
-              {{ row.distance.display }}
-              <!-- {{ gameState === 'round-results' && row.score === 5000 ? toMeter(row.distance) + ` [` +
+            <!-- <span v-else-if="field.value === 'distance'">{{ row.distance.display }}</span> -->
+            <!-- {{ gameState === 'round-results' && row.score === 5000 ? toMeter(row.distance) + ` [` +
                 formatDuration(row.time! * 1000) + `]` : toMeter(row.distance) }} -->
-            </span>
-            <span v-else-if="field.value === 'score'">{{ row.score.display }}</span>
-            <span v-else>{{ row[field.value] }}</span>
+            <!-- <span v-else-if="field.value === 'score'">{{ row.score.display }}</span> -->
+            <span v-else>{{ row[field.value].display }}</span>
           </td>
         </tr>
       </tbody>
@@ -97,7 +94,7 @@ const props = defineProps<{
 
 const tBody = ref<HTMLDivElement | null>(null)
 const { y, arrivedState } = useScroll(tBody, { behavior: 'smooth' })
-const position = reactive({ x: 200, y: 50, w: 340, h: 180 })
+const position = reactive({ x: 200, y: 50, w: 380, h: 190 })
 const isDraggable = ref(true)
 const isColumnVisibilityOpen = ref(false)
 
@@ -106,7 +103,8 @@ const switchOn = ref(true)
 const switchVisible = ref(true)
 
 onMounted(async () => {
-  Object.assign(position, getLocalStorage('cg_scoreboard__position', { x: 200, y: 50, w: 380, h: 180 }))
+  Object.assign(position, getLocalStorage('cg_scoreboard__position', { x: 200, y: 50, w: 380, h: 190 }))
+  runAutoScroll()
 })
 
 const settings = reactive(getLocalStorage('cg_scoreboard__settings',
@@ -130,7 +128,7 @@ const fields: Field[] = [
   { name: 'Player', value: 'player', sortable: false },
   { name: 'Streak', value: 'streak', width: '60px', sortable: true },
   { name: 'Distance', value: 'distance', width: '85px', sortable: true },
-  { name: 'Score', value: 'score', width: '60px', sortable: true }
+  { name: 'Score', value: 'score', width: '65px', sortable: true }
 ]
 
 const activeFields = computed(() => props.gameState === 'in-round' ? (props.isMultiGuess ? [fields[1]] : fields.filter(f => f.value === 'index' || f.value === 'player' || settings[f.value] === true)) : fields)
@@ -147,7 +145,7 @@ function onStartRound() {
 function renderGuess(guess: Guess) {
   console.log("🚀 ~ renderGuess ~ guess:", guess)
   const formatedRow = {
-    index: '',
+    index: { value: 0, display: '' },
     username: guess.username,
     flag: guess.flag,
     color: guess.color,
@@ -161,7 +159,7 @@ function renderGuess(guess: Guess) {
   rows.sort((a, b) => a.distance.value - b.distance.value)
 
   for (let i = 0; i < rows.length; i++) {
-    rows[i].index = i + 1
+    rows[i].index.value = i + 1
   }
 
   setTimeout(() => {
@@ -173,7 +171,7 @@ function renderMultiGuess(guesses: Guess[]) {
   console.log("🚀 ~ renderMultiGuess ~ guesses:", guesses)
   const formatedRows = guesses.map((guess) => {
     return {
-      index: '',
+      index: { value: 0, display: '' },
       username: guess.username,
       flag: guess.flag,
       color: guess.color,
@@ -196,7 +194,7 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
   console.log("🚀 ~ showRoundResults ~ roundResults:", roundResults)
   const formatedRows = roundResults.map((result, i) => {
     return {
-      index: i + 1,
+      index: { value: i + 1, display: i + 1 },
       username: result.username,
       flag: result.flag,
       color: result.color,
@@ -225,13 +223,15 @@ function showGameResults(gameResults: GameResult[]) {
   console.log("🚀 ~ showGameResults ~ gameResults:", gameResults)
   const formatedRows = gameResults.map((result, i) => {
     return {
-      index: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1,
+      index: { value: i + 1, display: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1 },
       username: result.username,
       flag: result.flag,
       color: result.color,
       guesses: result.guesses,
       scores: result.scores,
       distances: result.distances,
+      totalScore: result.totalScore,
+      totalDistance: result.totalDistance,
       streak: {
         value: result.streak,
         display: result.streak
@@ -269,6 +269,10 @@ function sortGuessesBy(col: string, sortType: 'desc' | 'asc') {
 
 function toggleAutoScroll() {
   settings.isAutoScroll = !settings.isAutoScroll
+  runAutoScroll()
+}
+
+function runAutoScroll() {
   // 0: up, 1: down
   let direction = 1
   // we need decimals to reduce the default speed
@@ -302,7 +306,7 @@ function toggleAutoScroll() {
         }, 3500)
       }
       else {
-        y.value -= 2
+        y.value -= 5
         requestAnimationFrame(scrollFunc)
       }
     }
@@ -314,15 +318,15 @@ function showSwitch(visibility: boolean) {
   switchVisible.value = visibility
 }
 
-const toggleGuesses = (event: Event) => {
+function toggleGuesses(event: Event) {
   props.setGuessesOpen((event.target as HTMLInputElement).checked)
 }
 
-const setSwitchOn = (state: boolean) => {
+function setSwitchOn(state: boolean) {
   switchOn.value = state
 }
 
-const savePosition = () => {
+function savePosition() {
   setLocalStorage('cg_scoreboard__position', position)
 }
 
@@ -344,7 +348,7 @@ defineExpose({
   text-align: center;
   padding: 5px;
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   background-color: rgba(0, 0, 0, 0.4);
   box-shadow: 2px 2px 7px -2px #000;
   border-radius: 10px;
@@ -490,7 +494,7 @@ input:checked+.switch:before {
 
 table {
   position: relative;
-  height: calc(100% - 93px);
+  height: calc(100% - 92px);
   margin: 0 auto;
   border-collapse: collapse;
   table-layout: fixed;
@@ -498,6 +502,7 @@ table {
 }
 
 tbody {
+  font-weight: bold;
   height: 100%;
   position: absolute;
   overflow-y: scroll;

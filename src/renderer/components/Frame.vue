@@ -52,14 +52,14 @@ const {
   ...rendererApi
 } = defineProps<{
   chatguessrApi: Window['ChatguessrApi'],
-  drawRoundResults: (location: Location, roundResults: Guess[], limit?: number) => void,
-  drawGameLocations: (locations: Location[]) => void,
-  drawPlayerResults: (locations: Location[], result: GameResult) => void,
-  clearMarkers: () => void,
-  focusOnGuess: (location: LatLng) => void,
-  showSatelliteMap: (location: LatLng) => void,
-  hideSatelliteMap: () => void,
-  centerSatelliteView: (location: LatLng) => void,
+  drawRoundResults: RendererApi['drawRoundResults'],
+  drawGameLocations: RendererApi['drawGameLocations'],
+  drawPlayerResults: RendererApi['drawPlayerResults'],
+  clearMarkers: RendererApi['clearMarkers'],
+  focusOnGuess: RendererApi['focusOnGuess'],
+  showSatelliteMap: RendererApi['showSatelliteMap'],
+  hideSatelliteMap: RendererApi['hideSatelliteMap'],
+  centerSatelliteView: RendererApi['centerSatelliteView'],
 }>();
 
 const scoreboard = ref<InstanceType<typeof Scoreboard> | null>(null);
@@ -68,7 +68,7 @@ const settingsVisible = ref(false);
 const gameState = ref<GameState>("none");
 const isMultiGuess = ref<boolean>(false);
 const currentLocation = shallowRef<LatLng | null>(null);
-const gameResultLocations = shallowRef<Location[] | null>(null);
+const gameResultLocations = shallowRef<Location_[] | null>(null);
 
 const twitchConnectionState = useTwitchConnectionState();
 const socketConnectionState = useSocketConnectionState();
@@ -204,12 +204,13 @@ onBeforeUnmount(chatguessrApi.onGuessesOpenChanged((open) => {
   scoreboard.value!.setSwitchOn(open);
 }));
 
-// TODO make sure this works with guessMarkersLimit
+// TODO: make sure this works with guessMarkersLimit
 function onRowClick(row: ScoreboardRow) {
-  if (row.position && gameState.value === 'round-results') {
+  if (gameState.value === 'round-results' && row.position) {
     rendererApi.focusOnGuess(row.position)
   }
-  else if (row.guesses && gameState.value === 'game-results') {
+  else if (gameState.value === 'game-results' && 'guesses' in row && 'distances' in row) {
+    // @ts-expect-error
     if (gameResultLocations.value) rendererApi.drawPlayerResults(gameResultLocations.value, row)
   }
 }

@@ -70,7 +70,7 @@ export const chatguessrApi = {
   onShowRoundResults(
     callback: (
       round: number,
-      location: Location,
+      location: Location_,
       roundResults: RoundResult[],
       markerLimit: number
     ) => void
@@ -78,7 +78,7 @@ export const chatguessrApi = {
     return ipcRendererOn('show-round-results', callback)
   },
 
-  onShowGameResults(callback: (locations: Location[], gameResults: GameResult[]) => void) {
+  onShowGameResults(callback: (locations: Location_[], gameResults: GameResult[]) => void) {
     return ipcRendererOn('show-game-results', callback)
   },
 

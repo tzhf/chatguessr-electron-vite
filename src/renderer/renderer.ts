@@ -15,14 +15,14 @@ document.body.append(wrapper)
 createApp(Frame, {
   chatguessrApi: window.chatguessrApi,
   drawRoundResults,
+  drawPlayerResults,
+  drawGameLocations,
   clearMarkers,
   showSatelliteMap,
   hideSatelliteMap,
   centerSatelliteView,
   getBounds,
-  focusOnGuess,
-  drawPlayerResults,
-  drawGameLocations
+  focusOnGuess
 })
   .use(Vue3DraggableResizable)
   .mount(wrapper)
@@ -70,15 +70,11 @@ function drawRoundResults(location: Location_, roundResults: RoundResult[], limi
     })
     guessMarker.addListener('mouseover', () => {
       infowindow.setContent(`
-                ${
-                  result.flag
-                    ? `<span class="flag-icon" style="background-image: url(flag:${result.flag})"></span>`
-                    : ''
-                }
-                <span class="username" style="color:${result.color}">${result.username}</span><br>
-                ${result.score}<br>
-                ${toMeter(result.distance)}
-            `)
+        ${result.flag ? `<span class="flag-icon" style="background-image: url(flag:${result.flag})"></span>` : ''}
+        <span class="username" style="color:${result.color}">${result.username}</span><br>
+        ${result.score}<br>
+        ${toMeter(result.distance)}
+      `)
       infowindow.open(map, guessMarker)
     })
     guessMarker.addListener('mouseout', () => {
@@ -109,7 +105,7 @@ function drawGameLocations(locations: Location_[]) {
   })
 }
 
-function drawPlayerResults(locations: Location_[], result: GameResult) {
+function drawPlayerResults(locations: Location_[], result: GameResultDisplay) {
   const map = globalMap
   const infowindow = new google.maps.InfoWindow()
   const color = result.color || '#fff'
@@ -127,13 +123,9 @@ function drawPlayerResults(locations: Location_[], result: GameResult) {
 
     guessMarker.addListener('mouseover', () => {
       infowindow.setContent(`
-				${
-          result.flag
-            ? `<span class="flag-icon" style="background-image: url(flag:${result.flag})"></span>`
-            : ''
-        }
-                <span class="username" style="color:${color}">${result.username}</span><br>
-                ${result.scores[index]}<br>
+				${result.flag ? `<span class="flag-icon" style="background-image: url(flag:${result.flag})"></span>` : ''}
+        <span class="username" style="color:${color}">${result.username}</span><br>
+        ${result.scores[index]}<br>
 				${toMeter(result.distances[index])}
 			`)
       infowindow.open(map, guessMarker)
