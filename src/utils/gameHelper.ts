@@ -135,10 +135,20 @@ export async function makeLink(
 /**
  * Returns random coordinates within land, no Antarctica
  */
-export async function getRandomCoordsInLand(): Promise<LatLng> {
-  const lat = Math.random() * (85 + 60) - 60
-  const lng = Math.random() * 360 - 180
+export async function getRandomCoordsInLand(bounds: Bounds | null = null): Promise<LatLng> {
+  let lat_north = 85,
+    lat_south = -60,
+    lng_west = -180,
+    lng_east = 180
+  if (bounds != null) {
+    lat_north = bounds.max.lat
+    lat_south = Math.max(bounds.min.lat, lat_south)
+    lng_east = bounds.max.lng
+    lng_west = bounds.min.lng
+  }
+  const lat = Math.random() * (lat_north - lat_south) + lat_south
+  const lng = Math.random() * (lng_east - lng_west) + lng_west
   const localResults = countryIso(lat, lng, true)
-  if (!localResults.length) return await getRandomCoordsInLand()
+  if (!localResults.length) return await getRandomCoordsInLand(bounds)
   return { lat, lng }
 }

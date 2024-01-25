@@ -3,6 +3,10 @@
 
 :root {
   --main-color: #59f3b3;
+  --danger: #f0625d;
+  --danger-hover: #e05e59;
+  --danger-active: #d35854;
+  --bg-dark-transparent: rgba(0, 0, 0, 0.4);
 }
 
 *,
@@ -83,6 +87,7 @@ h3 {
   height: 24px;
   font-family: inherit;
   font-size: inherit;
+  font-weight: 700;
   background: rgba(0, 0, 0, 0.5);
   color: #ffffff;
   text-align: center;
@@ -107,7 +112,7 @@ h3 {
 .form__group input[type='text'],
 .form__group input[type='range'],
 .form__group select {
-  width: 160px;
+  width: 165px;
 }
 
 .form__group input[type='text'],
@@ -188,6 +193,7 @@ textarea {
   padding: 0.5rem;
   font-family: inherit;
   font-size: inherit;
+  font-weight: 700;
   background: rgba(0, 0, 0, 0.5);
   color: #ffffff;
   resize: vertical;
@@ -200,10 +206,10 @@ textarea:focus {
 
 .btn {
   font-family: inherit;
-  font-weight: 700;
-  height: 28px;
-  padding: 0 0.5rem;
-  background-color: var(--main-color);
+  font-size: inherit;
+  line-height: 1;
+  padding: 0.4rem;
+  /* background-color: var(--main-color); */
   border-radius: 3px;
   cursor: pointer;
 }
@@ -243,15 +249,15 @@ small {
 }
 
 .danger {
-  background: #c9534e;
+  background: var(--danger);
 }
 
 .danger:hover {
-  background: #bd4e4a;
+  background: var(--danger-hover);
 }
 
 .danger:active {
-  background: #b64945;
+  background: var(--danger-active);
 }
 
 .warning {

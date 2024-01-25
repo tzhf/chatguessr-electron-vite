@@ -1,4 +1,4 @@
-// @ts-nocheck
+/// @ts-nocheck
 import { createApp } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import Frame from './components/Frame.vue'
@@ -13,7 +13,7 @@ const wrapper = document.createElement('div')
 document.body.append(wrapper)
 
 createApp(Frame, {
-  chatguessrApi: window.chatguessrApi,
+  chatguessrApi: window.ChatguessrApi,
   drawRoundResults,
   drawPlayerResults,
   drawGameLocations,
@@ -257,7 +257,7 @@ async function hijackMap() {
       for (const mutation of mutations) {
         for (const tmp of mutation.addedNodes) {
           if (tmp.nodeType === Node.ELEMENT_NODE) {
-            checkMapsScript(/** @type {Element} */ tmp)
+            checkMapsScript(tmp as Element)
           }
         }
       }
@@ -282,7 +282,7 @@ async function hijackMap() {
     if (existingTag) checkMapsScript(existingTag)
   })
 
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const google = window.google
     const isGamePage = () =>
       location.pathname.startsWith('/results/') || location.pathname.startsWith('/game/')
@@ -332,7 +332,8 @@ async function hijackMap() {
 async function showSatelliteMap(location: LatLng) {
   await mapReady
 
-  const boundsLimit = parseInt(localStorage.getItem('satelliteModeBoundsLimit')) || 10
+  const storedBoundsLimit = localStorage.getItem('satelliteModeBoundsLimit')
+  const boundsLimit = storedBoundsLimit ? parseInt(storedBoundsLimit) : 10
 
   if (!document.body.contains(satelliteCanvas)) {
     document.querySelector('[data-qa="panorama"] [aria-label="Map"]')?.append(satelliteCanvas)
@@ -364,10 +365,12 @@ async function hideSatelliteMap() {
 }
 
 function centerSatelliteView(location: LatLng) {
+  if (!satelliteLayer) return
   satelliteLayer.setCenter(location)
 }
 
 function focusOnGuess(location: LatLng) {
+  if (!globalMap) return
   globalMap.setCenter(location)
   globalMap.setZoom(8)
 }

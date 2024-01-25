@@ -181,7 +181,7 @@ const migrations: ((db: SQLite) => void)[] = [
   }
 ]
 
-class Database {
+export class Database {
   #db: SQLite
 
   constructor(file: string) {
@@ -229,7 +229,7 @@ class Database {
     })
   }
 
-  getCurrentRound(gameId: string): string | unknown {
+  getCurrentRound(gameId: string): string | undefined {
     const findRoundId = this.#db
       .prepare(
         `
@@ -242,7 +242,7 @@ class Database {
       )
       .pluck(true)
 
-    return findRoundId.get(gameId)
+    return findRoundId.get(gameId) as string | undefined
   }
 
   createRound(gameId: string, round: GameRound) {
@@ -830,7 +830,9 @@ class Database {
   }
 
   getBannedUsers() {
-    const bannedUsers = this.#db.prepare(`SELECT username FROM banned_users`).all()
+    const bannedUsers = this.#db.prepare(`SELECT username FROM banned_users`).all() as
+      | { username: string }[]
+      | []
     return bannedUsers
   }
 

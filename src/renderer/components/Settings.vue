@@ -96,7 +96,7 @@
           </div>
 
           <hr>
-          <div class="flex flex-col gap-05 mt-1-5">
+          <div class="flex flex-col gap-05 mt-1">
             <small>ChatGuessr version {{ currentVerion }}</small>
             <button type="button"
               :class="['btn', clearStatsBtn.state === 1 ? 'warning' : clearStatsBtn.state === 2 ? 'success' : 'danger']"
@@ -141,7 +141,7 @@
                   <input type="text"
                     :value="twitchConnectionState.state === 'connected' ? `chatguessr.com/map/${twitchConnectionState.botUsername}` : ''"
                     disabled />
-                  <button class="btn success" style="margin-right: 2px">🖊️</button>
+                  <button class="btn success">🖊️</button>
                 </div>
               </div>
             </label>
@@ -232,7 +232,7 @@ const clearStats = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: var(--bg-dark-transparent);
   transition: opacity 0.3s ease;
   z-index: 99999;
 }
@@ -244,23 +244,23 @@ const clearStats = () => {
 
 .modal-container {
   margin: 0 auto;
-  max-width: 800px;
-  min-height: 680px;
-  font-family: 'Montserrat';
+  max-width: 780px;
+  min-height: 660px;
+  font-family: Montserrat, sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: white;
-  background-color: rgb(0, 0, 0, 0.75);
+  background-color: var(--bg-dark-transparent);
   border-radius: .5rem;
+  border: 1px solid rgb(63, 63, 63, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s ease;
   user-select: none;
   overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid rgb(82, 82, 82);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .modal-content {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
 }
 
 .grid__col {
@@ -276,21 +276,21 @@ const clearStats = () => {
 }
 
 .tab button {
-  cursor: pointer;
-  transition: 0.5s;
+  line-height: 1;
+  padding: 0.5rem;
   letter-spacing: 1px;
-  background-color: rgb(58, 58, 58);
   color: #fff;
+  font-weight: 500;
+  background-color: rgb(58, 58, 58);
+  transition: 0.3s;
+  cursor: pointer;
 }
 
 .tab button:not(:last-child) {
   border-right: solid 1px rgb(0, 0, 0);
 }
 
-.tab button:hover {
-  background: #4fc489;
-}
-
+.tab button:hover,
 .tab button.active {
   color: #000;
   background: var(--main-color);
@@ -298,15 +298,15 @@ const clearStats = () => {
 
 .tab button.close {
   font-size: 24px;
-  background: #c91414;
+  background: var(--danger);
 }
 
 .tab button.close:hover {
-  background: #a02727;
+  background: var(--danger-hover);
 }
 
 .tab button.close:active {
-  background: #a02727;
+  background: var(--danger-active);
 }
 
 [data-tip] {
@@ -322,34 +322,30 @@ const clearStats = () => {
   content: "";
   display: none;
   position: absolute;
-  top: 24px;
+  top: 22px;
   right: 4px;
   width: 0;
   height: 0;
-  /* font-size: 0; */
-  /* line-height: 0; */
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-bottom: 8px solid rgb(99, 99, 99);
-  z-index: 9;
+  border-bottom: 8px solid rgb(127 127 127);
+  z-index: 1;
 }
 
 [data-tip]:after {
   content: attr(data-tip);
   display: none;
   position: absolute;
-  top: 32px;
+  top: 30px;
   right: 0;
   min-width: 200px;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 700;
+  padding: 0.7rem 1rem;
   text-align: center;
-  word-wrap: break-word;
+  /* word-wrap: break-word; */
   color: #ffffff;
-  background: rgb(99, 99, 99);
+  background: rgb(127 127 127);
   border-radius: 4px;
-  z-index: 999;
+  z-index: 1;
 }
 
 .btn.connected {

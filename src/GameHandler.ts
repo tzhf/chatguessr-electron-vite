@@ -1,27 +1,20 @@
-// @ts-nocheck
 import { ipcMain } from 'electron'
 import { once } from 'events'
 import { io } from 'socket.io-client'
 import Game from './Game'
 import TwitchBackend from './utils/useTwitchJS'
-import { store } from './utils/useStore'
+import { useSettings } from './utils/useSettings'
 import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/GameHelper'
 import { getEmoji, randomCountryFlag, selectFlag } from './utils/flags/flags'
-// import Settings from './utils/Settings'
-// import createSettingsWindow from './settings/SettingsWindow'
 
-import { useSettings } from './utils/useSettings'
 const { settings, saveSettings } = useSettings()
 
 const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
-// const settings = Settings.read()
 
 export default class GameHandler {
   #db: Database
 
   #win: BrowserWindow
-
-  // #settingsWindow: BrowserWindow | undefined
 
   #session: Session | undefined
 
@@ -31,7 +24,7 @@ export default class GameHandler {
 
   #game: Game
 
-  #requestAuthentication
+  #requestAuthentication: () => Promise<void>
 
   constructor(
     db: Database,
@@ -178,23 +171,23 @@ export default class GameHandler {
       if (!this.#game.isInGame) return
 
       this.#win.webContents.executeJavaScript(`
-                window.nextRoundBtn = document.querySelector('[data-qa="close-round-result"]');
-                window.playAgainBtn = document.querySelector('[data-qa="play-again-button"]');
+          window.nextRoundBtn = document.querySelector('[data-qa="close-round-result"]');
+          window.playAgainBtn = document.querySelector('[data-qa="play-again-button"]');
 
-                if (window.nextRoundBtn) {
-                    nextRoundBtn.addEventListener("click", () => {
-                        nextRoundBtn.setAttribute('disabled', 'disabled');
-                        chatguessrApi.startNextRound();
-                    });
-                }
+          if (window.nextRoundBtn) {
+              nextRoundBtn.addEventListener("click", () => {
+                  nextRoundBtn.setAttribute('disabled', 'disabled');
+                  chatguessrApi.startNextRound();
+              });
+          }
 
-                if (window.playAgainBtn) {
-                    playAgainBtn.addEventListener("click", () => {
-                        playAgainBtn.setAttribute('disabled', 'disabled');
-                        chatguessrApi.returnToMapPage();
-                    });
-                }
-            `)
+          if (window.playAgainBtn) {
+              playAgainBtn.addEventListener("click", () => {
+                  playAgainBtn.setAttribute('disabled', 'disabled');
+                  chatguessrApi.returnToMapPage();
+              });
+          }
+      `)
 
       if (this.#game.isFinished) return
 
@@ -203,7 +196,7 @@ export default class GameHandler {
       // update the current location if it was skipped
       // if the streamer has guessed returns scores
       this.#game.refreshSeed().then((roundResults) => {
-        if (roundResults) {
+        if (roundResults && roundResults.location) {
           this.#showRoundResults(roundResults.location, roundResults.roundResults)
         }
       })
@@ -224,11 +217,6 @@ export default class GameHandler {
     ipcMain.on('close-guesses', () => {
       if (this.#game.guessesOpen) this.closeGuesses()
     })
-
-    // ipcMain.on('save-twitch-settings', (_event, channelName: string) => {
-    //   settings.saveTwitchSettings(channelName)
-    //   this.#requestAuthentication()
-    // })
 
     ipcMain.handle('get-settings', () => {
       return { ...settings }
@@ -281,19 +269,19 @@ export default class GameHandler {
     return { state: 'connecting' }
   }
 
-  async authenticate(session: import('@supabase/supabase-js').Session) {
+  async authenticate(session: Session) {
     this.#session = session
     await this.#initBackend(session)
     await this.#initSocket(session)
   }
 
-  async #initBackend(session: import('@supabase/supabase-js').Session) {
+  async #initBackend(session: Session) {
     this.#backend?.close()
     this.#backend = undefined
     if (!settings.channelName) {
       return
     }
-    if (session.user.app_metadata.provider === 'twitch') {
+    if (session.user.app_metadata.provider === 'twitch' && session.provider_token) {
       this.#backend = new TwitchBackend({
         botUsername: session.user.user_metadata.name,
         channelName: settings.channelName,
@@ -306,7 +294,6 @@ export default class GameHandler {
     const emitConnectionState = () => {
       const state = this.getTwitchConnectionState()
       this.#win.webContents.send('twitch-connection-state', state)
-      // this.#settingsWindow?.webContents.send('connection-state', state)
     }
 
     this.#backend.on('connected', () => {
@@ -321,13 +308,13 @@ export default class GameHandler {
       }
     })
 
-    this.#backend.on('guess', (userstate, message) => {
+    this.#backend.on('guess', (userstate: ChatUserstate, message: string) => {
       this.#handleGuess(userstate, message).catch((error) => {
         console.error(error)
       })
     })
 
-    this.#backend.on('message', (userstate, message) => {
+    this.#backend.on('message', (userstate: ChatUserstate, message: string) => {
       this.#handleMessage(userstate, message).catch((error) => {
         console.error(error)
       })
@@ -337,15 +324,13 @@ export default class GameHandler {
     try {
       await this.#backend.connect()
     } catch (error) {
-      // if (this.#settingsWindow) {
       this.#win.webContents.send('twitch-error', error)
-      // }
-      console.log('errrrrrror', error)
+      console.log('Backend connection error:', error)
       console.error(error)
     }
   }
 
-  async #handleGuess(userstate: import('tmi.js').ChatUserstate, message: string) {
+  async #handleGuess(userstate: ChatUserstate, message: string) {
     if (!message.startsWith('!g') || !this.#game.guessesOpen) return
     // Ignore guesses made by the broadcaster with the CG map: prevents seemingly duplicate guesses
     if (userstate.username?.toLowerCase() === settings.channelName.toLowerCase()) return
@@ -405,12 +390,12 @@ export default class GameHandler {
 
   #cgCooldown: boolean = false
 
-  async #handleMessage(userstate: import('tmi.js').ChatUserstate, message: string) {
+  async #handleMessage(userstate: ChatUserstate, message: string) {
     if (!message.startsWith('!')) return
-    message = message.trim().toLowerCase()
-
+    if (!userstate['user-id'] || !userstate['display-name']) return
     const userId = userstate.badges?.broadcaster === '1' ? 'BROADCASTER' : userstate['user-id']
 
+    message = message.trim().toLowerCase()
     if (message === settings.cgCmd) {
       if (userId === 'BROADCASTER') {
         await this.#backend?.sendMessage(
@@ -437,6 +422,7 @@ export default class GameHandler {
     if (message.startsWith('!flag ')) {
       const countryReq = message.slice(message.indexOf(' ') + 1).trim()
       const dbUser = this.#db.getOrCreateUser(userId, userstate['display-name'])
+      if (!dbUser) return
 
       let newFlag
       if (countryReq === 'none') {
@@ -507,9 +493,6 @@ export default class GameHandler {
     }
 
     if (message === settings.clearUserStatsCmd) {
-      // @ts-ignore
-      store.delete(`users.${userstate.username}`)
-
       const dbUser = this.#db.getUser(userId)
       if (dbUser) {
         this.#db.resetUserStats(dbUser.id)
@@ -524,7 +507,7 @@ export default class GameHandler {
     }
 
     if (message === settings.randomPlonkCmd) {
-      const { lat, lng } = await getRandomCoordsInLand(this.#game.seed.bounds)
+      const { lat, lng } = await getRandomCoordsInLand(this.#game.seed!.bounds)
       const randomGuess = `!g ${lat}, ${lng}`
       this.#handleGuess(userstate, randomGuess).catch((error) => {
         console.error(error)
@@ -532,17 +515,14 @@ export default class GameHandler {
     }
 
     // streamer commands
-    if (userstate.badges?.broadcaster !== '1') {
-      return
-    }
-    if (process.env.NODE_ENV !== 'development') {
+    if (userstate.badges?.broadcaster !== '1' || process.env.NODE_ENV !== 'development') {
       return
     }
 
     if (message.startsWith('!spamguess')) {
       const max = parseInt(message.split(' ')[1] ?? '50', 10)
       for (let i = 0; i < max; i += 1) {
-        const { lat, lng } = await getRandomCoordsInLand()
+        const { lat, lng } = await getRandomCoordsInLand(this.#game.seed!.bounds)
         await this.#handleGuess(
           {
             'user-id': `123450${i}`,
@@ -557,7 +537,7 @@ export default class GameHandler {
     }
   }
 
-  async #initSocket(session: import('@supabase/supabase-js').Session) {
+  async #initSocket(session: Session) {
     if (this.#socket?.connected) {
       this.#socket.disconnect()
     }
@@ -578,18 +558,14 @@ export default class GameHandler {
 
     this.#socket.on('connect', () => {
       this.#socket?.emit('join', botUsername)
-      // if (this.#settingsWindow) {
       this.#win.webContents.send('socket-connected')
-      // }
     })
 
     this.#socket.on('disconnect', () => {
-      // if (this.#settingsWindow) {
       this.#win.webContents.send('socket-disconnected')
-      // }
     })
 
-    this.#socket.on('guess', (userData, guess) => {
+    this.#socket.on('guess', (userData: ChatUserstate, guess: string) => {
       this.#handleGuess(userData, guess).catch((error) => {
         console.error(error)
       })
@@ -597,31 +573,4 @@ export default class GameHandler {
 
     await once(this.#socket, 'connect')
   }
-
-  // openSettingsWindow() {
-  //   // Initialise the window if it doesn't exist,
-  //   // especially important in non-windows systems where Chatguessr may not be able
-  //   // to prevent the window from being completely closed.
-  //   if (!this.#settingsWindow) {
-  //     this.#settingsWindow = createSettingsWindow(this.#win).on('closed', () => {
-  //       this.#settingsWindow = undefined
-  //     })
-
-  //     this.#settingsWindow.webContents.on('did-finish-load', () => {
-  //       this.#settingsWindow?.webContents.send(
-  //         'render-settings',
-  //         settings,
-  //         this.#db.getBannedUsers(),
-  //         this.getTwitchConnectionState(),
-  //         this.#socket?.connected
-  //       )
-
-  //       this.#settingsWindow?.show()
-  //     })
-  //   }
-  // }
-
-  // closeSettingsWindow() {
-  //   this.#settingsWindow?.close()
-  // }
 }

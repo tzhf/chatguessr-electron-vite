@@ -38,6 +38,8 @@ export default class Game {
 
   location: Location_ | undefined
 
+  lastLocation: LatLng | undefined
+
   isInGame = false
   guessesOpen = false
   isMultiGuess = false

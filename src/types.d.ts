@@ -6,7 +6,9 @@ type Socket = import('socket.io-client').Socket
 
 type Session = import('@supabase/supabase-js').Session
 
-type Database = import('./utils/useDatabase')
+type ChatUserstate = import('tmi.js').ChatUserstate
+
+type Database = import('./utils/useDatabase').Database
 
 interface Settings {
   channelName: string

@@ -349,7 +349,7 @@ defineExpose({
   padding: 5px;
   color: #fff;
   font-size: 13px;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--bg-dark-transparent);
   box-shadow: 2px 2px 7px -2px #000;
   border-radius: 10px;
   pointer-events: auto;
@@ -405,18 +405,14 @@ defineExpose({
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
-  border: 1px solid #000;
-  border-radius: 4px;
+  width: 65px;
+  color: #fff;
+  font-weight: 700;
   background-size: 200% auto;
-  background-image: linear-gradient(to right,
-      #2e2e2e 0%,
-      #454545 51%,
-      #2e2e2e 100%);
+  background-image: linear-gradient(to right, #2e2e2e 0%, #454545 51%, #2e2e2e 100%);
+  border: 1px solid #000;
   transition: 0.3s;
   -webkit-transition: 0.3s;
-  color: #fff;
-  font-size: inherit;
 }
 
 .btn-icon {
@@ -431,14 +427,10 @@ defineExpose({
 
 .btn:hover:not([disabled]) {
   background-position: right center;
-  box-shadow: 2px 2px 5px -2px #000;
 }
 
 .btn.active:not([disabled]) {
-  background-image: linear-gradient(to right,
-      #1cd997 0%,
-      #33b09b 51%,
-      #1cd997 100%);
+  background-image: linear-gradient(to right, #1cd997 0%, #33b09b 51%, #1cd997 100%)
 }
 
 .switchContainer {

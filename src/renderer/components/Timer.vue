@@ -414,10 +414,6 @@ const handleImportAudioFile = async () => {
 </script>
 
 <style scoped>
-/* .vdr-container {
-  z-index: 99999;
-} */
-
 #timer {
   height: 30px;
   width: fit-content;
@@ -440,7 +436,7 @@ const handleImportAudioFile = async () => {
   font-family: 'Montserrat';
   font-size: 14px;
   color: #FFFFFF;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: var(--bg-dark-transparent);
   box-shadow: rgb(0, 0, 0) 2px 2px 7px -2px;
   border-radius: 0.5rem;
 }
