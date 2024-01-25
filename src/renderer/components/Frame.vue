@@ -151,8 +151,7 @@ onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess_, restoredGuesses, loc
   }
 }));
 
-// @ts-expect-error
-onBeforeUnmount(chatguessrApi.onStartRound((isMultiGuess, location) => {
+onBeforeUnmount(chatguessrApi.onStartRound((location) => {
   gameState.value = "in-round";
   currentLocation.value = location;
 

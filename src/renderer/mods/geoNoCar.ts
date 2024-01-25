@@ -77,14 +77,14 @@
     ) {
       document
         .querySelector('[class^="section_sectionMedium__"]')
-        .insertAdjacentHTML('beforeend', classicGameGuiHTML)
+        ?.insertAdjacentHTML('beforeend', classicGameGuiHTML)
 
       if (localStorage.getItem('noCarEnabled') === 'true') {
-        document.querySelector('#enableNoCar').checked = true
+        ;(document.querySelector('#enableNoCar') as HTMLInputElement).checked = true
       }
 
       if (localStorage.getItem('noCompassEnabled') === 'true') {
-        document.querySelector('#enableNoCompass').checked = true
+        ;(document.querySelector('#enableNoCompass') as HTMLInputElement).checked = true
       }
     }
   }

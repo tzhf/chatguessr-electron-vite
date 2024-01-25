@@ -121,7 +121,7 @@ export default class MenuItemsPlugin {
           container?.parentNode?.parentNode
         ] as HTMLDivElement[]
 
-        let controller: AbortController
+        let controller: AbortController | null
         li.addEventListener('mouseenter', () => {
           controller = new AbortController()
           this.showMenu(li, props.subMenu!, controller.signal)
@@ -131,7 +131,6 @@ export default class MenuItemsPlugin {
         })
         li.addEventListener('mouseleave', () => {
           controller?.abort()
-          // @ts-expect-error
           controller = null
           li.querySelector('[data-qa="extenssr__nav-submenu"]')?.remove()
           for (const el of overflows) {

@@ -1,4 +1,4 @@
-/// @ts-nocheck
+// @ts-nocheck
 import { createApp } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import Frame from './components/Frame.vue'

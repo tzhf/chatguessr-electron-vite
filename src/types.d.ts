@@ -30,20 +30,17 @@ interface Settings {
   guessMarkersLimit: number
 }
 
-// interface RendererApi {
-//   drawRoundResults(location: Location_, roundResults: Guess[], limit?: number)
-//   drawGameLocations(locations: Location_[])
-//   drawPlayerResults(locations: Location_[], result: GameResult)
-//   focusOnGuess(location: LatLng)
-//   clearMarkers(keepLocationMarkers?: boolean)
-//   drParseNoCar()
-//   blinkMode()
-//   satelliteMode()
-//   showSatelliteMap(location: LatLng)
-//   hideSatelliteMap()
-//   centerSatelliteView(location: LatLng)
-//   getBounds(location: LatLng, limit: number)
-// }
+interface RendererApi {
+  drawRoundResults(location: Location_, roundResults: Guess[], limit?: number)
+  drawGameLocations(locations: Location_[])
+  drawPlayerResults(locations: Location_[], result: GameResultDisplay)
+  focusOnGuess(location: LatLng)
+  clearMarkers(keepLocationMarkers?: boolean)
+  showSatelliteMap(location: LatLng)
+  hideSatelliteMap()
+  centerSatelliteView(location: LatLng)
+  getBounds(location: LatLng, limit: number)
+}
 
 type LatLng = { lat: number; lng: number }
 
@@ -231,15 +228,3 @@ type SocketConnectionState =
   | { state: 'disconnected' }
   | { state: 'connecting' }
   | { state: 'connected' }
-
-interface RendererApi {
-  drawRoundResults(location: Location_, roundResults: Guess[], limit?: number)
-  drawGameLocations(locations: Location_[])
-  drawPlayerResults(locations: Location_[], result: GameResultDisplay)
-  focusOnGuess(location: LatLng)
-  clearMarkers(keepLocationMarkers?: boolean)
-  showSatelliteMap(location: LatLng)
-  hideSatelliteMap()
-  centerSatelliteView(location: LatLng)
-  getBounds(location: LatLng, limit: number)
-}

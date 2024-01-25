@@ -82,7 +82,7 @@ export const chatguessrApi = {
     return ipcRendererOn('show-game-results', callback)
   },
 
-  onStartRound(callback: (isMultiGuess: boolean, location: LatLng) => void) {
+  onStartRound(callback: (location: LatLng) => void) {
     return ipcRendererOn('next-round', callback)
   },
 

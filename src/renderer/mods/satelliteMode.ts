@@ -50,7 +50,7 @@
     localStorage.getItem('satelliteModeBoundsLimit') == null ||
     isNaN(localStorage.getItem('satelliteModeBoundsLimit'))
   ) {
-    localStorage.setItem('satelliteModeBoundsLimit', boundsLimit)
+    localStorage.setItem('satelliteModeBoundsLimit', boundsLimit.toString())
   }
 
   boundsLimit = parseInt(localStorage.getItem('satelliteModeBoundsLimit'))
@@ -59,17 +59,17 @@
     localStorage.setItem('satelliteModeEnabled', e.checked ? 'enabled' : 'disabled')
 
     if (document.querySelector('#enableSatelliteMode')) {
-      document.querySelector('#enableSatelliteMode').checked = e.checked
+      ;(document.querySelector('#enableSatelliteMode') as HTMLInputElement).checked = e.checked
     }
   }
 
   window.changeBoundsLimit = (e) => {
     if (!isNaN(e.value)) {
-      localStorage.setItem('satelliteModeBoundsLimit', parseInt(e.value))
+      localStorage.setItem('satelliteModeBoundsLimit', parseInt(e.value).toString())
       boundsLimit = parseInt(e.value)
 
       if (document.querySelector('#boundsLimitText')) {
-        document.querySelector('#boundsLimitText').textContent = e.value + ' km'
+        ;(document.querySelector('#boundsLimitText') as HTMLElement).textContent = e.value + ' km'
       }
     }
   }
@@ -82,14 +82,14 @@
     ) {
       document
         .querySelector('[class^="section_sectionMedium__"]')
-        .insertAdjacentHTML('beforeend', classicGameGuiHTML)
+        ?.insertAdjacentHTML('beforeend', classicGameGuiHTML)
 
       if (localStorage.getItem('satelliteModeEnabled') === 'enabled') {
-        document.querySelector('#enableSatelliteMode').checked = true
+        ;(document.querySelector('#enableSatelliteMode') as HTMLInputElement).checked = true
       }
 
-      document.querySelector('#boundsLimit').value = boundsLimit
-      document.querySelector('#boundsLimitText').textContent = boundsLimit + ' km'
+      ;(document.querySelector('#boundsLimit') as HTMLInputElement).value = boundsLimit.toString()
+      document.querySelector('#boundsLimitText')!.textContent = boundsLimit + ' km'
     }
   }
 
