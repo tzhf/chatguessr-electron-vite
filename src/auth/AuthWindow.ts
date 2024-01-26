@@ -1,6 +1,8 @@
 import path from 'path'
 import { BrowserWindow, shell } from 'electron'
 
+const isDev = process.env.npm_lifecycle_event === 'dev'
+
 // Create the Auth window.
 export default async function createAuthWindow(
   parentWindow: BrowserWindow,
@@ -13,6 +15,7 @@ export default async function createAuthWindow(
     modal: true,
     webPreferences: {
       preload: path.join(__dirname, './auth_preload.js'),
+      devTools: isDev ? true : false,
       // Use a separate browser session so we can force log people out of
       // Twitch without logging them out of GeoGuessr.
       partition: 'persist:backendAuth',
@@ -42,9 +45,7 @@ export default async function createAuthWindow(
 
   win.loadURL(options.authUrl ?? `file://${path.join(__dirname, `../../src/auth/index.html`)}`)
 
-  // if (process.env.NODE_ENV === 'development') {
-  //   win.webContents.openDevTools()
-  // }
+  if (isDev) win.webContents.openDevTools()
 
   return win
 }

@@ -8,7 +8,7 @@
             Twitch Connect
           </button>
           <button :class="{ active: currentTab === 3 }" @click="currentTab = 3">Banlist</button>
-          <button class="close" @click="$emit('close')">&times;</button>
+          <button class="close" @click="close">&times;</button>
         </div>
 
         <div v-show="currentTab === 1" class="modal-content">
@@ -166,7 +166,7 @@
             </label>
             <label class="form__group" data-tip="Your streamer account">
               Your streaming channel :
-              <form @submit.prevent="changeChannel()">
+              <form @submit.prevent="onChannelNameUpdate()">
                 <div class="flex gap-05">
                   <input v-model="newChannelName" type="text" spellcheck="false" required />
                   <button v-if="newChannelName != settings.channelName" type="submit" class="btn">
@@ -249,7 +249,7 @@ watch(settings, () => {
   chatguessrApi.saveSettings({ ...settings })
 })
 
-const changeChannel = () => {
+const onChannelNameUpdate = () => {
   settings.channelName = newChannelName.value
 }
 
@@ -283,6 +283,12 @@ const clearStats = () => {
       clearStatsBtn.text = '🗑️ Clear user stats'
     }, 2000)
   }
+}
+
+const emit = defineEmits(['close'])
+
+const close = () => {
+  emit('close')
 }
 </script>
 <style scoped>
