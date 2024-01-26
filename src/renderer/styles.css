@@ -128,7 +128,7 @@ h3 {
 }
 
 .form__group input[type='range']::-webkit-slider-runnable-track {
-  background: rgb(71, 71, 71);
+  background: rgb(209, 209, 209);
   border-radius: 4px;
   height: 0.5rem;
 }

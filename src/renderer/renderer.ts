@@ -13,7 +13,7 @@ const wrapper = document.createElement('div')
 document.body.append(wrapper)
 
 createApp(Frame, {
-  chatguessrApi: window.ChatguessrApi,
+  chatguessrApi: window.chatguessrApi,
   drawRoundResults,
   drawPlayerResults,
   drawGameLocations,
@@ -149,6 +149,12 @@ function drawPlayerResults(locations: Location_[], result: GameResultDisplay) {
   })
 }
 
+function focusOnGuess(location: LatLng) {
+  if (!globalMap) return
+  globalMap.setCenter(location)
+  globalMap.setZoom(8)
+}
+
 function makeIcon(): google.maps.Symbol {
   return {
     path: `M13.04,41.77c-0.11-1.29-0.35-3.2-0.99-5.42c-0.91-3.17-4.74-9.54-5.49-10.79c-3.64-6.1-5.46-9.21-5.45-12.07
@@ -253,7 +259,7 @@ async function hijackMap() {
       }
     }
 
-    const scriptObserver = new MutationObserver((mutations, observer) => {
+    const scriptObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const tmp of mutation.addedNodes) {
           if (tmp.nodeType === Node.ELEMENT_NODE) {
@@ -367,12 +373,6 @@ async function hideSatelliteMap() {
 function centerSatelliteView(location: LatLng) {
   if (!satelliteLayer) return
   satelliteLayer.setCenter(location)
-}
-
-function focusOnGuess(location: LatLng) {
-  if (!globalMap) return
-  globalMap.setCenter(location)
-  globalMap.setZoom(8)
 }
 
 function getBounds(location: LatLng, limit: number) {

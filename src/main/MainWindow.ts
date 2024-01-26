@@ -27,7 +27,7 @@ export default function createWindow() {
   win.loadURL('https://www.geoguessr.com/community/maps')
 
   // Open links in default OS browser
-  // Allow login via socials to open a new window
+  // Allow GeoGuessr socials login to open a new window
   win.webContents.setWindowOpenHandler(({ url }) => {
     const socialUrls = [
       'https://www.facebook.com',

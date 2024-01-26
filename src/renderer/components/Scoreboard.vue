@@ -1,66 +1,122 @@
 <template>
-  <Vue3DraggableResizable :draggable="isDraggable" v-model:x="position.x" v-model:y="position.y" v-model:w="position.w"
-    v-model:h="position.h" :minW="340" :minH="190" :parent="true" classNameHandle="scoreboard-handle" class="scoreboard"
-    @drag-end="savePosition" @resize-end="savePosition">
+  <Vue3DraggableResizable
+    v-model:x="position.x"
+    v-model:y="position.y"
+    v-model:w="position.w"
+    v-model:h="position.h"
+    :draggable="isDraggable"
+    :min-w="340"
+    :min-h="190"
+    :parent="true"
+    class-name-handle="scoreboard-handle"
+    class="scoreboard"
+    @drag-end="savePosition"
+    @resize-end="savePosition"
+  >
     <div class="scoreboard__header">
       <div class="scoreboard__settings">
         <button class="btn btn-icon" @click="toggleAutoScroll">
           <svg width="16" height="16" viewBox="0 0 24 24">
             <g :fill="settings.isAutoScroll ? '#59f3b3' : 'white'">
               <path
-                d="M10.293,16.293,9,17.586V4A1,1,0,0,0,7,4V17.586L5.707,16.293a1,1,0,0,0-1.414,1.414l3,3a1,1,0,0,0,1.416,0l3-3a1,1,0,0,0-1.414-1.414Z" />
+                d="M10.293,16.293,9,17.586V4A1,1,0,0,0,7,4V17.586L5.707,16.293a1,1,0,0,0-1.414,1.414l3,3a1,1,0,0,0,1.416,0l3-3a1,1,0,0,0-1.414-1.414Z"
+              />
               <path
-                d="M19.707,6.293l-3-3a1,1,0,0,0-1.416,0l-3,3a1,1,0,0,0,1.414,1.414L15,6.414V20a1,1,0,0,0,2,0V6.414l1.293,1.293a1,1,0,0,0,1.414-1.414Z" />
+                d="M19.707,6.293l-3-3a1,1,0,0,0-1.416,0l-3,3a1,1,0,0,0,1.414,1.414L15,6.414V20a1,1,0,0,0,2,0V6.414l1.293,1.293a1,1,0,0,0,1.414-1.414Z"
+              />
             </g>
           </svg>
         </button>
         <button class="btn btn-icon" @click="isColumnVisibilityOpen = !isColumnVisibilityOpen">
           <svg width="14" height="14" viewBox="0 0 24 24">
-            <path :fill="isColumnVisibilityOpen ? '#59f3b3' : 'white'"
-              d="M24 13.616v-3.232c-1.651-.587-2.694-.752-3.219-2.019v-.001c-.527-1.271.1-2.134.847-3.707l-2.285-2.285c-1.561.742-2.433 1.375-3.707.847h-.001c-1.269-.526-1.435-1.576-2.019-3.219h-3.232c-.582 1.635-.749 2.692-2.019 3.219h-.001c-1.271.528-2.132-.098-3.707-.847l-2.285 2.285c.745 1.568 1.375 2.434.847 3.707-.527 1.271-1.584 1.438-3.219 2.02v3.232c1.632.58 2.692.749 3.219 2.019.53 1.282-.114 2.166-.847 3.707l2.285 2.286c1.562-.743 2.434-1.375 3.707-.847h.001c1.27.526 1.436 1.579 2.019 3.219h3.232c.582-1.636.75-2.69 2.027-3.222h.001c1.262-.524 2.12.101 3.698.851l2.285-2.286c-.744-1.563-1.375-2.433-.848-3.706.527-1.271 1.588-1.44 3.221-2.021zm-12 2.384c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z" />
+            <path
+              :fill="isColumnVisibilityOpen ? '#59f3b3' : 'white'"
+              d="M24 13.616v-3.232c-1.651-.587-2.694-.752-3.219-2.019v-.001c-.527-1.271.1-2.134.847-3.707l-2.285-2.285c-1.561.742-2.433 1.375-3.707.847h-.001c-1.269-.526-1.435-1.576-2.019-3.219h-3.232c-.582 1.635-.749 2.692-2.019 3.219h-.001c-1.271.528-2.132-.098-3.707-.847l-2.285 2.285c.745 1.568 1.375 2.434.847 3.707-.527 1.271-1.584 1.438-3.219 2.02v3.232c1.632.58 2.692.749 3.219 2.019.53 1.282-.114 2.166-.847 3.707l2.285 2.286c1.562-.743 2.434-1.375 3.707-.847h.001c1.27.526 1.436 1.579 2.019 3.219h3.232c.582-1.636.75-2.69 2.027-3.222h.001c1.262-.524 2.12.101 3.698.851l2.285-2.286c-.744-1.563-1.375-2.433-.848-3.706.527-1.271 1.588-1.44 3.221-2.021zm-12 2.384c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z"
+            />
           </svg>
         </button>
         <div v-if="isColumnVisibilityOpen" class="column__visibility">
-          <button class="btn" :class="{ active: settings.streak }" @click="settings.streak = !settings.streak"
-            :disabled="isMultiGuess">
+          <button
+            class="btn"
+            :class="{ active: settings.streak }"
+            :disabled="isMultiGuess"
+            @click="settings.streak = !settings.streak"
+          >
             {{ fields[2].name }}
           </button>
-          <button class="btn" :class="{ active: settings.distance }" @click="settings.distance = !settings.distance"
-            :disabled="isMultiGuess">
+          <button
+            class="btn"
+            :class="{ active: settings.distance }"
+            :disabled="isMultiGuess"
+            @click="settings.distance = !settings.distance"
+          >
             {{ fields[3].name }}
           </button>
-          <button class="btn" :class="{ active: settings.score }" @click="settings.score = !settings.score"
-            :disabled="isMultiGuess">
+          <button
+            class="btn"
+            :class="{ active: settings.score }"
+            :disabled="isMultiGuess"
+            @click="settings.score = !settings.score"
+          >
             {{ fields[4].name }}
           </button>
         </div>
       </div>
       <div class="scoreboard__title">{{ title }} ({{ rows.length }})</div>
       <label v-if="switchVisible" class="switchContainer">
-        <input class="switchBtn" type="checkbox" :checked="switchOn" @input="(event) => toggleGuesses(event)" />
+        <input
+          class="switchBtn"
+          type="checkbox"
+          :checked="switchOn"
+          @input="(event) => toggleGuesses(event)"
+        />
         <div class="switch"></div>
       </label>
-      <div v-if="isMultiGuess && gameState === 'in-round'" class="scoreboard__hint">Ordered by guess time</div>
+      <div v-if="isMultiGuess && gameState === 'in-round'" class="scoreboard__hint">
+        Ordered by guess time
+      </div>
     </div>
-    <input type="range" v-model="settings.scrollSpeed" @mouseover="isDraggable = false" @mouseleave="isDraggable = true"
-      min="0.5" step="0.1" max="2" class="scrollSpeedSlider" :class="{ hidden: !settings.isAutoScroll }">
+    <input
+      v-model="settings.scrollSpeed"
+      type="range"
+      min="0.5"
+      step="0.1"
+      max="2"
+      class="scrollSpeedSlider"
+      :class="{ hidden: !settings.isAutoScroll }"
+      @mouseover="isDraggable = false"
+      @mouseleave="isDraggable = true"
+    />
 
     <table>
       <thead>
         <tr>
-          <th v-for="field in activeFields" :key='field.value' @click="sortByCol(field)"
-            :class="{ sortable: field.sortable }" :style="{ width: field.width }">
+          <th
+            v-for="field in activeFields"
+            :key="field.value"
+            :class="{ sortable: field.sortable }"
+            :style="{ width: field.width }"
+            @click="sortByCol(field)"
+          >
             {{ field.name }}
           </th>
         </tr>
       </thead>
       <tbody ref="tBody">
-        <tr v-for="row in rows" :key='row.username' :class="{ expand: row.animationActive }"
-          @click="props.onRowClick(row)">
-          <td v-for="field in activeFields" :key='field.value' :style="{ width: field.width }">
+        <tr
+          v-for="row in rows"
+          :key="row.username"
+          :class="{ expand: row.animationActive }"
+          @click="props.onRowClick(row)"
+        >
+          <td v-for="field in activeFields" :key="field.value" :style="{ width: field.width }">
             <!-- <span v-if="field.value === 'index'">{{ row.index.display }}</span> -->
             <span v-if="field.value === 'player'" :style="{ color: row.color }" class="username">
-              <span v-if="row.flag" class="flag-icon" :style='{ backgroundImage: `url("flag:${row.flag}")` }'></span>
+              <span
+                v-if="row.flag"
+                class="flag-icon"
+                :style="{ backgroundImage: `url(&quot;flag:${row.flag}&quot;)` }"
+              ></span>
               {{ row.username }}
             </span>
             <!-- <span v-if="field.value === 'player'" v-html="row.player"></span> -->
@@ -86,10 +142,10 @@ import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
 import formatDuration from 'format-duration'
 
 const props = defineProps<{
-  gameState: GameState,
+  gameState: GameState
   isMultiGuess: boolean
-  setGuessesOpen: Window['ChatguessrApi']['setGuessesOpen'],
-  onRowClick: (row: ScoreboardRow) => void,
+  setGuessesOpen: Window['chatguessrApi']['setGuessesOpen']
+  onRowClick: (row: ScoreboardRow) => void
 }>()
 
 const tBody = ref<HTMLDivElement | null>(null)
@@ -103,17 +159,20 @@ const switchOn = ref(true)
 const switchVisible = ref(true)
 
 onMounted(async () => {
-  Object.assign(position, getLocalStorage('cg_scoreboard__position', { x: 200, y: 50, w: 380, h: 190 }))
+  Object.assign(
+    position,
+    getLocalStorage('cg_scoreboard__position', { x: 200, y: 50, w: 380, h: 190 })
+  )
   runAutoScroll()
 })
 
-const settings = reactive(getLocalStorage('cg_scoreboard__settings',
-  {
+const settings = reactive(
+  getLocalStorage('cg_scoreboard__settings', {
     isAutoScroll: false,
-    scrollSpeed: "1",
+    scrollSpeed: '1',
     streak: true,
     distance: true,
-    score: true,
+    score: true
   })
 )
 
@@ -121,7 +180,7 @@ watch(settings, () => {
   setLocalStorage('cg_scoreboard__settings', settings)
 })
 
-type Field = { name: string, value: string, width?: string, sortable: boolean }
+type Field = { name: string; value: string; width?: string; sortable: boolean }
 
 const fields: Field[] = [
   { name: '#', value: 'index', width: '30px', sortable: true },
@@ -131,7 +190,15 @@ const fields: Field[] = [
   { name: 'Score', value: 'score', width: '65px', sortable: true }
 ]
 
-const activeFields = computed(() => props.gameState === 'in-round' ? (props.isMultiGuess ? [fields[1]] : fields.filter(f => f.value === 'index' || f.value === 'player' || settings[f.value] === true)) : fields)
+const activeFields = computed(() =>
+  props.gameState === 'in-round'
+    ? props.isMultiGuess
+      ? [fields[1]]
+      : fields.filter(
+          (f) => f.value === 'index' || f.value === 'player' || settings[f.value] === true
+        )
+    : fields
+)
 const sortType = ref<'desc' | 'asc'>('desc')
 
 const rows = reactive<ScoreboardRow[]>([])
@@ -143,7 +210,7 @@ function onStartRound() {
 }
 
 function renderGuess(guess: Guess) {
-  console.log("🚀 ~ renderGuess ~ guess:", guess)
+  console.log('🚀 ~ renderGuess ~ guess:', guess)
   const formatedRow = {
     index: { value: 0, display: '' },
     username: guess.username,
@@ -168,7 +235,7 @@ function renderGuess(guess: Guess) {
 }
 
 function renderMultiGuess(guesses: Guess[]) {
-  console.log("🚀 ~ renderMultiGuess ~ guesses:", guesses)
+  console.log('🚀 ~ renderMultiGuess ~ guesses:', guesses)
   const formatedRows = guesses.map((guess) => {
     return {
       index: { value: 0, display: '' },
@@ -189,9 +256,8 @@ function renderMultiGuess(guesses: Guess[]) {
   // }, 500)
 }
 
-
 function showRoundResults(round: number, roundResults: RoundResult[]) {
-  console.log("🚀 ~ showRoundResults ~ roundResults:", roundResults)
+  console.log('🚀 ~ showRoundResults ~ roundResults:', roundResults)
   const formatedRows = roundResults.map((result, i) => {
     return {
       index: { value: i + 1, display: i + 1 },
@@ -204,7 +270,10 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
       },
       distance: {
         value: result.distance,
-        display: result.score === 5000 ? toMeter(result.distance) + ` [` + formatDuration(result.time * 1000) + `]` : toMeter(result.distance)
+        display:
+          result.score === 5000
+            ? toMeter(result.distance) + ` [` + formatDuration(result.time * 1000) + `]`
+            : toMeter(result.distance)
       },
       score: {
         value: result.score,
@@ -220,7 +289,7 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
 }
 
 function showGameResults(gameResults: GameResult[]) {
-  console.log("🚀 ~ showGameResults ~ gameResults:", gameResults)
+  console.log('🚀 ~ showGameResults ~ gameResults:', gameResults)
   const formatedRows = gameResults.map((result, i) => {
     return {
       index: { value: i + 1, display: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1 },
@@ -243,7 +312,7 @@ function showGameResults(gameResults: GameResult[]) {
       score: {
         value: result.totalScore,
         display: `${result.totalScore} [${result.guesses.filter(Boolean).length}]`
-      },
+      }
     }
   })
   Object.assign(rows, formatedRows)
@@ -256,7 +325,7 @@ function sortByCol(col: Field) {
   if (!col.sortable) return
 
   sortGuessesBy(col.value, sortType.value)
-  sortType.value = sortType.value === 'asc' ? 'desc' : 'asc';
+  sortType.value = sortType.value === 'asc' ? 'desc' : 'asc'
 }
 
 function sortGuessesBy(col: string, sortType: 'desc' | 'asc') {
@@ -290,22 +359,19 @@ function runAutoScroll() {
           direction = 0
           requestAnimationFrame(scrollFunc)
         }, 2000)
-      }
-      else {
+      } else {
         newY = newY + parseFloat(settings.scrollSpeed)
         y.value = newY
         requestAnimationFrame(scrollFunc)
       }
-    }
-    else {
+    } else {
       if (arrivedState.top) {
         setTimeout(() => {
           direction = 1
           newY = y.value
           requestAnimationFrame(scrollFunc)
         }, 3500)
-      }
-      else {
+      } else {
         y.value -= 5
         requestAnimationFrame(scrollFunc)
       }
@@ -330,7 +396,8 @@ function savePosition() {
   setLocalStorage('cg_scoreboard__position', position)
 }
 
-const toMeter = (distance: number) => distance >= 1 ? distance.toFixed(1) + 'km' : Math.floor(distance * 1000) + 'm'
+const toMeter = (distance: number) =>
+  distance >= 1 ? distance.toFixed(1) + 'km' : Math.floor(distance * 1000) + 'm'
 
 defineExpose({
   onStartRound,
@@ -338,7 +405,7 @@ defineExpose({
   showGameResults,
   renderGuess,
   renderMultiGuess,
-  setSwitchOn,
+  setSwitchOn
 })
 </script>
 
@@ -361,8 +428,8 @@ defineExpose({
 .scoreboard__header {
   display: grid;
   grid-template-areas:
-    "settings title switch"
-    "hint hint hint";
+    'settings title switch'
+    'hint hint hint';
   grid-template-columns: 90px auto 80px;
   margin-top: 10px;
   font-size: 18px;
@@ -430,7 +497,7 @@ defineExpose({
 }
 
 .btn.active:not([disabled]) {
-  background-image: linear-gradient(to right, #1cd997 0%, #33b09b 51%, #1cd997 100%)
+  background-image: linear-gradient(to right, #1cd997 0%, #33b09b 51%, #1cd997 100%);
 }
 
 .switchContainer {
@@ -476,11 +543,11 @@ defineExpose({
   transition: transform 0.2s;
 }
 
-input:checked+.switch {
+input:checked + .switch {
   background-color: #1cd997;
 }
 
-input:checked+.switch:before {
+input:checked + .switch:before {
   transform: translateX(11px);
 }
 
@@ -535,7 +602,7 @@ tr:nth-child(even) {
   background-color: rgba(0, 0, 0, 0.2);
 }
 
-tbody>tr:hover {
+tbody > tr:hover {
   -webkit-transition: 0.1s;
   transition: 0.1s;
   transform: scale(1.01);
@@ -543,7 +610,7 @@ tbody>tr:hover {
 }
 
 th.sortable {
-  cursor: pointer
+  cursor: pointer;
 }
 
 th.sortable:hover {

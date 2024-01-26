@@ -1,5 +1,11 @@
 import { ipcRenderer } from 'electron'
 
+declare global {
+  interface Window {
+    chatguessrApi: typeof chatguessrApi
+  }
+}
+
 export const chatguessrApi = {
   setGuessesOpen(open: boolean) {
     if (open) {
@@ -36,10 +42,6 @@ export const chatguessrApi = {
   deleteBannedUser(username: string) {
     ipcRenderer.send('delete-banned-user', username)
   },
-
-  // saveTwitchSettings(channelName: string): void {
-  //   ipcRenderer.send('save-twitch-settings', channelName)
-  // },
 
   appDataPathExists(subdir?: string): Promise<string | false> {
     return ipcRenderer.invoke('app-data-path-exists', subdir)
@@ -146,12 +148,4 @@ function ipcRendererOn(event: string, callback: (...args: any[]) => void) {
 
   ipcRenderer.on(event, listener)
   return () => ipcRenderer.off(event, listener)
-}
-
-export type ChatguessrApi = typeof chatguessrApi
-
-declare global {
-  interface Window {
-    ChatguessrApi: ChatguessrApi
-  }
 }

@@ -1,254 +1,348 @@
 <template>
-  <div id="CGFrameContainer" :style="gameState !== 'none' ? 'visibility: visible' : 'visibility: hidden'">
+  <div
+    id="CGFrameContainer"
+    :style="gameState !== 'none' ? 'visibility: visible' : 'visibility: hidden'"
+  >
+    <Scoreboard
+      ref="scoreboard"
+      :is-multi-guess="isMultiGuess"
+      :game-state="gameState"
+      :on-row-click="onRowClick"
+      :set-guesses-open="chatguessrApi.setGuessesOpen"
+      :style="
+        widgetVisibility.scoreboardVisible && gameState != 'none'
+          ? 'visibility: visible'
+          : 'visibility: hidden'
+      "
+    />
 
-    <Scoreboard ref="scoreboard" :isMultiGuess="isMultiGuess" :gameState="gameState" :onRowClick="onRowClick"
-      :setGuessesOpen="chatguessrApi.setGuessesOpen"
-      :style="widgetVisibility.scoreboardVisible && gameState != 'none' ? 'visibility: visible' : 'visibility: hidden'" />
-
-    <Timer :gameState="gameState" :importAudioFile="chatguessrApi.importAudioFile"
-      :appDataPathExists="chatguessrApi.appDataPathExists" :setGuessesOpen="chatguessrApi.setGuessesOpen"
-      :style="widgetVisibility.timerVisible && gameState === 'in-round' ? 'visibility: visible' : 'visibility: hidden'" />
+    <Timer
+      :game-state="gameState"
+      :import-audio-file="chatguessrApi.importAudioFile"
+      :app-data-path-exists="chatguessrApi.appDataPathExists"
+      :set-guesses-open="chatguessrApi.setGuessesOpen"
+      :style="
+        widgetVisibility.timerVisible && gameState === 'in-round'
+          ? 'visibility: visible'
+          : 'visibility: hidden'
+      "
+    />
   </div>
 
   <div class="cg-menu">
-    <button :class="['cg-button', twitchConnectionState.state]" title="settings" @click="settingsVisible = true">
+    <button
+      :class="['cg-button', twitchConnectionState.state]"
+      title="settings"
+      @click="settingsVisible = true"
+    >
       <span class="icon cg-icon--gear"></span>
     </button>
-    <button class="cg-button" title="Show/Hide timer" @click="toggleTimer" :hidden="gameState === 'none'">
-      <span :class="['icon', widgetVisibility.timerVisible ? 'cg-icon--timerVisible' : 'cg-icon--timerHidden']"></span>
-    </button>
-    <button class="cg-button" title="Show/Hide scoreboard" @click="toggleScoreboard" :hidden="gameState === 'none'">
+    <button
+      class="cg-button"
+      title="Show/Hide timer"
+      :hidden="gameState === 'none'"
+      @click="toggleTimer"
+    >
       <span
-        :class="['icon', widgetVisibility.scoreboardVisible ? 'cg-icon--scoreboardVisible' : 'cg-icon--scoreboardHidden']"></span>
+        :class="[
+          'icon',
+          widgetVisibility.timerVisible ? 'cg-icon--timerVisible' : 'cg-icon--timerHidden'
+        ]"
+      ></span>
     </button>
-    <button class="cg-button" title="Center view" @click="centerSatelliteView"
-      :hidden="satelliteModeEnabled.value !== 'enabled' || gameState !== 'in-round'">
+    <button
+      class="cg-button"
+      title="Show/Hide scoreboard"
+      :hidden="gameState === 'none'"
+      @click="toggleScoreboard"
+    >
+      <span
+        :class="[
+          'icon',
+          widgetVisibility.scoreboardVisible
+            ? 'cg-icon--scoreboardVisible'
+            : 'cg-icon--scoreboardHidden'
+        ]"
+      ></span>
+    </button>
+    <button
+      class="cg-button"
+      title="Center view"
+      :hidden="satelliteModeEnabled.value !== 'enabled' || gameState !== 'in-round'"
+      @click="onClickCenterSatelliteView"
+    >
       <span class="icon cg-icon--flag"></span>
     </button>
   </div>
 
   <Suspense>
     <transition name="modal">
-      <Settings v-if="settingsVisible" @close="settingsVisible = false" :chatguessrApi="chatguessrApi"
-        :socketConnectionState="socketConnectionState" :twitchConnectionState="twitchConnectionState" />
+      <Settings
+        v-if="settingsVisible"
+        :chatguessr-api="chatguessrApi"
+        :socket-connection-state="socketConnectionState"
+        :twitch-connection-state="twitchConnectionState"
+        @close="settingsVisible = false"
+      />
     </transition>
   </Suspense>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, shallowRef, onMounted, onBeforeUnmount, watch, computed } from "vue"
-import { useStyleTag } from "@vueuse/core"
-import Settings from "./Settings.vue";
-import Scoreboard from "./Scoreboard.vue"
-import Timer from "./Timer.vue"
+import { ref, reactive, shallowRef, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+import { useStyleTag } from '@vueuse/core'
+import Settings from './Settings.vue'
+import Scoreboard from './Scoreboard.vue'
+import Timer from './Timer.vue'
 import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
 
 defineOptions({
   inheritAttrs: false
 })
 
-const {
-  chatguessrApi,
-  ...rendererApi
-} = defineProps<{
-  chatguessrApi: Window['ChatguessrApi'],
-  drawRoundResults: RendererApi['drawRoundResults'],
-  drawGameLocations: RendererApi['drawGameLocations'],
-  drawPlayerResults: RendererApi['drawPlayerResults'],
-  clearMarkers: RendererApi['clearMarkers'],
-  focusOnGuess: RendererApi['focusOnGuess'],
-  showSatelliteMap: RendererApi['showSatelliteMap'],
-  hideSatelliteMap: RendererApi['hideSatelliteMap'],
-  centerSatelliteView: RendererApi['centerSatelliteView'],
-}>();
+const { chatguessrApi, ...rendererApi } = defineProps<{
+  chatguessrApi: Window['chatguessrApi']
+  drawRoundResults: RendererApi['drawRoundResults']
+  drawGameLocations: RendererApi['drawGameLocations']
+  drawPlayerResults: RendererApi['drawPlayerResults']
+  clearMarkers: RendererApi['clearMarkers']
+  focusOnGuess: RendererApi['focusOnGuess']
+  showSatelliteMap: RendererApi['showSatelliteMap']
+  hideSatelliteMap: RendererApi['hideSatelliteMap']
+  centerSatelliteView: RendererApi['centerSatelliteView']
+}>()
 
-const scoreboard = ref<InstanceType<typeof Scoreboard> | null>(null);
-const settingsVisible = ref(false);
+const scoreboard = ref<InstanceType<typeof Scoreboard> | null>(null)
+const settingsVisible = ref(false)
 
-const gameState = ref<GameState>("none");
-const isMultiGuess = ref<boolean>(false);
-const currentLocation = shallowRef<LatLng | null>(null);
-const gameResultLocations = shallowRef<Location_[] | null>(null);
+const gameState = ref<GameState>('none')
+const isMultiGuess = ref<boolean>(false)
+const currentLocation = shallowRef<LatLng | null>(null)
+const gameResultLocations = shallowRef<Location_[] | null>(null)
 
-const twitchConnectionState = useTwitchConnectionState();
-const socketConnectionState = useSocketConnectionState();
+const twitchConnectionState = useTwitchConnectionState()
+const socketConnectionState = useSocketConnectionState()
 
-const widgetVisibility = reactive(getLocalStorage('cg_widget_visibility', {
-  scoreboardVisible: true,
-  timerVisible: true
-}))
+const widgetVisibility = reactive(
+  getLocalStorage('cg_widget_visibility', {
+    scoreboardVisible: true,
+    timerVisible: true
+  })
+)
 
-const toggleScoreboard = () => widgetVisibility.scoreboardVisible = !widgetVisibility.scoreboardVisible
-const toggleTimer = () => widgetVisibility.timerVisible = !widgetVisibility.timerVisible
+const toggleScoreboard = () =>
+  (widgetVisibility.scoreboardVisible = !widgetVisibility.scoreboardVisible)
+const toggleTimer = () => (widgetVisibility.timerVisible = !widgetVisibility.timerVisible)
 
 watch(widgetVisibility, () => {
-  setLocalStorage("cg_widget_visibility", widgetVisibility)
+  setLocalStorage('cg_widget_visibility', widgetVisibility)
 })
 
 const satelliteModeEnabled = {
   // Manual implementation of `ref()` API
   // As `useLocalStorage` does not receive storage events from the non-vue UI script
   // TODO(@ReAnnannanna): Replace this with `useLocalStorage` when the pregame UI script is using Vue
-  get value(): "enabled" | "disabled" {
-    return localStorage.getItem("satelliteModeEnabled") === "enabled" ? "enabled" : "disabled"
+  get value(): 'enabled' | 'disabled' {
+    return localStorage.getItem('satelliteModeEnabled') === 'enabled' ? 'enabled' : 'disabled'
   },
-  set value(value: "enabled" | "disabled") {
-    setLocalStorage("satelliteModeEnabled", value)
-  },
-};
+  set value(value: 'enabled' | 'disabled') {
+    setLocalStorage('satelliteModeEnabled', value)
+  }
+}
 
 // Remove the game's own markers while on a results screen (where we draw our own)
-const markerRemover = useStyleTag('[data-qa="result-view-top"] [data-qa="guess-marker"], [data-qa="result-view-top"] [data-qa="correct-location-marker"], [class^="coordinate-result-map_line__"] { display: none; }', {
-  id: 'cg-marker-remover',
-  manual: true,
-});
-const removeMarkers = computed(() => gameState.value === "round-results" || gameState.value === "game-results");
-watch(removeMarkers, (load) => {
-  if (load) {
-    markerRemover.load();
-  } else {
-    markerRemover.unload();
+const markerRemover = useStyleTag(
+  '[data-qa="result-view-top"] [data-qa="guess-marker"], [data-qa="result-view-top"] [data-qa="correct-location-marker"], [class^="coordinate-result-map_line__"] { display: none; }',
+  {
+    id: 'cg-marker-remover',
+    manual: true
   }
-}, { immediate: true });
+)
+const removeMarkers = computed(
+  () => gameState.value === 'round-results' || gameState.value === 'game-results'
+)
+watch(
+  removeMarkers,
+  (load) => {
+    if (load) {
+      markerRemover.load()
+    } else {
+      markerRemover.unload()
+    }
+  },
+  { immediate: true }
+)
 
 // Remove the game's controls when in satellite mode.
-const gameControlsRemover = useStyleTag('[class^="styles_columnTwo__"], [class^="styles_controlGroup__"], [data-qa="compass"], [class^="panorama-compass_"] { display: none !important; }', {
-  id: "cg-game-controls-remover",
-  manual: true,
-});
+const gameControlsRemover = useStyleTag(
+  '[class^="styles_columnTwo__"], [class^="styles_controlGroup__"], [data-qa="compass"], [class^="panorama-compass_"] { display: none !important; }',
+  {
+    id: 'cg-game-controls-remover',
+    manual: true
+  }
+)
 // `satelliteModeEnabled` is not actually reactive, but the actual change we're interested in is in `gameState` anyways.
-const removeGameControls = computed(() => gameState.value !== "none" && satelliteModeEnabled.value === "enabled");
-watch(removeGameControls, (load) => {
-  if (load) {
-    gameControlsRemover.load();
-  } else {
-    gameControlsRemover.unload();
-  }
-}, { immediate: true });
-
-onBeforeUnmount(chatguessrApi.onGameStarted((isMultiGuess_, restoredGuesses, location) => {
-  isMultiGuess.value = isMultiGuess_
-  gameState.value = "in-round";
-  currentLocation.value = location;
-
-  if (satelliteModeEnabled.value === "enabled") {
-    rendererApi.showSatelliteMap(location);
-  } else {
-    rendererApi.hideSatelliteMap();
-  }
-
-  scoreboard.value!.onStartRound();
-
-  if (restoredGuesses.length > 0) {
-    if (isMultiGuess.value) {
-      scoreboard.value!.renderMultiGuess(restoredGuesses);
+const removeGameControls = computed(
+  () => gameState.value !== 'none' && satelliteModeEnabled.value === 'enabled'
+)
+watch(
+  removeGameControls,
+  (load) => {
+    if (load) {
+      gameControlsRemover.load()
     } else {
-      // Not very fast KEKW
-      for (const guess of restoredGuesses) {
-        scoreboard.value!.renderGuess(guess);
+      gameControlsRemover.unload()
+    }
+  },
+  { immediate: true }
+)
+
+onBeforeUnmount(
+  chatguessrApi.onGameStarted((isMultiGuess_, restoredGuesses, location) => {
+    isMultiGuess.value = isMultiGuess_
+    gameState.value = 'in-round'
+    currentLocation.value = location
+
+    if (satelliteModeEnabled.value === 'enabled') {
+      rendererApi.showSatelliteMap(location)
+    } else {
+      rendererApi.hideSatelliteMap()
+    }
+
+    scoreboard.value!.onStartRound()
+
+    if (restoredGuesses.length > 0) {
+      if (isMultiGuess.value) {
+        scoreboard.value!.renderMultiGuess(restoredGuesses)
+      } else {
+        // Not very fast KEKW
+        for (const guess of restoredGuesses) {
+          scoreboard.value!.renderGuess(guess)
+        }
       }
     }
-  }
-}));
+  })
+)
 
-onBeforeUnmount(chatguessrApi.onStartRound((location) => {
-  gameState.value = "in-round";
-  currentLocation.value = location;
+onBeforeUnmount(
+  chatguessrApi.onStartRound((location) => {
+    gameState.value = 'in-round'
+    currentLocation.value = location
 
-  rendererApi.clearMarkers();
-  if (satelliteModeEnabled.value === "enabled") {
-    rendererApi.showSatelliteMap(location);
-  }
+    rendererApi.clearMarkers()
+    if (satelliteModeEnabled.value === 'enabled') {
+      rendererApi.showSatelliteMap(location)
+    }
 
-  scoreboard.value!.onStartRound();
-}));
+    scoreboard.value!.onStartRound()
+  })
+)
 
-onBeforeUnmount(chatguessrApi.onRefreshRound((location) => {
-  gameState.value = "in-round";
-  if (satelliteModeEnabled.value === "enabled") {
-    rendererApi.showSatelliteMap(location);
-  }
-}));
+onBeforeUnmount(
+  chatguessrApi.onRefreshRound((location) => {
+    gameState.value = 'in-round'
+    if (satelliteModeEnabled.value === 'enabled') {
+      rendererApi.showSatelliteMap(location)
+    }
+  })
+)
 
-onBeforeUnmount(chatguessrApi.onGameQuit(() => {
-  gameState.value = "none";
-  rendererApi.clearMarkers();
-}));
+onBeforeUnmount(
+  chatguessrApi.onGameQuit(() => {
+    gameState.value = 'none'
+    rendererApi.clearMarkers()
+  })
+)
 
-onBeforeUnmount(chatguessrApi.onReceiveGuess((guess) => {
-  scoreboard.value!.renderGuess(guess);
-}));
+onBeforeUnmount(
+  chatguessrApi.onReceiveGuess((guess) => {
+    scoreboard.value!.renderGuess(guess)
+  })
+)
 
-onBeforeUnmount(chatguessrApi.onReceiveMultiGuesses((guesses) => {
-  scoreboard.value!.renderMultiGuess(guesses);
-}));
+onBeforeUnmount(
+  chatguessrApi.onReceiveMultiGuesses((guesses) => {
+    scoreboard.value!.renderMultiGuess(guesses)
+  })
+)
 
-onBeforeUnmount(chatguessrApi.onShowRoundResults((round, location, roundResults, guessMarkersLimit) => {
-  gameState.value = "round-results";
+onBeforeUnmount(
+  chatguessrApi.onShowRoundResults((round, location, roundResults, guessMarkersLimit) => {
+    gameState.value = 'round-results'
 
-  rendererApi.drawRoundResults(location, roundResults, guessMarkersLimit);
-  scoreboard.value!.showRoundResults(round, roundResults);
-}));
+    rendererApi.drawRoundResults(location, roundResults, guessMarkersLimit)
+    scoreboard.value!.showRoundResults(round, roundResults)
+  })
+)
 
-onBeforeUnmount(chatguessrApi.onShowGameResults((locations, gameResults) => {
-  gameState.value = "game-results";
-  gameResultLocations.value = locations
+onBeforeUnmount(
+  chatguessrApi.onShowGameResults((locations, gameResults) => {
+    gameState.value = 'game-results'
+    gameResultLocations.value = locations
 
-  rendererApi.drawGameLocations(locations);
-  rendererApi.drawPlayerResults(locations, gameResults[0]);
-  scoreboard.value!.showGameResults(gameResults);
-}));
+    rendererApi.drawGameLocations(locations)
+    rendererApi.drawPlayerResults(locations, gameResults[0])
+    scoreboard.value!.showGameResults(gameResults)
+  })
+)
 
-onBeforeUnmount(chatguessrApi.onGuessesOpenChanged((open) => {
-  scoreboard.value!.setSwitchOn(open);
-}));
+onBeforeUnmount(
+  chatguessrApi.onGuessesOpenChanged((open) => {
+    scoreboard.value!.setSwitchOn(open)
+  })
+)
 
 // TODO: make sure this works with guessMarkersLimit
 function onRowClick(row: ScoreboardRow) {
   if (gameState.value === 'round-results' && row.position) {
     rendererApi.focusOnGuess(row.position)
-  }
-  else if (gameState.value === 'game-results' && 'guesses' in row && 'distances' in row) {
+  } else if (gameState.value === 'game-results' && 'guesses' in row && 'distances' in row) {
     // @ts-expect-error
     if (gameResultLocations.value) rendererApi.drawPlayerResults(gameResultLocations.value, row)
   }
 }
 
-function centerSatelliteView() {
+function onClickCenterSatelliteView() {
   if (currentLocation.value) rendererApi.centerSatelliteView(currentLocation.value)
 }
 
 /** Load and update twitch connection state. */
 function useTwitchConnectionState() {
-  const conn = ref<TwitchConnectionState>({ state: "disconnected" })
+  const conn = ref<TwitchConnectionState>({ state: 'disconnected' })
 
   onMounted(async () => {
     const state = await chatguessrApi.getTwitchConnectionState()
     conn.value = state
-  });
+  })
 
-  onBeforeUnmount(chatguessrApi.onTwitchConnectionStateChange((state) => {
-    conn.value = state
-  }));
+  onBeforeUnmount(
+    chatguessrApi.onTwitchConnectionStateChange((state) => {
+      conn.value = state
+    })
+  )
 
   return conn
 }
 
 /** Load and update socket connection state. */
 function useSocketConnectionState() {
-  const conn = ref<SocketConnectionState>({ state: "disconnected" })
+  const conn = ref<SocketConnectionState>({ state: 'disconnected' })
 
   onMounted(async () => {
     const state = await chatguessrApi.getSocketConnectionState()
     conn.value = state
-  });
+  })
 
-  onBeforeUnmount(chatguessrApi.onSocketConnected(() => {
-    conn.value.state = "connected"
-  }))
-  onBeforeUnmount(chatguessrApi.onSocketDisconnected(() => {
-    conn.value.state = "disconnected"
-  }))
+  onBeforeUnmount(
+    chatguessrApi.onSocketConnected(() => {
+      conn.value.state = 'connected'
+    })
+  )
+  onBeforeUnmount(
+    chatguessrApi.onSocketDisconnected(() => {
+      conn.value.state = 'disconnected'
+    })
+  )
 
   return conn
 }
@@ -339,7 +433,6 @@ function useSocketConnectionState() {
 /* Vue draggable-resizable */
 .drv,
 .vdr-container {
-  border: none
+  border: none;
 }
 </style>
-
