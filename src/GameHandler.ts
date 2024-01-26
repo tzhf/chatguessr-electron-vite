@@ -4,7 +4,7 @@ import { io } from 'socket.io-client'
 import Game from './Game'
 import TwitchBackend from './utils/useTwitchJS'
 import { useSettings } from './utils/useSettings'
-import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/GameHelper'
+import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/useGameHelper'
 import { getEmoji, randomCountryFlag, selectFlag } from './utils/flags/flags'
 
 const { settings, saveSettings } = useSettings()

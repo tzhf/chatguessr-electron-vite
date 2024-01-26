@@ -10,7 +10,7 @@ import {
   getCountryCode,
   haversineDistance,
   calculateScore
-} from './utils/GameHelper'
+} from './utils/useGameHelper'
 
 export default class Game {
   #db: Database
