@@ -5,8 +5,8 @@
   >
     <Scoreboard
       ref="scoreboard"
-      :is-multi-guess="isMultiGuess"
       :game-state="gameState"
+      :is-multi-guess="isMultiGuess"
       :on-row-click="onRowClick"
       :set-guesses-open="chatguessrApi.setGuessesOpen"
       :style="
@@ -41,7 +41,7 @@
       class="cg-button"
       title="Show/Hide timer"
       :hidden="gameState === 'none'"
-      @click="toggleTimer"
+      @click="widgetVisibility.timerVisible = !widgetVisibility.timerVisible"
     >
       <span
         :class="[
@@ -54,7 +54,7 @@
       class="cg-button"
       title="Show/Hide scoreboard"
       :hidden="gameState === 'none'"
-      @click="toggleScoreboard"
+      @click="widgetVisibility.scoreboardVisible = !widgetVisibility.scoreboardVisible"
     >
       <span
         :class="[
@@ -122,10 +122,6 @@ const widgetVisibility = reactive(
     timerVisible: true
   })
 )
-
-const toggleScoreboard = () =>
-  (widgetVisibility.scoreboardVisible = !widgetVisibility.scoreboardVisible)
-const toggleTimer = () => (widgetVisibility.timerVisible = !widgetVisibility.timerVisible)
 
 watch(widgetVisibility, () => {
   setLocalStorage('cg_widget_visibility', widgetVisibility)

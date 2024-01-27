@@ -91,7 +91,7 @@ type GameResult = {
 }
 
 type ScoreboardRow = {
-  index: { value: number; display: string }
+  index: { value: number; display: string | number }
   username: string
   flag: string | null
   color: string

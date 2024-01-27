@@ -160,16 +160,27 @@
               }}</span>
             </label>
             <label class="form__group">
-              Server :<span :class="[socketConnectionState.state]">{{
+              ChatGuessr server :<span :class="[socketConnectionState.state]">{{
                 socketConnectionState.state
               }}</span>
             </label>
             <label class="form__group" data-tip="Your streamer account">
               Your streaming channel :
               <form @submit.prevent="onChannelNameUpdate()">
-                <div class="flex gap-05">
-                  <input v-model="newChannelName" type="text" spellcheck="false" required />
-                  <button v-if="newChannelName != settings.channelName" type="submit" class="btn">
+                <div class="flex gap-02">
+                  <input
+                    v-model="newChannelName"
+                    type="text"
+                    spellcheck="false"
+                    required
+                    style="width: 240px"
+                  />
+                  <button
+                    :disabled="newChannelName === settings.channelName"
+                    type="submit"
+                    class="btn success"
+                    style="width: 70px"
+                  >
                     Update
                   </button>
                 </div>
@@ -178,40 +189,27 @@
 
             <label class="form__group">
               Your cg link :
-              <div>
-                <div class="flex gap-05">
-                  <input
-                    type="text"
-                    :value="
-                      twitchConnectionState.state === 'connected'
-                        ? `chatguessr.com/map/${twitchConnectionState.botUsername}`
-                        : ''
-                    "
-                    disabled
-                  />
-                  <button class="btn success">🖊️</button>
-                </div>
+
+              <div class="flex gap-02">
+                <input
+                  type="text"
+                  :value="
+                    twitchConnectionState.state === 'connected'
+                      ? `chatguessr.com/map/${twitchConnectionState.botUsername}`
+                      : ''
+                  "
+                  style="width: 240px"
+                  disabled
+                />
+                <button class="btn success" style="width: 70px">Copy🖊️</button>
               </div>
             </label>
           </div>
         </div>
 
         <div v-show="currentTab === 3" class="modal-content">
-          <div class="form__group gap-05">
-            <input
-              v-model.trim="newBannedUser"
-              class="form__group w-full"
-              type="text"
-              spellcheck="false"
-              @keyup.enter="addBannedUser()"
-            />
-            <button type="button" class="btn small danger" @click="addBannedUser()">
-              Ban User
-            </button>
-          </div>
-
           <h3>Banned users :</h3>
-          <div class="flex flex-wrap gap-05">
+          <div class="flex flex-wrap gap-03 mb-05">
             <span
               v-for="(user, index) of bannedUsers"
               :key="index"
@@ -220,6 +218,18 @@
               @click="removeBannedUser(index, user)"
               >{{ user.username }}</span
             >
+          </div>
+          <div class="form__group gap-05">
+            <input
+              v-model.trim="newBannedUser"
+              class="form__group mr-05"
+              type="text"
+              spellcheck="false"
+              @keyup.enter="addBannedUser()"
+            />
+            <button type="button" class="btn small danger" @click="addBannedUser()">
+              Ban User
+            </button>
           </div>
         </div>
       </div>
@@ -448,11 +458,9 @@ span.disconnected {
 
 .badge {
   cursor: pointer;
-  padding: 5px;
+  padding: 0.3rem 0.5rem;
   border-radius: 5px;
-  box-shadow:
-    0 1px 3px rgb(0 0 0 / 12%),
-    0 1px 2px rgb(0 0 0 / 24%);
+  box-shadow: 1px 0 4px #00000073;
 }
 
 .modal-enter-from,
