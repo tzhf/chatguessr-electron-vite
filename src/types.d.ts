@@ -30,18 +30,6 @@ interface Settings {
   guessMarkersLimit: number
 }
 
-interface RendererApi {
-  drawRoundResults(location: Location_, roundResults: Guess[], limit?: number)
-  drawGameLocations(locations: Location_[])
-  drawPlayerResults(locations: Location_[], result: GameResultDisplay)
-  focusOnGuess(location: LatLng)
-  clearMarkers(keepLocationMarkers?: boolean)
-  showSatelliteMap(location: LatLng)
-  hideSatelliteMap()
-  centerSatelliteView(location: LatLng)
-  getBounds(location: LatLng, limit: number)
-}
-
 type LatLng = { lat: number; lng: number }
 
 type Location_ = {

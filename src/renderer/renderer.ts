@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createApp } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import Frame from './components/Frame.vue'
@@ -14,15 +13,16 @@ document.body.append(wrapper)
 
 createApp(Frame, {
   chatguessrApi: window.chatguessrApi,
-  drawRoundResults,
-  drawPlayerResults,
-  drawGameLocations,
-  clearMarkers,
-  showSatelliteMap,
-  hideSatelliteMap,
-  centerSatelliteView,
-  getBounds,
-  focusOnGuess
+  rendererApi: {
+    drawRoundResults,
+    drawPlayerResults,
+    drawGameLocations,
+    focusOnGuess,
+    clearMarkers,
+    showSatelliteMap,
+    hideSatelliteMap,
+    centerSatelliteView
+  }
 })
   .use(Vue3DraggableResizable)
   .mount(wrapper)
@@ -126,7 +126,7 @@ function drawPlayerResults(locations: Location_[], result: GameResultDisplay) {
 				${result.flag ? `<span class="flag-icon" style="background-image: url(flag:${result.flag})"></span>` : ''}
         <span class="username" style="color:${color}">${result.username}</span><br>
         ${result.scores[index]}<br>
-				${toMeter(result.distances[index])}
+				${toMeter(result.distances[index]!)}
 			`)
       infowindow.open(map, guessMarker)
     })
@@ -173,10 +173,11 @@ function makeIcon(): google.maps.Symbol {
 function makeLocationMarker(
   location: Location_,
   icon: google.maps.Symbol,
-  map: google.maps.Map,
+  map?: google.maps.Map,
   index: number | null = null
 ): google.maps.Marker {
   const locationMarker = new google.maps.Marker({ position: location, icon, map, optimized: true })
+
   if (index) {
     locationMarker.setLabel({
       color: '#000',
@@ -350,15 +351,19 @@ async function showSatelliteMap(location: LatLng) {
     fullscreenControl: false,
     mapTypeId: google.maps.MapTypeId.SATELLITE
   })
+
   satelliteLayer.setOptions({
     restriction: {
-      latLngBounds: getBounds(location, boundsLimit * 1000),
+      latLngBounds: getBounds(location, boundsLimit),
       strictBounds: true
     }
   })
+
   satelliteLayer.setCenter(location)
-  satelliteLayer.setZoom(20)
+  satelliteLayer.setZoom(15)
+
   satelliteMarker?.setMap(null)
+
   satelliteMarker = new google.maps.Marker({
     position: location,
     map: satelliteLayer
@@ -375,21 +380,33 @@ function centerSatelliteView(location: LatLng) {
   satelliteLayer.setCenter(location)
 }
 
-function getBounds(location: LatLng, limit: number) {
-  const meters = limit / 2
+function getBounds(location: LatLng, limitInKm: number) {
+  const meters = (limitInKm * 1000) / 2
   const earth = 6371.071
   const pi = Math.PI
-  const cos = Math.cos
   const m = 1 / (((2 * pi) / 360) * earth) / 1000
 
   const north = location.lat + meters * m
   const south = location.lat - meters * m
-  const west = location.lng - (meters * m) / cos(location.lat * (pi / 180))
-  const east = location.lng + (meters * m) / cos(location.lat * (pi / 180))
+  const west = location.lng - (meters * m) / Math.cos(location.lat * (pi / 180))
+  const east = location.lng + (meters * m) / Math.cos(location.lat * (pi / 180))
 
   return { north, south, west, east }
 }
 
 function toMeter(distance: number) {
   return distance >= 1 ? distance.toFixed(1) + 'km' : Math.floor(distance * 1000) + 'm'
+}
+
+declare global {
+  interface RendererApi {
+    drawRoundResults: typeof drawRoundResults
+    drawPlayerResults: typeof drawPlayerResults
+    drawGameLocations: typeof drawGameLocations
+    focusOnGuess: typeof focusOnGuess
+    clearMarkers: typeof clearMarkers
+    showSatelliteMap: typeof showSatelliteMap
+    hideSatelliteMap: typeof hideSatelliteMap
+    centerSatelliteView: typeof centerSatelliteView
+  }
 }

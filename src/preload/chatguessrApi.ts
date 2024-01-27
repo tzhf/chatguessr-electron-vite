@@ -52,7 +52,7 @@ export const chatguessrApi = {
   },
 
   onGameStarted(
-    callback: (isMultiGuess: boolean, restoredGuesses: Guess[], location: LatLng) => void
+    callback: (isMultiGuess: boolean, restoredGuesses: Guess[], location: Location_) => void
   ) {
     return ipcRendererOn('game-started', callback)
   },
@@ -84,11 +84,11 @@ export const chatguessrApi = {
     return ipcRendererOn('show-game-results', callback)
   },
 
-  onStartRound(callback: (location: LatLng) => void) {
+  onStartRound(callback: (location: Location_) => void) {
     return ipcRendererOn('next-round', callback)
   },
 
-  onRefreshRound(callback: (location: LatLng) => void) {
+  onRefreshRound(callback: (location: Location_) => void) {
     return ipcRendererOn('refreshed-in-game', callback)
   },
 

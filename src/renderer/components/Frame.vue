@@ -100,16 +100,9 @@ defineOptions({
   inheritAttrs: false
 })
 
-const { chatguessrApi, ...rendererApi } = defineProps<{
+const { chatguessrApi, rendererApi } = defineProps<{
   chatguessrApi: Window['chatguessrApi']
-  drawRoundResults: RendererApi['drawRoundResults']
-  drawGameLocations: RendererApi['drawGameLocations']
-  drawPlayerResults: RendererApi['drawPlayerResults']
-  clearMarkers: RendererApi['clearMarkers']
-  focusOnGuess: RendererApi['focusOnGuess']
-  showSatelliteMap: RendererApi['showSatelliteMap']
-  hideSatelliteMap: RendererApi['hideSatelliteMap']
-  centerSatelliteView: RendererApi['centerSatelliteView']
+  rendererApi: RendererApi
 }>()
 
 const scoreboard = ref<InstanceType<typeof Scoreboard> | null>(null)
@@ -201,10 +194,10 @@ onBeforeUnmount(
   chatguessrApi.onGameStarted((isMultiGuess_, restoredGuesses, location) => {
     isMultiGuess.value = isMultiGuess_
     gameState.value = 'in-round'
-    currentLocation.value = location
 
+    currentLocation.value = { lat: location.lat, lng: location.lng }
     if (satelliteModeEnabled.value === 'enabled') {
-      rendererApi.showSatelliteMap(location)
+      rendererApi.showSatelliteMap({ lat: location.lat, lng: location.lng })
     } else {
       rendererApi.hideSatelliteMap()
     }
@@ -225,15 +218,9 @@ onBeforeUnmount(
 )
 
 onBeforeUnmount(
-  chatguessrApi.onStartRound((location) => {
+  chatguessrApi.onStartRound(() => {
     gameState.value = 'in-round'
-    currentLocation.value = location
-
     rendererApi.clearMarkers()
-    if (satelliteModeEnabled.value === 'enabled') {
-      rendererApi.showSatelliteMap(location)
-    }
-
     scoreboard.value!.onStartRound()
   })
 )
@@ -241,8 +228,9 @@ onBeforeUnmount(
 onBeforeUnmount(
   chatguessrApi.onRefreshRound((location) => {
     gameState.value = 'in-round'
+    currentLocation.value = { lat: location.lat, lng: location.lng }
     if (satelliteModeEnabled.value === 'enabled') {
-      rendererApi.showSatelliteMap(location)
+      rendererApi.showSatelliteMap({ lat: location.lat, lng: location.lng })
     }
   })
 )
