@@ -68,7 +68,7 @@
     <button
       class="cg-button"
       title="Center view"
-      :hidden="satelliteModeEnabled.value !== 'enabled' || gameState !== 'in-round'"
+      :hidden="!satelliteMode.value.enabled || gameState !== 'in-round'"
       @click="onClickCenterSatelliteView"
     >
       <span class="icon cg-icon--flag"></span>
@@ -113,29 +113,22 @@ const isMultiGuess = ref<boolean>(false)
 const currentLocation = shallowRef<LatLng | null>(null)
 const gameResultLocations = shallowRef<Location_[] | null>(null)
 
-const twitchConnectionState = useTwitchConnectionState()
-const socketConnectionState = useSocketConnectionState()
-
 const widgetVisibility = reactive(
-  getLocalStorage('cg_widget_visibility', {
+  getLocalStorage('cg_widget__visibility', {
     scoreboardVisible: true,
     timerVisible: true
   })
 )
-
 watch(widgetVisibility, () => {
-  setLocalStorage('cg_widget_visibility', widgetVisibility)
+  setLocalStorage('cg_widget__visibility', widgetVisibility)
 })
 
-const satelliteModeEnabled = {
+const satelliteMode = {
   // Manual implementation of `ref()` API
   // As `useLocalStorage` does not receive storage events from the non-vue UI script
   // TODO(@ReAnnannanna): Replace this with `useLocalStorage` when the pregame UI script is using Vue
-  get value(): 'enabled' | 'disabled' {
-    return localStorage.getItem('satelliteModeEnabled') === 'enabled' ? 'enabled' : 'disabled'
-  },
-  set value(value: 'enabled' | 'disabled') {
-    setLocalStorage('satelliteModeEnabled', value)
+  get value(): { enabled: boolean } {
+    return getLocalStorage('cg_satelliteMode__settings', { enabled: false })
   }
 }
 
@@ -170,10 +163,8 @@ const gameControlsRemover = useStyleTag(
     manual: true
   }
 )
-// `satelliteModeEnabled` is not actually reactive, but the actual change we're interested in is in `gameState` anyways.
-const removeGameControls = computed(
-  () => gameState.value !== 'none' && satelliteModeEnabled.value === 'enabled'
-)
+// `satelliteMode` is not actually reactive, but the actual change we're interested in is in `gameState` anyways.
+const removeGameControls = computed(() => gameState.value !== 'none' && satelliteMode.value.enabled)
 watch(
   removeGameControls,
   (load) => {
@@ -191,9 +182,9 @@ onBeforeUnmount(
     isMultiGuess.value = isMultiGuess_
     gameState.value = 'in-round'
 
-    currentLocation.value = { lat: location.lat, lng: location.lng }
-    if (satelliteModeEnabled.value === 'enabled') {
-      rendererApi.showSatelliteMap({ lat: location.lat, lng: location.lng })
+    currentLocation.value = location
+    if (satelliteMode.value.enabled) {
+      rendererApi.showSatelliteMap(location)
     } else {
       rendererApi.hideSatelliteMap()
     }
@@ -224,9 +215,9 @@ onBeforeUnmount(
 onBeforeUnmount(
   chatguessrApi.onRefreshRound((location) => {
     gameState.value = 'in-round'
-    currentLocation.value = { lat: location.lat, lng: location.lng }
-    if (satelliteModeEnabled.value === 'enabled') {
-      rendererApi.showSatelliteMap({ lat: location.lat, lng: location.lng })
+    currentLocation.value = location
+    if (satelliteMode.value.enabled) {
+      rendererApi.showSatelliteMap(location)
     }
   })
 )
@@ -291,6 +282,7 @@ function onClickCenterSatelliteView() {
 }
 
 /** Load and update twitch connection state. */
+const twitchConnectionState = useTwitchConnectionState()
 function useTwitchConnectionState() {
   const conn = ref<TwitchConnectionState>({ state: 'disconnected' })
 
@@ -309,6 +301,7 @@ function useTwitchConnectionState() {
 }
 
 /** Load and update socket connection state. */
+const socketConnectionState = useSocketConnectionState()
 function useSocketConnectionState() {
   const conn = ref<SocketConnectionState>({ state: 'disconnected' })
 

@@ -273,7 +273,7 @@ watch(settings, () => {
   setLocalStorage('cg_timer__settings', settings)
 })
 
-const position = reactive(getLocalStorage('cg_timer__position', { x: 300, y: 50 }))
+const position = reactive(getLocalStorage('cg_timer__position', { x: 450, y: 50 }))
 
 watch(
   () => props.gameState,

@@ -145,7 +145,7 @@ const props = defineProps<{
 
 const tBody = ref<HTMLDivElement | null>(null)
 const { y, arrivedState } = useScroll(tBody, { behavior: 'smooth' })
-const position = reactive({ x: 200, y: 50, w: 380, h: 190 })
+const position = reactive({ x: 20, y: 50, w: 340, h: 190 })
 const isDraggable = ref(true)
 const isColumnVisibilityOpen = ref(false)
 
@@ -156,7 +156,7 @@ const switchVisible = ref(true)
 onMounted(async () => {
   Object.assign(
     position,
-    getLocalStorage('cg_scoreboard__position', { x: 200, y: 50, w: 380, h: 190 })
+    getLocalStorage('cg_scoreboard__position', { x: 20, y: 50, w: 340, h: 190 })
   )
   runAutoScroll()
 })

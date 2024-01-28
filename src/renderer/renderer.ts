@@ -1,10 +1,11 @@
 import { createApp } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import Frame from './components/Frame.vue'
+import { getLocalStorage, setLocalStorage } from './useLocalStorage'
 import './styles.css'
 
 import './mods/extenssrMenuItemsPlugin'
-import './mods/geoNoCar'
+import './mods/noCarNoCompass'
 import './mods/blinkMode'
 import './mods/satelliteMode'
 
@@ -315,7 +316,7 @@ async function hijackMap() {
         })
         this.addListener('maptypeid_changed', () => {
           // Save the map type ID so we can prevent GeoGuessr from resetting it
-          localStorage.chatguessrMapTypeId = this.getMapTypeId()
+          setLocalStorage('cg_MapTypeId', this.getMapTypeId())
         })
       }
 
@@ -323,7 +324,7 @@ async function hijackMap() {
         // GeoGuessr's `setOptions` calls always include `backgroundColor`
         // so this is how we can distinguish between theirs and ours
         if (opts.backgroundColor) {
-          opts.mapTypeId = localStorage.chatguessrMapTypeId ?? opts.mapTypeId
+          opts.mapTypeId = getLocalStorage('cg_MapTypeId', opts.mapTypeId)
           opts.mapTypeControl = true
           opts.mapTypeControlOptions = {
             style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
@@ -339,8 +340,7 @@ async function hijackMap() {
 async function showSatelliteMap(location: LatLng) {
   await mapReady
 
-  const storedBoundsLimit = localStorage.getItem('satelliteModeBoundsLimit')
-  const boundsLimit = storedBoundsLimit ? parseInt(storedBoundsLimit) : 10
+  const satelliteMode = getLocalStorage('cg_satelliteMode__settings', { boundsLimit: 10 })
 
   if (!document.body.contains(satelliteCanvas)) {
     document.querySelector('[data-qa="panorama"] [aria-label="Map"]')?.append(satelliteCanvas)
@@ -354,7 +354,7 @@ async function showSatelliteMap(location: LatLng) {
 
   satelliteLayer.setOptions({
     restriction: {
-      latLngBounds: getBounds(location, boundsLimit),
+      latLngBounds: getBounds(location, satelliteMode.boundsLimit),
       strictBounds: true
     }
   })
