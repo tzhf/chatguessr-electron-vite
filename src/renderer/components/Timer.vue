@@ -18,15 +18,8 @@
           fontFamily: settings.fontFamily,
           fontSize: settings.fontSize + 'px',
           color: settings.color,
-          textShadow:
-            settings.shadowOffsetX +
-            'px ' +
-            settings.shadowOffsetY +
-            'px ' +
-            settings.shadowBlur +
-            'px ' +
-            settings.shadowColor,
-          WebkitTextStroke: settings.borderWidth + 'px ' + settings.borderColor,
+          textShadow: `${settings.shadowOffsetX}px ${settings.shadowOffsetY}px ${settings.shadowBlur}px ${settings.shadowColor}`,
+          WebkitTextStroke: `${settings.borderWidth}px ${settings.borderColor}`,
           paddingBottom: '0.5rem',
           cursor: 'move'
         }"
@@ -109,7 +102,7 @@
         <label class="form__group"
           >Time ({{ settings.timeLimit }} sec) :
           <input
-            v-model="settings.timeLimit"
+            v-model.number="settings.timeLimit"
             type="range"
             min="5"
             max="600"
@@ -124,7 +117,7 @@
         <label class="form__group"
           >Time to plonk ({{ settings.timeToPlonk }} sec) :
           <input
-            v-model="settings.timeToPlonk"
+            v-model.number="settings.timeToPlonk"
             type="range"
             min="5"
             :max="settings.timeLimit"
@@ -145,7 +138,9 @@
         <div class="form__group">
           <label>Load audio file :</label>
           <div class="flex flex-center gap-05">
-            <button class="btn success" type="button" @click="handleImportAudioFile">Import</button>
+            <button class="btn bg-primary" type="button" @click="handleImportAudioFile">
+              Import
+            </button>
             <svg
               v-if="audioPath"
               class="icon"
@@ -161,7 +156,7 @@
         </div>
         <label class="form__group"
           >Sound volume ({{ settings.audioVolume * 100 }} %) :
-          <input v-model="settings.audioVolume" type="range" min="0" max="1" step="0.1" />
+          <input v-model.number="settings.audioVolume" type="range" min="0" max="1" step="0.1" />
         </label>
         <hr />
 
@@ -229,22 +224,21 @@ const props = defineProps<{
   appDataPathExists: Window['chatguessrApi']['appDataPathExists']
   setGuessesOpen: Window['chatguessrApi']['setGuessesOpen']
 }>()
+watch(
+  () => props.gameState,
+  (gameState) => {
+    switch (gameState) {
+      case 'in-round':
+        reset()
+        if (settings.autoStart) start()
+        break
+      case 'none':
+        reset()
+    }
+  }
+)
 
-const audioPath = ref<string | false>(false)
-
-let targetTimestamp = 0
-let pausedDifference = 0
-let frameInterval = () => {}
-
-const display = ref('00:00')
-const isStarted = ref(false)
-const isPaused = ref(false)
-const isTimeToPlonk = ref(false)
-
-const availableFonts = ref()
-const settingsVisibility = ref(false)
-const iconsVisibility = ref(false)
-
+const position = reactive(getLocalStorage('cg_timer__position', { x: 450, y: 50 }))
 const settings = reactive(
   getLocalStorage('cg_timer__settings', {
     timeLimit: 90,
@@ -266,28 +260,24 @@ const settings = reactive(
     shadowColor: '#a159ff'
   })
 )
-
 watch(settings, () => {
-  if (parseInt(settings.timeToPlonk.toString()) >= parseInt(settings.timeLimit.toString()))
-    settings.timeToPlonk = settings.timeLimit
+  if (settings.timeToPlonk >= settings.timeLimit) settings.timeToPlonk = settings.timeLimit
   setLocalStorage('cg_timer__settings', settings)
 })
 
-const position = reactive(getLocalStorage('cg_timer__position', { x: 450, y: 50 }))
+const display = ref('00:00')
+const isStarted = ref(false)
+const isPaused = ref(false)
+const isTimeToPlonk = ref(false)
 
-watch(
-  () => props.gameState,
-  (gameState) => {
-    switch (gameState) {
-      case 'in-round':
-        reset()
-        if (settings.autoStart) start()
-        break
-      case 'none':
-        reset()
-    }
-  }
-)
+const audioPath = ref<string | false>(false)
+const availableFonts = ref()
+const settingsVisibility = ref(false)
+const iconsVisibility = ref(false)
+
+let targetTimestamp = 0
+let pausedDifference = 0
+let frameInterval = () => {}
 
 onMounted(async () => {
   audioPath.value = await props.appDataPathExists('\\timer\\timer_alert')
@@ -296,7 +286,6 @@ onMounted(async () => {
 
   await document.fonts.ready
   const fontsAvailable = new Set()
-
   const fontsList = new Set(
     [
       // Windows 10
@@ -495,7 +484,7 @@ const updateDisplay = (targetTime?: number) => {
 const playAudio = () => {
   if (!audioPath.value) return
   const audio = new Audio(audioPath.value)
-  audio.volume = parseFloat(settings.audioVolume.toString())
+  audio.volume = settings.audioVolume
   audio.play()
 }
 

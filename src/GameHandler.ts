@@ -448,7 +448,7 @@ export default class GameHandler {
     }
 
     if (message === settings.flagsCmd) {
-      await this.#backend?.sendMessage(settings.flagsCmdMsg)
+      await this.#backend?.sendMessage('Available flags: chatguessr.com/flags')
     }
 
     if (message === settings.getUserStatsCmd) {

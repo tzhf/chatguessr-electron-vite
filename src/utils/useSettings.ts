@@ -16,7 +16,6 @@ export function useSettings() {
         2. Paste the command into chat without editing: <your cg link>
       `,
       flagsCmd: '!flags',
-      flagsCmdMsg: 'chatguessr.com/flags',
       getUserStatsCmd: '!me',
       getBestStatsCmd: '!best',
       clearUserStatsCmd: '!clear',

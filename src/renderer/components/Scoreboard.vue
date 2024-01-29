@@ -6,7 +6,7 @@
     v-model:h="position.h"
     :draggable="isDraggable"
     :min-w="340"
-    :min-h="190"
+    :min-h="186"
     :parent="true"
     class-name-handle="scoreboard-handle"
     class="scoreboard"
@@ -17,7 +17,7 @@
       <div class="scoreboard__settings">
         <button class="btn btn-icon" @click="toggleAutoScroll">
           <svg width="16" height="16" viewBox="0 0 24 24">
-            <g :fill="settings.isAutoScroll ? '#59f3b3' : 'white'">
+            <g :fill="settings.autoScroll ? '#59f3b3' : 'white'">
               <path
                 d="M10.293,16.293,9,17.586V4A1,1,0,0,0,7,4V17.586L5.707,16.293a1,1,0,0,0-1.414,1.414l3,3a1,1,0,0,0,1.416,0l3-3a1,1,0,0,0-1.414-1.414Z"
               />
@@ -42,7 +42,7 @@
             :disabled="isMultiGuess"
             @click="settings.streak = !settings.streak"
           >
-            {{ fields[2].name }}
+            {{ columns[2].name }}
           </button>
           <button
             class="btn"
@@ -50,7 +50,7 @@
             :disabled="isMultiGuess"
             @click="settings.distance = !settings.distance"
           >
-            {{ fields[3].name }}
+            {{ columns[3].name }}
           </button>
           <button
             class="btn"
@@ -58,7 +58,7 @@
             :disabled="isMultiGuess"
             @click="settings.score = !settings.score"
           >
-            {{ fields[4].name }}
+            {{ columns[4].name }}
           </button>
         </div>
       </div>
@@ -72,13 +72,13 @@
       </div>
     </div>
     <input
-      v-model="settings.scrollSpeed"
+      v-model.number="settings.scrollSpeed"
       type="range"
       min="0.5"
       step="0.1"
       max="2"
       class="scrollSpeedSlider"
-      :class="{ hidden: !settings.isAutoScroll }"
+      :class="{ hidden: !settings.autoScroll }"
       @mouseover="isDraggable = false"
       @mouseleave="isDraggable = true"
     />
@@ -87,13 +87,13 @@
       <thead>
         <tr>
           <th
-            v-for="field in activeFields"
-            :key="field.value"
-            :class="{ sortable: field.sortable }"
-            :style="{ width: field.width }"
-            @click="sortByCol(field)"
+            v-for="col in activeColumns"
+            :key="col.value"
+            :class="{ sortable: col.sortable }"
+            :style="{ width: col.width }"
+            @click="sortByCol(col)"
           >
-            {{ field.name }}
+            {{ col.name }}
           </th>
         </tr>
       </thead>
@@ -104,25 +104,16 @@
           :class="{ expand: row.animationActive }"
           @click="props.onRowClick(row)"
         >
-          <td v-for="field in activeFields" :key="field.value" :style="{ width: field.width }">
-            <!-- <span v-if="field.value === 'index'">{{ row.index.display }}</span> -->
-            <span v-if="field.value === 'player'" :style="{ color: row.color }" class="username">
+          <td v-for="col in activeColumns" :key="col.value" :style="{ width: col.width }">
+            <span v-if="col.value === 'player'" :style="{ color: row.color }" class="username">
               <span
                 v-if="row.flag"
                 class="flag-icon"
-                :style="{ backgroundImage: `url(&quot;flag:${row.flag}&quot;)` }"
+                :style="{ backgroundImage: `url('flag:${row.flag}')` }"
               ></span>
               {{ row.username }}
             </span>
-            <!-- <span v-if="field.value === 'player'" v-html="row.player"></span> -->
-            <!-- <span v-else-if="field.value === 'streak'">{{ row.streak.display }}</span> -->
-            <!-- {{ gameState === 'round-results' && row.lastStreak ? row.streak + ` [` + row.lastStreak + `]` :
-                row.streak }} -->
-            <!-- <span v-else-if="field.value === 'distance'">{{ row.distance.display }}</span> -->
-            <!-- {{ gameState === 'round-results' && row.score === 5000 ? toMeter(row.distance) + ` [` +
-                formatDuration(row.time! * 1000) + `]` : toMeter(row.distance) }} -->
-            <!-- <span v-else-if="field.value === 'score'">{{ row.score.display }}</span> -->
-            <span v-else>{{ row[field.value].display }}</span>
+            <span v-else>{{ row[col.value].display }}</span>
           </td>
         </tr>
       </tbody>
@@ -148,22 +139,22 @@ const tBody = ref<HTMLDivElement | null>(null)
 const isDraggable = ref(true)
 const isColumnVisibilityOpen = ref(false)
 
-const position = reactive({ x: 20, y: 50, w: 340, h: 190 })
+const position = reactive({ x: 20, y: 50, w: 340, h: 390 })
 const title = ref('GUESSES')
 const switchOn = ref(true)
 
 onMounted(async () => {
   Object.assign(
     position,
-    getLocalStorage('cg_scoreboard__position', { x: 20, y: 50, w: 340, h: 190 })
+    getLocalStorage('cg_scoreboard__position', { x: 20, y: 50, w: 340, h: 390 })
   )
   runAutoScroll()
 })
 
 const settings = reactive(
   getLocalStorage('cg_scoreboard__settings', {
-    isAutoScroll: false,
-    scrollSpeed: '1',
+    autoScroll: false,
+    scrollSpeed: 1,
     streak: true,
     distance: true,
     score: true
@@ -174,14 +165,14 @@ watch(settings, () => {
   setLocalStorage('cg_scoreboard__settings', settings)
 })
 
-type Field = {
+type Column = {
   name: string
   value: string
   width?: string
   sortable: boolean
 }
 
-const fields: Field[] = [
+const columns: Column[] = [
   { name: '#', value: 'index', width: '30px', sortable: true },
   { name: 'Player', value: 'player', sortable: false },
   { name: 'Streak', value: 'streak', width: '60px', sortable: true },
@@ -189,14 +180,14 @@ const fields: Field[] = [
   { name: 'Score', value: 'score', width: '65px', sortable: true }
 ]
 
-const activeFields = computed(() =>
+const activeColumns = computed(() =>
   props.gameState === 'in-round'
     ? props.isMultiGuess
-      ? [fields[1]]
-      : fields.filter(
+      ? [columns[1]]
+      : columns.filter(
           (f) => f.value === 'index' || f.value === 'player' || settings[f.value] === true
         )
-    : fields
+    : columns
 )
 
 const rows = reactive<ScoreboardRow[]>([])
@@ -317,7 +308,7 @@ function showGameResults(gameResults: GameResult[]) {
   title.value = 'HIGHSCORES'
 }
 
-function sortByCol(col: Field) {
+function sortByCol(col: Column) {
   if (!col.sortable) return
   sortGuessesBy(col.value)
 }
@@ -345,7 +336,7 @@ function runAutoScroll() {
   let newY = y.value
 
   function scrollFunc() {
-    if (!settings.isAutoScroll) return
+    if (!settings.autoScroll) return
     if (arrivedState.top && arrivedState.bottom) arrivedState.bottom = false
 
     if (direction) {
@@ -355,7 +346,7 @@ function runAutoScroll() {
           requestAnimationFrame(scrollFunc)
         }, 2000)
       } else {
-        newY = newY + parseFloat(settings.scrollSpeed)
+        newY = newY + settings.scrollSpeed
         y.value = newY
         requestAnimationFrame(scrollFunc)
       }
@@ -376,7 +367,7 @@ function runAutoScroll() {
 }
 
 function toggleAutoScroll() {
-  settings.isAutoScroll = !settings.isAutoScroll
+  settings.autoScroll = !settings.autoScroll
   runAutoScroll()
 }
 
@@ -542,7 +533,7 @@ input:checked + .switch:before {
 
 table {
   position: relative;
-  height: calc(100% - 92px);
+  height: calc(100% - 89px);
   margin: 0 auto;
   border-collapse: collapse;
   table-layout: fixed;
@@ -639,10 +630,6 @@ th.sortable:hover {
   background: #63db85;
   cursor: pointer;
   border-radius: 5px;
-}
-
-.hidden {
-  visibility: hidden;
 }
 
 .expand {

@@ -1,0 +1,69 @@
+.flex {
+  display: flex;
+  align-items: center;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-center {
+  justify-content: center;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.mt-1 {
+  margin-top: 1rem;
+}
+.mx-1 {
+  margin: 1rem 0;
+}
+.ml-05 {
+  margin-left: 0.5rem;
+}
+.mr-05 {
+  margin-right: 0.5rem;
+}
+.mb-05 {
+  margin-bottom: 0.5rem;
+}
+.gap-02 {
+  gap: 0.2rem;
+}
+.gap-03 {
+  gap: 0.3rem;
+}
+.gap-05 {
+  gap: 0.5rem;
+}
+
+/******** COLORS ********/
+.primary {
+  color: var(--primary);
+}
+.bg-primary {
+  background: var(--primary);
+}
+.bg-primary:hover:not([disabled]) {
+  background: #56ca90;
+}
+.bg-primary:active:not([disabled]) {
+  background: #4eb883;
+}
+.danger {
+  background: var(--danger);
+}
+.danger:hover {
+  background: var(--danger-hover);
+}
+.danger:active {
+  background: var(--danger-active);
+}
+.warning {
+  background: #ffae00;
+}
+.warning:hover {
+  background: #e49c00;
+}
+.warning:active {
+  background: #c28400;
+}

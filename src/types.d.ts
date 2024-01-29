@@ -17,7 +17,6 @@ interface Settings {
   cgCmdCooldown: number
   cgMsg: string
   flagsCmd: string
-  flagsCmdMsg: string
   getUserStatsCmd: string
   getBestStatsCmd: string
   clearUserStatsCmd: string

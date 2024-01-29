@@ -1,19 +1,12 @@
 <template>
-  <div
-    id="CGFrameContainer"
-    :style="gameState !== 'none' ? 'visibility: visible' : 'visibility: hidden'"
-  >
+  <div id="CGFrameContainer" :class="{ hidden: gameState === 'none' }">
     <Scoreboard
       ref="scoreboard"
       :game-state="gameState"
       :is-multi-guess="isMultiGuess"
       :on-row-click="onRowClick"
       :set-guesses-open="chatguessrApi.setGuessesOpen"
-      :style="
-        widgetVisibility.scoreboardVisible && gameState != 'none'
-          ? 'visibility: visible'
-          : 'visibility: hidden'
-      "
+      :class="{ hidden: gameState === 'none' || !widgetVisibility.scoreboardVisible }"
     />
 
     <Timer
@@ -338,13 +331,6 @@ function useSocketConnectionState() {
   bottom: 0;
   overflow: hidden;
   pointer-events: none;
-}
-
-#satelliteCanvas {
-  display: none;
-  width: 100%;
-  height: 100%;
-  z-index: 9;
 }
 
 .cg-menu {
