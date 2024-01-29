@@ -63,7 +63,7 @@
         </div>
       </div>
       <div class="scoreboard__title">{{ title }} ({{ rows.length }})</div>
-      <label v-if="switchVisible" class="switchContainer">
+      <label v-if="gameState === 'in-round'" class="switchContainer">
         <input type="checkbox" :checked="switchOn" @input="(event) => toggleGuesses(event)" />
         <div class="switch"></div>
       </label>
@@ -144,14 +144,13 @@ const props = defineProps<{
 }>()
 
 const tBody = ref<HTMLDivElement | null>(null)
-const { y, arrivedState } = useScroll(tBody, { behavior: 'smooth' })
-const position = reactive({ x: 20, y: 50, w: 340, h: 190 })
+
 const isDraggable = ref(true)
 const isColumnVisibilityOpen = ref(false)
 
+const position = reactive({ x: 20, y: 50, w: 340, h: 190 })
 const title = ref('GUESSES')
 const switchOn = ref(true)
-const switchVisible = ref(true)
 
 onMounted(async () => {
   Object.assign(
@@ -175,7 +174,12 @@ watch(settings, () => {
   setLocalStorage('cg_scoreboard__settings', settings)
 })
 
-type Field = { name: string; value: string; width?: string; sortable: boolean }
+type Field = {
+  name: string
+  value: string
+  width?: string
+  sortable: boolean
+}
 
 const fields: Field[] = [
   { name: '#', value: 'index', width: '30px', sortable: true },
@@ -194,14 +198,12 @@ const activeFields = computed(() =>
         )
     : fields
 )
-const sortType = ref<'desc' | 'asc'>('desc')
 
 const rows = reactive<ScoreboardRow[]>([])
 
 function onStartRound() {
   rows.length = 0
   title.value = 'GUESSES'
-  showSwitch(true)
 }
 
 function renderGuess(guess: Guess) {
@@ -281,7 +283,6 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
   Object.assign(rows, formatedRows)
 
   title.value = `ROUND ${round} RESULTS`
-  showSwitch(false)
 }
 
 function showGameResults(gameResults: GameResult[]) {
@@ -313,30 +314,28 @@ function showGameResults(gameResults: GameResult[]) {
   })
   Object.assign(rows, formatedRows)
 
-  title.value = `HIGHSCORES`
-  showSwitch(false)
+  title.value = 'HIGHSCORES'
 }
 
 function sortByCol(col: Field) {
   if (!col.sortable) return
-
-  sortGuessesBy(col.value, sortType.value)
-  sortType.value = sortType.value === 'asc' ? 'desc' : 'asc'
+  sortGuessesBy(col.value)
 }
 
-function sortGuessesBy(col: string, sortType: 'desc' | 'asc') {
-  if (sortType === 'asc') {
-    rows.sort((a, b) => a[col].value - b[col].value)
-  } else {
-    rows.sort((a, b) => b[col].value - a[col].value)
-  }
+function sortGuessesBy(col: string) {
+  rows.sort((a, b) => {
+    const x = a[col].value
+    const y = b[col].value
+    return isSorted(col) ? x - y : y - x
+  })
 }
 
-function toggleAutoScroll() {
-  settings.isAutoScroll = !settings.isAutoScroll
-  runAutoScroll()
+function isSorted(col: string) {
+  const arr: number[] = rows.map((row) => row[col].value)
+  return JSON.stringify(arr) === JSON.stringify(arr.sort((a, b) => b - a))
 }
 
+const { y, arrivedState } = useScroll(tBody, { behavior: 'smooth' })
 function runAutoScroll() {
   // 0: up, 1: down
   let direction = 1
@@ -376,8 +375,9 @@ function runAutoScroll() {
   requestAnimationFrame(scrollFunc)
 }
 
-function showSwitch(visibility: boolean) {
-  switchVisible.value = visibility
+function toggleAutoScroll() {
+  settings.isAutoScroll = !settings.isAutoScroll
+  runAutoScroll()
 }
 
 function toggleGuesses(event: Event) {
@@ -420,7 +420,6 @@ defineExpose({
   cursor: move;
   z-index: 24;
 }
-
 .scoreboard__header {
   display: grid;
   grid-template-areas:
@@ -431,7 +430,6 @@ defineExpose({
   font-size: 18px;
   align-items: center;
 }
-
 .scoreboard__settings {
   grid-area: settings;
   display: flex;
@@ -482,11 +480,6 @@ defineExpose({
   width: 32px;
   height: 22px;
 }
-
-/* .btn[disabled] {
-  cursor: not-allowed;
-  color: #8f8f8f;
-} */
 
 .btn:hover:not([disabled]) {
   background-position: right center;
@@ -587,7 +580,6 @@ thead th {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* transition: all 0.2s ease-in-out; */
 }
 
 tr:nth-child(odd) {

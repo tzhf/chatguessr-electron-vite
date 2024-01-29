@@ -1,8 +1,8 @@
 import { createApp } from 'vue'
+import { getLocalStorage, setLocalStorage } from './useLocalStorage'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import Frame from './components/Frame.vue'
-import { getLocalStorage, setLocalStorage } from './useLocalStorage'
-import './styles.css'
+import './styles/styles.css'
 
 import './mods/extenssrMenuItemsPlugin'
 import './mods/noCarNoCompass'
