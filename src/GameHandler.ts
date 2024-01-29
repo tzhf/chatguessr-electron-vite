@@ -111,8 +111,8 @@ export default class GameHandler {
         locations,
         gameResults
       )
-    } catch (error) {
-      console.error('could not upload summary', error)
+    } catch (err) {
+      console.error('could not upload summary', err)
     }
     await this.#backend?.sendMessage(
       `🌎 Game finished. Congrats ${getEmoji(gameResults[0].flag)} ${gameResults[0].username} 🏆! ${
@@ -158,8 +158,8 @@ export default class GameHandler {
 
             this.openGuesses()
           })
-          .catch((error) => {
-            console.error(error)
+          .catch((err) => {
+            console.error(err)
           })
       } else {
         this.#game.outGame()
@@ -309,24 +309,23 @@ export default class GameHandler {
     })
 
     this.#backend.on('guess', (userstate: ChatUserstate, message: string) => {
-      this.#handleGuess(userstate, message).catch((error) => {
-        console.error(error)
+      this.#handleGuess(userstate, message).catch((err) => {
+        console.error(err)
       })
     })
 
     this.#backend.on('message', (userstate: ChatUserstate, message: string) => {
-      this.#handleMessage(userstate, message).catch((error) => {
-        console.error(error)
+      this.#handleMessage(userstate, message).catch((err) => {
+        console.error(err)
       })
     })
 
     emitConnectionState()
     try {
       await this.#backend.connect()
-    } catch (error) {
-      this.#win.webContents.send('twitch-error', error)
-      console.log('Backend connection error:', error)
-      console.error(error)
+    } catch (err) {
+      this.#win.webContents.send('twitch-error', err)
+      console.error('Backend connection error:', err)
     }
   }
 
@@ -509,8 +508,8 @@ export default class GameHandler {
     if (message === settings.randomPlonkCmd) {
       const { lat, lng } = await getRandomCoordsInLand(this.#game.seed!.bounds)
       const randomGuess = `!g ${lat}, ${lng}`
-      this.#handleGuess(userstate, randomGuess).catch((error) => {
-        console.error(error)
+      this.#handleGuess(userstate, randomGuess).catch((err) => {
+        console.error(err)
       })
     }
 
@@ -566,8 +565,8 @@ export default class GameHandler {
     })
 
     this.#socket.on('guess', (userData: ChatUserstate, guess: string) => {
-      this.#handleGuess(userData, guess).catch((error) => {
-        console.error(error)
+      this.#handleGuess(userData, guess).catch((err) => {
+        console.error(err)
       })
     })
 

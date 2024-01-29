@@ -210,6 +210,7 @@ type TwitchConnectionState =
   | { state: 'disconnected' }
   | { state: 'connecting' }
   | { state: 'connected'; botUsername: string; channelName: string }
+  | { state: 'error'; error: unknown }
 
 type SocketConnectionState =
   | { state: 'disconnected' }

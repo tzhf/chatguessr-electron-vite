@@ -116,7 +116,7 @@ export const chatguessrApi = {
     return ipcRendererOn('twitch-connection-state', callback)
   },
 
-  onTwitchError(callback: (error) => void) {
+  onTwitchError(callback: (err: unknown) => void) {
     return ipcRendererOn('twitch-error', callback)
   },
 

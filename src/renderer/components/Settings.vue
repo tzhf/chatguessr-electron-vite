@@ -3,12 +3,12 @@
     <div class="modal-wrapper">
       <div class="modal-container">
         <div class="tab">
-          <button :class="{ active: currentTab === 1 }" @click="currentTab = 1">Settings</button>
+          <button :class="{ active: currentTab === 1 }" @click="currentTab = 1">SETTINGS</button>
           <button :class="{ active: currentTab === 2 }" @click="currentTab = 2">
-            Twitch Connect
+            TWITCH CONNECT
           </button>
-          <button :class="{ active: currentTab === 3 }" @click="currentTab = 3">Banlist</button>
-          <button class="close" @click="close">&times;</button>
+          <button :class="{ active: currentTab === 3 }" @click="currentTab = 3">BAN LIST</button>
+          <button class="btn close bg-danger" @click="close"></button>
         </div>
 
         <div v-show="currentTab === 1" class="modal-content">
@@ -115,10 +115,10 @@
               :class="[
                 'btn',
                 clearStatsBtn.state === 1
-                  ? 'warning'
+                  ? 'bg-warning'
                   : clearStatsBtn.state === 2
                     ? 'bg-primary'
-                    : 'danger'
+                    : 'bg-danger'
               ]"
               @click="clearStats()"
             >
@@ -130,12 +130,13 @@
         <div v-show="currentTab === 2" class="modal-content">
           <div class="flex flex-col flex-center gap-05 mx-1">
             <span class="icon twitch-icon"></span>
-            <span :class="[twitchConnectionState.state]">
-              {{ twitchConnectionState.state }}
-              <span v-if="twitchConnectionState.state === 'connected'">
-                as {{ twitchConnectionState.botUsername }}</span
-              >
-            </span>
+            <span :class="[twitchConnectionState.state]">{{
+              twitchConnectionState.state === 'connected'
+                ? 'connected as ' + twitchConnectionState.botUsername
+                : twitchConnectionState.state === 'error'
+                  ? 'Error: ' + twitchConnectionState.error
+                  : twitchConnectionState.state
+            }}</span>
             <button
               :class="['btn', twitchConnectionState.state]"
               @click="chatguessrApi.replaceSession"
@@ -210,7 +211,7 @@
             <span
               v-for="(user, index) of bannedUsers"
               :key="index"
-              class="badge danger"
+              class="badge bg-danger"
               title="Unban user"
               @click="removeBannedUser(index, user)"
               >{{ user.username }}</span
@@ -224,7 +225,7 @@
               spellcheck="false"
               @keyup.enter="addBannedUser()"
             />
-            <button type="button" class="btn danger" @click="addBannedUser()">Ban User</button>
+            <button type="button" class="btn bg-danger" @click="addBannedUser()">Ban User</button>
           </div>
         </div>
       </div>
@@ -266,9 +267,6 @@ const removeBannedUser = (index: number, user: { username: string }) => {
   chatguessrApi.deleteBannedUser(user.username)
   bannedUsers.splice(index, 1)
 }
-// onBeforeUnmount(chatguessrApi.onTwitchError(() => {
-//   console.log("error")
-// }));
 
 const clearStatsBtn = reactive({ state: 0, text: '🗑️ Clear user stats' })
 const clearStats = () => {
@@ -321,7 +319,7 @@ textarea {
 }
 
 .modal-container {
-  font-family: Montserrat, sans-serif;
+  font-family: Montserrat;
   font-size: 13px;
   font-weight: 700;
   color: white;
@@ -348,58 +346,47 @@ textarea {
 }
 
 .tab {
-  overflow: hidden;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 40px;
 }
 
 .tab button {
-  line-height: 1;
-  padding: 0.5rem;
-  letter-spacing: 1px;
-  color: #fff;
+  font-size: 12px;
   font-weight: 500;
-  background-color: rgb(58, 58, 58);
+  letter-spacing: 2px;
+  color: #fff;
   transition: 0.3s;
   cursor: pointer;
 }
 
 .tab button:not(:last-child) {
+  background-color: rgb(58, 58, 58);
   border-right: solid 1px rgb(0, 0, 0);
 }
 
-.tab button:hover,
+.tab button:hover:not(:last-child),
 .tab button.active {
   color: #000;
   background: var(--primary);
 }
 
-.tab button.close {
-  font-size: 24px;
-  background: var(--danger);
-}
-
-.tab button.close:hover {
-  background: var(--danger-hover);
-}
-
-.tab button.close:active {
-  background: var(--danger-active);
+.close:after {
+  font-size: 23px;
+  display: inline-block;
+  content: '\00d7';
 }
 
 [data-tip] {
   position: relative;
 }
-
-[data-tip]:hover:after,
-[data-tip]:hover:before {
-  display: block;
-}
-
-[data-tip]:before {
-  content: '';
+[data-tip]:before,
+[data-tip]:after {
   display: none;
   position: absolute;
+  z-index: 1;
+}
+[data-tip]:before {
+  content: '';
   top: 22px;
   right: 4px;
   width: 0;
@@ -407,47 +394,44 @@ textarea {
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-bottom: 8px solid rgb(127 127 127);
-  z-index: 1;
 }
-
 [data-tip]:after {
   content: attr(data-tip);
-  display: none;
-  position: absolute;
   top: 30px;
   right: 0;
-  min-width: 200px;
   padding: 0.7rem 1rem;
   text-align: center;
-  /* word-wrap: break-word; */
   color: #ffffff;
   background: rgb(127 127 127);
   border-radius: 4px;
-  z-index: 1;
+}
+[data-tip]:hover:after,
+[data-tip]:hover:before {
+  display: block;
 }
 
 .btn.connected {
   background: var(--primary);
 }
-
-.btn.connecting {
-  background: rgb(255, 174, 0);
-}
-
-.btn.disconnected {
-  background: rgb(255, 0, 0);
-}
-
 span.connected {
   color: var(--primary);
 }
 
+.btn.connecting {
+  background: var(--warning);
+}
 span.connecting {
-  color: rgb(255, 174, 0);
+  color: var(--warning);
 }
 
-span.disconnected {
-  color: rgb(255, 0, 0);
+.btn.disconnected,
+.btn.error {
+  background: var(--danger);
+}
+
+span.disconnected,
+span.error {
+  color: var(--danger);
 }
 
 .twitch-icon {

@@ -290,6 +290,12 @@ function useTwitchConnectionState() {
     })
   )
 
+  onBeforeUnmount(
+    chatguessrApi.onTwitchError((err) => {
+      conn.value = { state: 'error', error: err }
+    })
+  )
+
   return conn
 }
 

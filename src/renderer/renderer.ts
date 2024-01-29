@@ -300,9 +300,9 @@ async function hijackMap() {
         if (!isGamePage()) return
         globalMap = map
         resolve()
-      } catch (error) {
-        console.error('GeoguessrHijackMap Error:', error)
-        reject(error)
+      } catch (err) {
+        console.error('GeoguessrHijackMap Error:', err)
+        reject(err)
       }
     }
 
