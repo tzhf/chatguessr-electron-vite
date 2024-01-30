@@ -149,20 +149,7 @@
                     : 'Login'
               }}
             </button>
-          </div>
-          <h2>Status :</h2>
-          <div style="margin-left: 1rem">
-            <label class="form__group">
-              Twitch :<span :class="[twitchConnectionState.state]">{{
-                twitchConnectionState.state
-              }}</span>
-            </label>
-            <label class="form__group">
-              ChatGuessr server :<span :class="[socketConnectionState.state]">{{
-                socketConnectionState.state
-              }}</span>
-            </label>
-            <label class="form__group" data-tip="Your streamer account">
+            <div class="form__group" data-tip="Your streamer account">
               Your streaming channel :
               <form @submit.prevent="onChannelNameUpdate()">
                 <div class="flex gap-02">
@@ -183,11 +170,9 @@
                   </button>
                 </div>
               </form>
-            </label>
-
-            <label class="form__group">
+            </div>
+            <div class="form__group">
               Your cg link :
-
               <div class="flex gap-02">
                 <input
                   type="text"
@@ -201,7 +186,20 @@
                 />
                 <button class="btn bg-primary" style="width: 70px">Copy🖊️</button>
               </div>
-            </label>
+            </div>
+          </div>
+          <h2>Status :</h2>
+          <div class="ml-05">
+            <div class="form__group">
+              Twitch :<span :class="[twitchConnectionState.state]">{{
+                twitchConnectionState.state
+              }}</span>
+            </div>
+            <div class="form__group">
+              ChatGuessr server :<span :class="[socketConnectionState.state]">{{
+                socketConnectionState.state
+              }}</span>
+            </div>
           </div>
         </div>
 
@@ -220,7 +218,7 @@
           <div class="form__group gap-05">
             <input
               v-model.trim="newBannedUser"
-              class="form__group mr-05"
+              class="form__group"
               type="text"
               spellcheck="false"
               @keyup.enter="addBannedUser()"
@@ -376,40 +374,6 @@ textarea {
   content: '\00d7';
 }
 
-[data-tip] {
-  position: relative;
-}
-[data-tip]:before,
-[data-tip]:after {
-  display: none;
-  position: absolute;
-  z-index: 1;
-}
-[data-tip]:before {
-  content: '';
-  top: 22px;
-  right: 4px;
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 8px solid rgb(127 127 127);
-}
-[data-tip]:after {
-  content: attr(data-tip);
-  top: 30px;
-  right: 0;
-  padding: 0.7rem 1rem;
-  text-align: center;
-  color: #ffffff;
-  background: rgb(127 127 127);
-  border-radius: 4px;
-}
-[data-tip]:hover:after,
-[data-tip]:hover:before {
-  display: block;
-}
-
 .btn.connected {
   background: var(--primary);
 }
@@ -448,13 +412,46 @@ span.error {
   box-shadow: 1px 0 4px #00000073;
 }
 
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
+[data-tip] {
+  position: relative;
+}
+[data-tip]:before,
+[data-tip]:after {
+  display: none;
+  position: absolute;
+  z-index: 1;
+}
+[data-tip]:before {
+  content: '';
+  top: 22px;
+  right: 4px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid rgb(127 127 127);
+}
+[data-tip]:after {
+  content: attr(data-tip);
+  top: 30px;
+  right: 0;
+  padding: 0.7rem 1rem;
+  text-align: center;
+  color: #ffffff;
+  background: rgb(127 127 127);
+  border-radius: 4px;
+}
+[data-tip]:hover:after,
+[data-tip]:hover:before {
+  display: block;
 }
 
-.modal-enter-active .modal-container,
-.modal-leave-active .modal-container {
+.settings_modal-enter-from,
+.settings_modal-leave-to {
+  opacity: 0;
+}
+.settings_modal-enter-active .modal-container,
+.settings_modal-leave-active .modal-container {
   -webkit-transform: scale(1.1);
   transform: scale(1.1);
 }

@@ -9,12 +9,10 @@
 }
 
 @font-face {
-  font-family: Montserrat;
-  src:
-    url(asset:fonts/montserrat-regular-webfont.woff2) format('woff2'),
-    url(asset:fonts/montserrat-regular-webfont.woff) format('woff');
-  font-weight: 400;
+  font-family: 'Montserrat';
   font-style: normal;
+  font-weight: 400;
+  src: url(asset:fonts/montserrat-regular-webfont.woff2) format('woff2');
 }
 
 h2,
@@ -191,11 +189,9 @@ textarea:focus {
 }
 .btn:hover:not([disabled]) {
   opacity: 0.9;
-  /* filter: alpha(opacity=90); */
 }
 .btn:active:not([disabled]) {
   opacity: 0.8;
-  /* filter: alpha(opacity=80); */
 }
 .btn[disabled] {
   cursor: not-allowed;

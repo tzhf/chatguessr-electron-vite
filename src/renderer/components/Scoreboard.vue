@@ -398,7 +398,7 @@ defineExpose({
 
 <style scoped>
 .scoreboard {
-  font-family: Montserrat, sans-serif;
+  font-family: 'Montserrat', sans-serif;
   text-align: center;
   padding: 5px;
   color: #fff;
@@ -445,7 +445,7 @@ defineExpose({
   position: absolute;
   display: flex;
   gap: 0.19rem;
-  margin-top: -5px;
+  margin-top: -7px;
   left: 75px;
   padding: 0.2rem;
   background-color: #000;
@@ -635,7 +635,6 @@ th.sortable:hover {
 .expand {
   animation: expand 0.3s ease-out;
 }
-
 @keyframes expand {
   from {
     transform: scale(0);
@@ -646,5 +645,26 @@ th.sortable:hover {
 .medal {
   font-size: 20px;
   line-height: 0;
+}
+
+.scoreboard_modal-enter-active {
+  animation: bounce-in 0.3s;
+}
+.scoreboard_modal-leave-active {
+  animation: bounce-in 0.3s reverse;
+}
+@keyframes bounce-in {
+  0% {
+    /* transform: scale(0); */
+    transform: scale3d(0, 0, 0);
+  }
+  50% {
+    transform: scale3d(1.2, 1.2, 1.2);
+    /* transform: scale(1.2); */
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+    /* transform: scale(1); */
+  }
 }
 </style>

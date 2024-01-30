@@ -3,11 +3,11 @@ import { once } from 'events'
 import { io } from 'socket.io-client'
 import Game from './Game'
 import TwitchBackend from './utils/useTwitchJS'
-import { useSettings } from './utils/useSettings'
+import { settings, saveSettings } from './utils/useSettings'
 import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/useGameHelper'
 import { getEmoji, randomCountryFlag, selectFlag } from './utils/flags/flags'
 
-const { settings, saveSettings } = useSettings()
+// const { settings, saveSettings } = useSettings()
 
 const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
 
@@ -219,7 +219,7 @@ export default class GameHandler {
     })
 
     ipcMain.handle('get-settings', () => {
-      return { ...settings }
+      return settings
     })
 
     ipcMain.on('save-settings', (_event, settings_: Settings) => {
@@ -395,26 +395,19 @@ export default class GameHandler {
     const userId = userstate.badges?.broadcaster === '1' ? 'BROADCASTER' : userstate['user-id']
 
     message = message.trim().toLowerCase()
+
     if (message === settings.cgCmd) {
-      if (userId === 'BROADCASTER') {
-        await this.#backend?.sendMessage(
-          settings.cgMsg.replace(
-            '<your cg link>',
-            `chatguessr.com/map/${this.#backend?.botUsername}`
-          )
-        )
-      } else if (!this.#cgCooldown) {
-        await this.#backend?.sendMessage(
-          settings.cgMsg.replace(
-            '<your cg link>',
-            `chatguessr.com/map/${this.#backend?.botUsername}`
-          )
-        )
-        this.#cgCooldown = true
-        setTimeout(() => {
-          this.#cgCooldown = false
-        }, settings.cgCmdCooldown * 1000)
-      }
+      if (this.#cgCooldown && userId !== 'BROADCASTER') return
+
+      await this.#backend?.sendMessage(
+        settings.cgMsg.replace('<your cg link>', `chatguessr.com/map/${this.#backend?.botUsername}`)
+      )
+
+      this.#cgCooldown = true
+      setTimeout(() => {
+        this.#cgCooldown = false
+      }, settings.cgCmdCooldown * 1000)
+
       return
     }
 
@@ -443,11 +436,14 @@ export default class GameHandler {
       } else if (countryReq === 'random') {
         await this.#backend?.sendMessage(`${userstate['display-name']} got ${getEmoji(newFlag)}`)
       }
+
       return
     }
 
     if (message === settings.flagsCmd) {
       await this.#backend?.sendMessage('Available flags: chatguessr.com/flags')
+
+      return
     }
 
     if (message === settings.getUserStatsCmd) {
@@ -468,6 +464,7 @@ export default class GameHandler {
 					Perfects: ${userInfo.perfects}.
 				`)
       }
+
       return
     }
 
@@ -488,6 +485,7 @@ export default class GameHandler {
         }
         await this.#backend?.sendMessage(`Channels best: ${msg}`)
       }
+
       return
     }
 
@@ -506,11 +504,15 @@ export default class GameHandler {
     }
 
     if (message === settings.randomPlonkCmd) {
+      if (!this.#game.isInGame) return
+
       const { lat, lng } = await getRandomCoordsInLand(this.#game.seed!.bounds)
       const randomGuess = `!g ${lat}, ${lng}`
       this.#handleGuess(userstate, randomGuess).catch((err) => {
         console.error(err)
       })
+
+      return
     }
 
     // streamer commands

@@ -520,7 +520,7 @@ const handleImportAudioFile = async () => {
   width: 380px;
   margin: 0.5rem auto;
   padding: 0.8rem;
-  font-family: 'Montserrat';
+  font-family: 'Montserrat', sans-serif;
   font-size: 14px;
   color: #ffffff;
   background-color: var(--bg-dark-transparent);

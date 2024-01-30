@@ -1,26 +1,36 @@
 <template>
   <div id="CGFrameContainer" :class="{ hidden: gameState === 'none' }">
-    <Scoreboard
-      ref="scoreboard"
-      :game-state="gameState"
-      :is-multi-guess="isMultiGuess"
-      :on-row-click="onRowClick"
-      :set-guesses-open="chatguessrApi.setGuessesOpen"
-      :class="{ hidden: gameState === 'none' || !widgetVisibility.scoreboardVisible }"
-    />
+    <transition name="scoreboard_modal">
+      <Scoreboard
+        v-show="gameState !== 'none' && widgetVisibility.scoreboardVisible"
+        ref="scoreboard"
+        :game-state="gameState"
+        :is-multi-guess="isMultiGuess"
+        :on-row-click="onRowClick"
+        :set-guesses-open="chatguessrApi.setGuessesOpen"
+      />
+    </transition>
 
     <Timer
       :game-state="gameState"
       :import-audio-file="chatguessrApi.importAudioFile"
       :app-data-path-exists="chatguessrApi.appDataPathExists"
       :set-guesses-open="chatguessrApi.setGuessesOpen"
-      :style="
-        widgetVisibility.timerVisible && gameState === 'in-round'
-          ? 'visibility: visible'
-          : 'visibility: hidden'
-      "
+      :class="{ hidden: gameState !== 'in-round' || !widgetVisibility.timerVisible }"
     />
   </div>
+
+  <Suspense>
+    <transition name="settings_modal">
+      <Settings
+        v-if="settingsVisible"
+        :chatguessr-api="chatguessrApi"
+        :socket-connection-state="socketConnectionState"
+        :twitch-connection-state="twitchConnectionState"
+        @close="settingsVisible = false"
+      />
+    </transition>
+  </Suspense>
 
   <div class="cg-menu">
     <button
@@ -67,18 +77,6 @@
       <span class="icon cg-icon--flag"></span>
     </button>
   </div>
-
-  <Suspense>
-    <transition name="modal">
-      <Settings
-        v-if="settingsVisible"
-        :chatguessr-api="chatguessrApi"
-        :socket-connection-state="socketConnectionState"
-        :twitch-connection-state="twitchConnectionState"
-        @close="settingsVisible = false"
-      />
-    </transition>
-  </Suspense>
 </template>
 
 <script lang="ts" setup>
