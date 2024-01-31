@@ -208,7 +208,10 @@ export default class Game {
     })
   }
 
-  async handleUserGuess(userstate: import('tmi.js').ChatUserstate, location: LatLng) {
+  async handleUserGuess(
+    userstate: import('tmi.js').ChatUserstate,
+    location: LatLng
+  ): Promise<Guess> {
     const dbUser = this.#db.getOrCreateUser(userstate['user-id'], userstate['display-name'])
 
     const existingGuess = this.#db.getUserGuess(this.#roundId, dbUser.id)

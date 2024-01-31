@@ -184,7 +184,8 @@ onBeforeUnmount(
 
     if (restoredGuesses.length > 0) {
       if (isMultiGuess.value) {
-        scoreboard.value!.renderMultiGuess(restoredGuesses)
+        // TODO
+        // scoreboard.value!.renderMultiGuess(restoredGuesses)
       } else {
         // Not very fast KEKW
         for (const guess of restoredGuesses) {
@@ -227,8 +228,8 @@ onBeforeUnmount(
 )
 
 onBeforeUnmount(
-  chatguessrApi.onReceiveMultiGuesses((guesses) => {
-    scoreboard.value!.renderMultiGuess(guesses)
+  chatguessrApi.onReceiveMultiGuesses((guess) => {
+    scoreboard.value!.renderMultiGuess(guess)
   })
 )
 

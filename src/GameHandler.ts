@@ -7,8 +7,6 @@ import { settings, saveSettings } from './utils/useSettings'
 import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/useGameHelper'
 import { getEmoji, randomCountryFlag, selectFlag } from './utils/flags/flags'
 
-// const { settings, saveSettings } = useSettings()
-
 const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
 
 export default class GameHandler {
@@ -354,15 +352,20 @@ export default class GameHandler {
           )
         }
       } else {
-        const guesses = this.#game.getMultiGuesses()
-        this.#win.webContents.send('render-multiguess', guesses)
+        // const guesses = this.#game.getMultiGuesses()
+        // this.#win.webContents.send('render-multiguess', guess)
+
         if (!guess.modified) {
+          this.#win.webContents.send('render-multiguess', guess)
+
           if (settings.showHasGuessed) {
             await this.#backend?.sendMessage(
               `${getEmoji(guess.flag)} ${userstate['display-name']} has guessed`
             )
           }
         } else {
+          this.#win.webContents.send('render-multiguess', guess)
+
           if (settings.showGuessChanged) {
             await this.#backend?.sendMessage(
               `${getEmoji(guess.flag)} ${userstate['display-name']} guess changed`

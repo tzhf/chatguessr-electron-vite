@@ -65,7 +65,7 @@ export const chatguessrApi = {
     return ipcRendererOn('render-guess', callback)
   },
 
-  onReceiveMultiGuesses(callback: (guesses: Guess[]) => void) {
+  onReceiveMultiGuesses(callback: (guess: Guess) => void) {
     return ipcRendererOn('render-multiguess', callback)
   },
 

@@ -41,7 +41,6 @@ type Location_ = {
 }
 
 type Guess = {
-  // index?: number | string
   user: string
   username: string
   color: string
@@ -51,16 +50,16 @@ type Guess = {
   lastStreak: number | null
   distance: number
   score: number
-  time?: number
-  // animationActive?: boolean
+  // time?: number
+  modified?: boolean
 }
 
-type MultiGuess = {
-  user: string
-  username: string
-  color: string
-  flag: string | null
-}
+// type MultiGuess = {
+//   user: string
+//   username: string
+//   color: string
+//   flag: string | null
+// }
 
 type RoundResult = {
   id: string
@@ -90,6 +89,7 @@ type GameResult = {
 }
 
 type ScoreboardRow = {
+  modified?: boolean
   index: { value: number; display: string | number }
   username: string
   flag: string | null
@@ -112,7 +112,6 @@ type ScoreboardRow = {
   totalDistance?: number
   scores?: (number | null)[]
   distances?: (number | null)[]
-  animationActive?: boolean
 }
 
 type GameResultDisplay = {

@@ -98,24 +98,22 @@
         </tr>
       </thead>
       <tbody ref="tBody">
-        <tr
-          v-for="row in rows"
-          :key="row.username"
-          :class="{ expand: row.animationActive }"
-          @click="props.onRowClick(row)"
-        >
-          <td v-for="col in activeColumns" :key="col.value" :style="{ width: col.width }">
-            <span v-if="col.value === 'player'" :style="{ color: row.color }" class="username">
-              <span
-                v-if="row.flag"
-                class="flag-icon"
-                :style="{ backgroundImage: `url('flag:${row.flag}')` }"
-              ></span>
-              {{ row.username }}
-            </span>
-            <span v-else>{{ row[col.value].display }}</span>
-          </td>
-        </tr>
+        <TransitionGroup name="scoreboard_rows">
+          <tr v-for="row in rows" :key="row.username" @click="props.onRowClick(row)">
+            <td v-for="col in activeColumns" :key="col.value" :style="{ width: col.width }">
+              <span v-if="col.value === 'player'" :style="{ color: row.color }" class="username">
+                <span
+                  v-if="row.flag"
+                  class="flag-icon"
+                  :style="{ backgroundImage: `url('flag:${row.flag}')` }"
+                ></span>
+                {{ row.username }}
+                <span v-if="row.modified">*</span>
+              </span>
+              <span v-else>{{ row[col.value].display }}</span>
+            </td>
+          </tr>
+        </TransitionGroup>
       </tbody>
     </table>
   </Vue3DraggableResizable>
@@ -198,7 +196,7 @@ function onStartRound() {
 }
 
 function renderGuess(guess: Guess) {
-  console.log('🚀 ~ renderGuess ~ guess:', guess)
+  console.log('🚀 ~ renderGuess:', guess)
   const formatedRow = {
     index: { value: 0, display: '' },
     username: guess.username,
@@ -206,8 +204,7 @@ function renderGuess(guess: Guess) {
     color: guess.color,
     streak: { value: guess.streak, display: guess.streak },
     distance: { value: guess.distance, display: toMeter(guess.distance) },
-    score: { value: guess.score, display: guess.score },
-    animationActive: true
+    score: { value: guess.score, display: guess.score }
   }
 
   rows.push(formatedRow)
@@ -217,36 +214,36 @@ function renderGuess(guess: Guess) {
     rows[i].index.value = i + 1
     rows[i].index.display = i + 1
   }
-
-  setTimeout(() => {
-    formatedRow.animationActive = false
-  }, 500)
 }
 
-function renderMultiGuess(guesses: Guess[]) {
-  console.log('🚀 ~ renderMultiGuess ~ guesses:', guesses)
-  const formatedRows = guesses.map((guess) => {
-    return {
-      index: { value: 0, display: '' },
-      username: guess.username,
-      flag: guess.flag,
-      color: guess.color,
-      streak: { value: 0, display: '' },
-      distance: { value: 0, display: '' },
-      score: { value: 0, display: '' }
-    }
-  })
-  Object.assign(rows, formatedRows)
+function renderMultiGuess(guess: Guess) {
+  console.log('🚀 ~ renderMultiGuess:', guess)
+  const formatedRow = {
+    index: { value: 0, display: '' },
+    username: guess.username,
+    flag: guess.flag,
+    color: guess.color,
+    streak: { value: 0, display: '' },
+    distance: { value: guess.distance, display: '' },
+    score: { value: 0, display: '' },
+    modified: guess.modified
+  }
 
-  // guess.animationActive = true
-
-  // setTimeout(() => {
-  //   guess.animationActive = false
-  // }, 500)
+  if (guess.modified) {
+    const index = rows.findIndex((row) => row.username == guess.username)
+    rows.splice(index, 1)
+    // TODO: find a better soluion
+    // Animation is not triggered if we push too fast because key:username is remaining in the DOM
+    // using uuid as key works here but messes up the rest
+    setTimeout(() => {
+      rows.push(formatedRow)
+    }, 50)
+  } else {
+    rows.push(formatedRow)
+  }
 }
 
 function showRoundResults(round: number, roundResults: RoundResult[]) {
-  console.log('🚀 ~ showRoundResults ~ roundResults:', roundResults)
   const formatedRows = roundResults.map((result, i) => {
     return {
       index: { value: i + 1, display: i + 1 },
@@ -277,7 +274,6 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
 }
 
 function showGameResults(gameResults: GameResult[]) {
-  console.log('🚀 ~ showGameResults ~ gameResults:', gameResults)
   const formatedRows = gameResults.map((result, i) => {
     return {
       index: { value: i + 1, display: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1 },
@@ -632,21 +628,28 @@ th.sortable:hover {
   border-radius: 5px;
 }
 
-.expand {
-  animation: expand 0.3s ease-out;
-}
-@keyframes expand {
-  from {
-    transform: scale(0);
-    opacity: 0;
-  }
-}
-
 .medal {
   font-size: 20px;
   line-height: 0;
 }
 
+/* ROWS ANIMATION */
+
+.vdr-container:not(.dragging, .resizing) .scoreboard_rows-move {
+  transition: transform 0.2s ease;
+}
+
+.scoreboard_rows-enter-active,
+.scoreboard_rows-leave-active {
+  transition: transform 0.2s ease;
+}
+.scoreboard_rows-enter-from,
+.scoreboard_rows-leave-to {
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* MODAL ANIMATION */
 .scoreboard_modal-enter-active {
   animation: bounce-in 0.3s;
 }
@@ -655,16 +658,13 @@ th.sortable:hover {
 }
 @keyframes bounce-in {
   0% {
-    /* transform: scale(0); */
     transform: scale3d(0, 0, 0);
   }
   50% {
     transform: scale3d(1.2, 1.2, 1.2);
-    /* transform: scale(1.2); */
   }
   100% {
     transform: scale3d(1, 1, 1);
-    /* transform: scale(1); */
   }
 }
 </style>
