@@ -8,13 +8,13 @@
     :min-w="340"
     :min-h="186"
     :parent="true"
-    class-name-handle="scoreboard-handle"
     class="scoreboard"
+    class-name-handle="scoreboard_handle"
     @drag-end="savePosition"
     @resize-end="savePosition"
   >
-    <div class="scoreboard__header">
-      <div class="scoreboard__settings">
+    <div class="scoreboard_header">
+      <div class="scoreboard_settings">
         <button class="btn btn-icon" @click="toggleAutoScroll">
           <svg width="16" height="16" viewBox="0 0 24 24">
             <g :fill="settings.autoScroll ? '#59f3b3' : 'white'">
@@ -35,7 +35,7 @@
             />
           </svg>
         </button>
-        <div v-if="isColumnVisibilityOpen" class="column__visibility">
+        <div v-if="isColumnVisibilityOpen" class="column_visibility">
           <button
             class="btn"
             :class="{ active: settings.streak }"
@@ -62,12 +62,12 @@
           </button>
         </div>
       </div>
-      <div class="scoreboard__title">{{ title }} ({{ rows.length }})</div>
-      <label v-if="gameState === 'in-round'" class="switchContainer">
+      <div class="scoreboard_title">{{ title }} ({{ rows.length }})</div>
+      <label v-if="gameState === 'in-round'" class="switch_container">
         <input type="checkbox" :checked="switchOn" @input="(event) => toggleGuesses(event)" />
         <div class="switch"></div>
       </label>
-      <div v-if="isMultiGuess && gameState === 'in-round'" class="scoreboard__hint">
+      <div v-if="isMultiGuess && gameState === 'in-round'" class="scoreboard_hint">
         Ordered by guess time
       </div>
     </div>
@@ -77,45 +77,46 @@
       min="0.5"
       step="0.1"
       max="2"
-      class="scrollSpeedSlider"
+      class="scrollspeed_slider"
       :class="{ hidden: !settings.autoScroll }"
       @mouseover="isDraggable = false"
       @mouseleave="isDraggable = true"
     />
-
-    <table>
-      <thead>
-        <tr>
-          <th
-            v-for="col in activeColumns"
-            :key="col.value"
-            :class="{ sortable: col.sortable }"
-            :style="{ width: col.width }"
-            @click="sortByCol(col)"
-          >
-            {{ col.name }}
-          </th>
-        </tr>
-      </thead>
-      <tbody ref="tBody">
-        <TransitionGroup name="scoreboard_rows">
-          <tr v-for="row in rows" :key="row.username" @click="props.onRowClick(row)">
-            <td v-for="col in activeColumns" :key="col.value" :style="{ width: col.width }">
-              <span v-if="col.value === 'player'" :style="{ color: row.color }" class="username">
-                <span
-                  v-if="row.flag"
-                  class="flag-icon"
-                  :style="{ backgroundImage: `url('flag:${row.flag}')` }"
-                ></span>
-                {{ row.username }}
-                <span v-if="row.modified">*</span>
-              </span>
-              <span v-else>{{ row[col.value].display }}</span>
-            </td>
+    <div ref="tableContainer" class="table_container">
+      <table>
+        <thead>
+          <tr>
+            <th
+              v-for="col in activeCols"
+              :key="col.value"
+              :class="{ sortable: col.sortable }"
+              :style="{ width: col.width }"
+              @click="sortByCol(col)"
+            >
+              {{ col.name }}
+            </th>
           </tr>
-        </TransitionGroup>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <TransitionGroup name="scoreboard_rows">
+            <tr v-for="row in rows" :key="row.username" @click="props.onRowClick(row)">
+              <td v-for="col in activeCols" :key="col.value">
+                <span v-if="col.value === 'player'" :style="{ color: row.color }" class="username">
+                  <span
+                    v-if="row.flag"
+                    class="flag-icon"
+                    :style="{ backgroundImage: `url('flag:${row.flag}')` }"
+                  ></span>
+                  {{ row.username }}
+                  <span v-if="row.modified">*</span>
+                </span>
+                <span v-else>{{ row[col.value].display }}</span>
+              </td>
+            </tr>
+          </TransitionGroup>
+        </tbody>
+      </table>
+    </div>
   </Vue3DraggableResizable>
 </template>
 
@@ -132,7 +133,8 @@ const props = defineProps<{
   onRowClick: (row: ScoreboardRow) => void
 }>()
 
-const tBody = ref<HTMLDivElement | null>(null)
+const tableContainer = ref<HTMLDivElement | null>(null)
+const { y, arrivedState } = useScroll(tableContainer, { behavior: 'smooth' })
 
 const isDraggable = ref(true)
 const isColumnVisibilityOpen = ref(false)
@@ -172,13 +174,13 @@ type Column = {
 
 const columns: Column[] = [
   { name: '#', value: 'index', width: '30px', sortable: true },
-  { name: 'Player', value: 'player', sortable: false },
+  { name: 'Player', value: 'player', width: '100%', sortable: false },
   { name: 'Streak', value: 'streak', width: '60px', sortable: true },
   { name: 'Distance', value: 'distance', width: '85px', sortable: true },
   { name: 'Score', value: 'score', width: '65px', sortable: true }
 ]
 
-const activeColumns = computed(() =>
+const activeCols = computed(() =>
   props.gameState === 'in-round'
     ? props.isMultiGuess
       ? [columns[1]]
@@ -271,6 +273,7 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
   Object.assign(rows, formatedRows)
 
   title.value = `ROUND ${round} RESULTS`
+  scrollToTop()
 }
 
 function showGameResults(gameResults: GameResult[]) {
@@ -302,6 +305,7 @@ function showGameResults(gameResults: GameResult[]) {
   Object.assign(rows, formatedRows)
 
   title.value = 'HIGHSCORES'
+  scrollToTop()
 }
 
 function sortByCol(col: Column) {
@@ -322,14 +326,20 @@ function isSorted(col: string) {
   return JSON.stringify(arr) === JSON.stringify(arr.sort((a, b) => b - a))
 }
 
-const { y, arrivedState } = useScroll(tBody, { behavior: 'smooth' })
+function toggleAutoScroll() {
+  settings.autoScroll = !settings.autoScroll
+  runAutoScroll()
+}
+
+// 0: up, 1: down
+let direction = 1
+function scrollToTop() {
+  y.value = 0
+  direction = 0
+}
+
 function runAutoScroll() {
-  // 0: up, 1: down
-  let direction = 1
-  // we need decimals to reduce the default speed
-  // however 'y' cannot handle decimals so we increment newY
-  // one downside is that we can't scroll during autoscroll
-  let newY = y.value
+  requestAnimationFrame(scrollFunc)
 
   function scrollFunc() {
     if (!settings.autoScroll) return
@@ -342,15 +352,13 @@ function runAutoScroll() {
           requestAnimationFrame(scrollFunc)
         }, 2000)
       } else {
-        newY = newY + settings.scrollSpeed
-        y.value = newY
+        y.value += settings.scrollSpeed
         requestAnimationFrame(scrollFunc)
       }
     } else {
       if (arrivedState.top) {
         setTimeout(() => {
           direction = 1
-          newY = y.value
           requestAnimationFrame(scrollFunc)
         }, 3500)
       } else {
@@ -359,12 +367,6 @@ function runAutoScroll() {
       }
     }
   }
-  requestAnimationFrame(scrollFunc)
-}
-
-function toggleAutoScroll() {
-  settings.autoScroll = !settings.autoScroll
-  runAutoScroll()
 }
 
 function toggleGuesses(event: Event) {
@@ -407,7 +409,7 @@ defineExpose({
   cursor: move;
   z-index: 24;
 }
-.scoreboard__header {
+.scoreboard_header {
   display: grid;
   grid-template-areas:
     'settings title switch'
@@ -417,13 +419,13 @@ defineExpose({
   font-size: 18px;
   align-items: center;
 }
-.scoreboard__settings {
+.scoreboard_settings {
   grid-area: settings;
   display: flex;
   gap: 0.2rem;
 }
 
-.scoreboard__title {
+.scoreboard_title {
   height: 36px;
   display: flex;
   justify-content: center;
@@ -431,12 +433,12 @@ defineExpose({
   grid-area: title;
 }
 
-.scoreboard__hint {
+.scoreboard_hint {
   grid-area: hint;
   font-size: 0.75rem;
 }
 
-.column__visibility {
+.column_visibility {
   font-size: 12px;
   position: absolute;
   display: flex;
@@ -476,7 +478,7 @@ defineExpose({
   background-image: linear-gradient(to right, #1cd997 0%, #33b09b 51%, #1cd997 100%);
 }
 
-.switchContainer {
+.switch_container {
   grid-area: switch;
   position: relative;
   display: inline-block;
@@ -485,12 +487,12 @@ defineExpose({
   margin-left: auto;
 }
 
-.switchContainer:hover {
+.switch_container:hover {
   transition: box-shadow 0.3s;
   box-shadow: 2px 2px 5px -2px #000;
 }
 
-.switchContainer input {
+.switch_container input {
   display: none;
 }
 
@@ -527,65 +529,58 @@ input:checked + .switch:before {
   transform: translateX(11px);
 }
 
-table {
-  position: relative;
-  height: calc(100% - 89px);
-  margin: 0 auto;
-  border-collapse: collapse;
-  table-layout: fixed;
-  word-wrap: break-word;
+.table_container {
+  height: calc(100% - 60px);
+  overflow: auto;
 }
-
-tbody {
-  font-weight: bold;
-  height: 100%;
-  position: absolute;
-  overflow-y: scroll;
-  overflow-x: hidden;
-}
-
-tbody::-webkit-scrollbar {
+.table_container::-webkit-scrollbar {
   display: none;
 }
 
-thead,
-tbody tr {
-  display: table;
+table {
   width: 100%;
+  border-collapse: collapse;
   table-layout: fixed;
+  font-weight: bold;
+  line-height: 1em;
 }
 
 thead {
-  font-size: 14px;
-  background-color: rgba(0, 0, 0, 0.5);
+  top: 0;
+  position: sticky;
+  background-color: rgba(0, 0, 0);
+  z-index: 2;
 }
 
-tbody td,
-thead th {
+th,
+td {
   padding: 8px 0;
-  line-height: 1em;
+}
+
+tbody td {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-tr:nth-child(odd) {
+tbody tr:nth-child(odd) {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-tr:nth-child(even) {
+tbody tr:nth-child(even) {
   background-color: rgba(0, 0, 0, 0.2);
 }
 
-tbody > tr:hover {
-  transition: 0.1s;
-  -webkit-transition: 0.1s;
-  transform: scale(1.01);
+tbody tr:hover {
   background-color: rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s;
+  transform: scale(1.01);
+  /* -webkit-transition: 0.1s; */
 }
 
 th.sortable {
   cursor: pointer;
+  transition: color 0.2s ease-in-out;
 }
 
 th.sortable:hover {
@@ -593,7 +588,7 @@ th.sortable:hover {
 }
 
 /* SCROLL SLIDER */
-.scrollSpeedSlider {
+.scrollspeed_slider {
   height: 5px;
   padding: 0;
   appearance: none;
@@ -603,14 +598,14 @@ th.sortable:hover {
   outline: none;
   opacity: 0.2;
   transition: opacity 0.3s;
-  -webkit-transition: opacity 0.3s;
+  /* -webkit-transition: opacity 0.3s; */
 }
 
-.scrollSpeedSlider:hover {
+.scrollspeed_slider:hover {
   opacity: 1;
 }
 
-.scrollSpeedSlider::-webkit-slider-thumb {
+.scrollspeed_slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 30px;
@@ -620,7 +615,7 @@ th.sortable:hover {
   border-radius: 5px;
 }
 
-.scrollSpeedSlider::-moz-range-thumb {
+.scrollspeed_slider::-moz-range-thumb {
   width: 30px;
   height: 7px;
   background: #63db85;

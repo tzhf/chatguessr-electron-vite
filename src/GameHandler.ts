@@ -353,19 +353,15 @@ export default class GameHandler {
         }
       } else {
         // const guesses = this.#game.getMultiGuesses()
-        // this.#win.webContents.send('render-multiguess', guess)
+        this.#win.webContents.send('render-multiguess', guess)
 
         if (!guess.modified) {
-          this.#win.webContents.send('render-multiguess', guess)
-
           if (settings.showHasGuessed) {
             await this.#backend?.sendMessage(
               `${getEmoji(guess.flag)} ${userstate['display-name']} has guessed`
             )
           }
         } else {
-          this.#win.webContents.send('render-multiguess', guess)
-
           if (settings.showGuessChanged) {
             await this.#backend?.sendMessage(
               `${getEmoji(guess.flag)} ${userstate['display-name']} guess changed`

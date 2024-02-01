@@ -9,7 +9,7 @@
     @drag-end="setLocalStorage('cg_timer__position', position)"
   >
     <div
-      id="timer"
+      class="timer"
       @mouseover="iconsVisibility = true"
       @mouseleave="!settingsVisibility ? (iconsVisibility = false) : true"
     >
@@ -87,7 +87,7 @@
       <div
         :hidden="!settingsVisibility"
         :class="settingsVisibility ? 'expanded' : 'collapsed'"
-        class="timer__settings"
+        class="timer_settings"
       >
         <label class="form__group"
           >Start timer at round start :
@@ -501,7 +501,7 @@ const handleImportAudioFile = async () => {
 </script>
 
 <style scoped>
-#timer {
+.timer {
   height: 30px;
   width: fit-content;
   line-height: 1;
@@ -512,11 +512,11 @@ const handleImportAudioFile = async () => {
   z-index: 999999;
 }
 
-#timer * {
+.timer * {
   pointer-events: auto;
 }
 
-.timer__settings {
+.timer_settings {
   width: 380px;
   margin: 0.5rem auto;
   padding: 0.8rem;

@@ -151,6 +151,7 @@ export default class Game {
    */
   async #processMultiGuesses() {
     // TODO only retrieve location and streak values
+    // Very slow
     const guesses = this.#db.getRoundResults(this.#roundId)
     await pMap(
       guesses,
