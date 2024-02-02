@@ -206,8 +206,8 @@ textarea:focus {
 }
 
 .username {
-  font-size: 15px;
-  text-shadow: 1px 1px 0 #fff;
+  font-size: 14px;
+  text-shadow: white 1px 1px 1px;
 }
 
 .flag-icon {
@@ -217,7 +217,6 @@ textarea:focus {
   position: relative;
   display: inline-block;
   width: 1.33333333em;
-  line-height: 1em;
   margin-right: 5px;
 }
 

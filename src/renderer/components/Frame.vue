@@ -101,6 +101,7 @@ const settingsVisible = ref(false)
 
 const gameState = ref<GameState>('none')
 const isMultiGuess = ref<boolean>(false)
+const guessMarkersLimit = shallowRef<number | null>(null)
 const currentLocation = shallowRef<LatLng | null>(null)
 const gameResultLocations = shallowRef<Location_[] | null>(null)
 
@@ -169,8 +170,8 @@ watch(
 )
 
 onBeforeUnmount(
-  chatguessrApi.onGameStarted((isMultiGuess_, restoredGuesses, location) => {
-    isMultiGuess.value = isMultiGuess_
+  chatguessrApi.onGameStarted((_isMultiGuess, restoredGuesses, location) => {
+    isMultiGuess.value = _isMultiGuess
     gameState.value = 'in-round'
 
     currentLocation.value = location
@@ -184,13 +185,9 @@ onBeforeUnmount(
 
     if (restoredGuesses.length > 0) {
       if (isMultiGuess.value) {
-        // TODO
-        // scoreboard.value!.renderMultiGuess(restoredGuesses)
+        scoreboard.value!.restoreMultiGuesses(restoredGuesses as RoundParticipant[])
       } else {
-        // Not very fast KEKW
-        for (const guess of restoredGuesses) {
-          scoreboard.value!.renderGuess(guess)
-        }
+        scoreboard.value!.restoreGuesses(restoredGuesses as RoundResult[])
       }
     }
   })
@@ -234,10 +231,11 @@ onBeforeUnmount(
 )
 
 onBeforeUnmount(
-  chatguessrApi.onShowRoundResults((round, location, roundResults, guessMarkersLimit) => {
+  chatguessrApi.onShowRoundResults((round, location, roundResults, _guessMarkersLimit) => {
     gameState.value = 'round-results'
+    guessMarkersLimit.value = _guessMarkersLimit
 
-    rendererApi.drawRoundResults(location, roundResults, guessMarkersLimit)
+    rendererApi.drawRoundResults(location, roundResults, _guessMarkersLimit)
     scoreboard.value!.showRoundResults(round, roundResults)
   })
 )
@@ -261,11 +259,13 @@ onBeforeUnmount(
 
 // TODO: make sure this works with guessMarkersLimit
 function onRowClick(row: ScoreboardRow) {
-  if (gameState.value === 'round-results' && row.position) {
-    rendererApi.focusOnGuess(row.position)
-  } else if (gameState.value === 'game-results' && 'guesses' in row && 'distances' in row) {
-    // @ts-expect-error
-    if (gameResultLocations.value) rendererApi.drawPlayerResults(gameResultLocations.value, row)
+  console.log('🚀 ~ onRowClick ~ row:', row)
+  if (gameState.value === 'round-results' && row.index && row.position && guessMarkersLimit.value) {
+    if (row.index.value <= guessMarkersLimit.value) {
+      rendererApi.focusOnGuess(row.position)
+    }
+  } else if (gameState.value === 'game-results' && gameResultLocations.value) {
+    rendererApi.drawPlayerResults(gameResultLocations.value, row)
   }
 }
 

@@ -499,7 +499,7 @@ export class Database {
       flag: string
     }[]
 
-    return records
+    return records as RoundParticipant[]
   }
 
   /**
@@ -557,7 +557,7 @@ export class Database {
       score: record.score,
       time: record.time,
       position: JSON.parse(record.location) as LatLng
-    }))
+    })) as RoundResult[]
   }
 
   /**
@@ -571,7 +571,7 @@ export class Database {
   /**
    * Get the total scores for a game, across all rounds, ordered from highest to lowest points.
    */
-  getGameResults(gameId: string): GameResult[] {
+  getGameResults(gameId: string) {
     // We need to pick the last guess's streak value OR calculate them on the fly. Our streak tracking table is not suitable for
     // checking the current streak at a previous point. The only option atm is to use this subquery I think, hopefully the
     // performance is not too bad.
@@ -630,7 +630,7 @@ export class Database {
       distances: JSON.parse(record.distances),
       totalScore: record.total_score,
       totalDistance: record.total_distance
-    }))
+    })) as GameResult[]
   }
 
   #parseUser(record: Record<string, any>): {

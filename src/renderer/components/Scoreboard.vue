@@ -99,15 +99,19 @@
         </thead>
         <tbody>
           <TransitionGroup name="scoreboard_rows">
-            <tr v-for="row in rows" :key="row.username" @click="props.onRowClick(row)">
+            <tr v-for="row in rows" :key="row.player.username" @click="props.onRowClick(row)">
               <td v-for="col in activeCols" :key="col.value">
-                <span v-if="col.value === 'player'" :style="{ color: row.color }" class="username">
+                <span
+                  v-if="col.value === 'player'"
+                  :style="{ color: row.player.color }"
+                  class="username"
+                >
                   <span
-                    v-if="row.flag"
+                    v-if="row.player.flag"
                     class="flag-icon"
-                    :style="{ backgroundImage: `url('flag:${row.flag}')` }"
+                    :style="{ backgroundImage: `url('flag:${row.player.flag}')` }"
                   ></span>
-                  {{ row.username }}
+                  {{ row.player.username }}
                   <span v-if="row.modified">*</span>
                 </span>
                 <span v-else>{{ row[col.value].display }}</span>
@@ -134,7 +138,6 @@ const props = defineProps<{
 }>()
 
 const tableContainer = ref<HTMLDivElement | null>(null)
-const { y, arrivedState } = useScroll(tableContainer, { behavior: 'smooth' })
 
 const isDraggable = ref(true)
 const isColumnVisibilityOpen = ref(false)
@@ -168,7 +171,7 @@ watch(settings, () => {
 type Column = {
   name: string
   value: string
-  width?: string
+  width: string
   sortable: boolean
 }
 
@@ -201,42 +204,31 @@ function renderGuess(guess: Guess) {
   console.log('🚀 ~ renderGuess:', guess)
   const formatedRow = {
     index: { value: 0, display: '' },
-    username: guess.username,
-    flag: guess.flag,
-    color: guess.color,
+    player: { username: guess.username, flag: guess.flag, color: guess.color },
     streak: { value: guess.streak, display: guess.streak },
     distance: { value: guess.distance, display: toMeter(guess.distance) },
     score: { value: guess.score, display: guess.score }
   }
-
   rows.push(formatedRow)
-  rows.sort((a, b) => a.distance.value - b.distance.value)
 
+  rows.sort((a, b) => a.distance!.value - b.distance!.value)
   for (let i = 0; i < rows.length; i++) {
-    rows[i].index.value = i + 1
-    rows[i].index.display = i + 1
+    rows[i].index!.value = i + 1
+    rows[i].index!.display = i + 1
   }
 }
 
 function renderMultiGuess(guess: Guess) {
   console.log('🚀 ~ renderMultiGuess:', guess)
   const formatedRow = {
-    index: { value: 0, display: '' },
-    username: guess.username,
-    flag: guess.flag,
-    color: guess.color,
-    streak: { value: 0, display: '' },
-    distance: { value: guess.distance, display: '' },
-    score: { value: 0, display: '' },
+    player: { username: guess.username, flag: guess.flag, color: guess.color },
     modified: guess.modified
   }
 
   if (guess.modified) {
-    const index = rows.findIndex((row) => row.username == guess.username)
+    const index = rows.findIndex((row) => row.player.username == guess.username)
     rows.splice(index, 1)
-    // TODO: find a better soluion
-    // Animation is not triggered if we push too fast because key:username is remaining in the DOM
-    // using uuid as key works here but messes up the rest
+    // TODO find a better soluion, animation is not triggered if we push too fast because key:username is remaining in the DOM
     setTimeout(() => {
       rows.push(formatedRow)
     }, 50)
@@ -245,13 +237,41 @@ function renderMultiGuess(guess: Guess) {
   }
 }
 
+function restoreGuesses(restoredGuesses: RoundResult[]) {
+  const formatedRows = restoredGuesses.map((restoredGuess, i) => {
+    return {
+      index: { value: i + 1, display: i + 1 },
+      player: {
+        username: restoredGuess.username,
+        flag: restoredGuess.flag,
+        color: restoredGuess.color
+      },
+      streak: { value: restoredGuess.streak, display: restoredGuess.streak },
+      distance: { value: restoredGuess.distance, display: toMeter(restoredGuess.distance) },
+      score: { value: restoredGuess.score, display: restoredGuess.score }
+    }
+  })
+  Object.assign(rows, formatedRows)
+}
+
+function restoreMultiGuesses(restoredGuesses: RoundParticipant[]) {
+  const formatedRows = restoredGuesses.map((restoredGuess) => {
+    return {
+      player: {
+        username: restoredGuess.username,
+        flag: restoredGuess.flag,
+        color: restoredGuess.color
+      }
+    }
+  })
+  Object.assign(rows, formatedRows)
+}
+
 function showRoundResults(round: number, roundResults: RoundResult[]) {
   const formatedRows = roundResults.map((result, i) => {
     return {
       index: { value: i + 1, display: i + 1 },
-      username: result.username,
-      flag: result.flag,
-      color: result.color,
+      player: { username: result.username, flag: result.flag, color: result.color },
       streak: {
         value: result.streak,
         display: result.lastStreak ? result.streak + ` [` + result.lastStreak + `]` : result.streak
@@ -310,14 +330,11 @@ function showGameResults(gameResults: GameResult[]) {
 
 function sortByCol(col: Column) {
   if (!col.sortable) return
-  sortGuessesBy(col.value)
-}
 
-function sortGuessesBy(col: string) {
   rows.sort((a, b) => {
-    const x = a[col].value
-    const y = b[col].value
-    return isSorted(col) ? x - y : y - x
+    const x = a[col.value].value
+    const y = b[col.value].value
+    return isSorted(col.value) ? x - y : y - x
   })
 }
 
@@ -326,16 +343,12 @@ function isSorted(col: string) {
   return JSON.stringify(arr) === JSON.stringify(arr.sort((a, b) => b - a))
 }
 
+const { y, arrivedState } = useScroll(tableContainer, { behavior: 'smooth' })
+let direction = 1 // 0: up, 1: down
+
 function toggleAutoScroll() {
   settings.autoScroll = !settings.autoScroll
   runAutoScroll()
-}
-
-// 0: up, 1: down
-let direction = 1
-function scrollToTop() {
-  y.value = 0
-  direction = 0
 }
 
 function runAutoScroll() {
@@ -369,6 +382,11 @@ function runAutoScroll() {
   }
 }
 
+function scrollToTop() {
+  y.value = 0
+  direction = 0
+}
+
 function toggleGuesses(event: Event) {
   props.setGuessesOpen((event.target as HTMLInputElement).checked)
 }
@@ -381,15 +399,18 @@ function savePosition() {
   setLocalStorage('cg_scoreboard__position', position)
 }
 
-const toMeter = (distance: number) =>
-  distance >= 1 ? distance.toFixed(1) + 'km' : Math.floor(distance * 1000) + 'm'
+function toMeter(distance: number) {
+  return distance >= 1 ? distance.toFixed(1) + 'km' : Math.floor(distance * 1000) + 'm'
+}
 
 defineExpose({
   onStartRound,
-  showRoundResults,
-  showGameResults,
   renderGuess,
   renderMultiGuess,
+  restoreGuesses,
+  restoreMultiGuesses,
+  showRoundResults,
+  showGameResults,
   setSwitchOn
 })
 </script>

@@ -130,17 +130,17 @@ export default class GameHandler {
         this.#game
           .start(url, settings.isMultiGuess)
           .then(() => {
-            const guesses = this.#game.isMultiGuess
-              ? this.#game.getMultiGuesses()
+            const restoredGuesses = this.#game.isMultiGuess
+              ? this.#game.getRoundParticipants()
               : this.#game.getRoundResults()
             this.#win.webContents.send(
               'game-started',
               this.#game.isMultiGuess,
-              guesses,
+              restoredGuesses,
               this.#game.getLocation()
             )
 
-            if (guesses.length > 0) {
+            if (restoredGuesses.length > 0) {
               this.#backend?.sendMessage(`🌎 Round ${this.#game.round} has resumed`, {
                 system: true
               })
@@ -352,7 +352,6 @@ export default class GameHandler {
           )
         }
       } else {
-        // const guesses = this.#game.getMultiGuesses()
         this.#win.webContents.send('render-multiguess', guess)
 
         if (!guess.modified) {
@@ -522,13 +521,15 @@ export default class GameHandler {
     if (message.startsWith('!spamguess')) {
       const max = parseInt(message.split(' ')[1] ?? '50', 10)
       for (let i = 0; i < max; i += 1) {
+        const userId = `123450${i}`
+        // const flag = randomCountryFlag()
+        // this.#db.setUserFlag(userId, flag)
         const { lat, lng } = await getRandomCoordsInLand(this.#game.seed!.bounds)
         await this.#handleGuess(
           {
-            'user-id': `123450${i}`,
+            'user-id': userId,
             username: `fake_${i}`,
             'display-name': `fake_${i}`,
-            flag: randomCountryFlag(),
             color: `#${Math.random().toString(16).slice(2, 8).padStart(6, '0')}`
           },
           `!g ${lat},${lng}`

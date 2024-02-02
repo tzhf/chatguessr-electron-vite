@@ -52,7 +52,11 @@ export const chatguessrApi = {
   },
 
   onGameStarted(
-    callback: (isMultiGuess: boolean, restoredGuesses: Guess[], location: Location_) => void
+    callback: (
+      isMultiGuess: boolean,
+      restoredGuesses: RoundResult[] | RoundParticipant[],
+      location: Location_
+    ) => void
   ) {
     return ipcRendererOn('game-started', callback)
   },

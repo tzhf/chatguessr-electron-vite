@@ -322,7 +322,7 @@ export default class Game {
   /**
    * Get the participants for the current round, sorted by who guessed first.
    */
-  getMultiGuesses() {
+  getRoundParticipants() {
     return this.#db.getRoundParticipants(this.#roundId)
   }
 
