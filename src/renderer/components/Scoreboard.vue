@@ -99,19 +99,15 @@
         </thead>
         <tbody>
           <TransitionGroup name="scoreboard_rows">
-            <tr v-for="row in rows" :key="row.player.username" @click="props.onRowClick(row)">
+            <tr v-for="row in rows" :key="row.username" @click="onRowClick(row)">
               <td v-for="col in activeCols" :key="col.value">
-                <span
-                  v-if="col.value === 'player'"
-                  :style="{ color: row.player.color }"
-                  class="username"
-                >
+                <span v-if="col.value === 'player'" :style="{ color: row.color }" class="username">
                   <span
-                    v-if="row.player.flag"
+                    v-if="row.flag"
                     class="flag-icon"
-                    :style="{ backgroundImage: `url('flag:${row.player.flag}')` }"
+                    :style="{ backgroundImage: `url('flag:${row.flag}')` }"
                   ></span>
-                  {{ row.player.username }}
+                  {{ row.username }}
                   <span v-if="row.modified">*</span>
                 </span>
                 <span v-else>{{ row[col.value].display }}</span>
@@ -134,18 +130,17 @@ const props = defineProps<{
   gameState: GameState
   isMultiGuess: boolean
   setGuessesOpen: Window['chatguessrApi']['setGuessesOpen']
-  onRowClick: (row: ScoreboardRow) => void
+  onRoundResultRowClick: (index: number, position: LatLng) => void
+  onGameResultRowClick: (row: ScoreboardRow) => void
 }>()
 
 const tableContainer = ref<HTMLDivElement | null>(null)
-
 const isDraggable = ref(true)
 const isColumnVisibilityOpen = ref(false)
-
-const position = reactive({ x: 20, y: 50, w: 340, h: 390 })
 const title = ref('GUESSES')
 const switchOn = ref(true)
 
+const position = reactive({ x: 20, y: 50, w: 340, h: 390 })
 onMounted(async () => {
   Object.assign(
     position,
@@ -163,26 +158,21 @@ const settings = reactive(
     score: true
   })
 )
-
 watch(settings, () => {
   setLocalStorage('cg_scoreboard__settings', settings)
 })
 
-type Column = {
-  name: string
-  value: string
-  width: string
-  sortable: boolean
+function savePosition() {
+  setLocalStorage('cg_scoreboard__position', position)
 }
 
-const columns: Column[] = [
+const columns: ScoreboardColumn[] = [
   { name: '#', value: 'index', width: '30px', sortable: true },
   { name: 'Player', value: 'player', width: '100%', sortable: false },
   { name: 'Streak', value: 'streak', width: '60px', sortable: true },
   { name: 'Distance', value: 'distance', width: '85px', sortable: true },
   { name: 'Score', value: 'score', width: '65px', sortable: true }
 ]
-
 const activeCols = computed(() =>
   props.gameState === 'in-round'
     ? props.isMultiGuess
@@ -204,7 +194,9 @@ function renderGuess(guess: Guess) {
   console.log('🚀 ~ renderGuess:', guess)
   const formatedRow = {
     index: { value: 0, display: '' },
-    player: { username: guess.username, flag: guess.flag, color: guess.color },
+    username: guess.username,
+    flag: guess.flag,
+    color: guess.color,
     streak: { value: guess.streak, display: guess.streak },
     distance: { value: guess.distance, display: toMeter(guess.distance) },
     score: { value: guess.score, display: guess.score }
@@ -221,14 +213,17 @@ function renderGuess(guess: Guess) {
 function renderMultiGuess(guess: Guess) {
   console.log('🚀 ~ renderMultiGuess:', guess)
   const formatedRow = {
-    player: { username: guess.username, flag: guess.flag, color: guess.color },
+    username: guess.username,
+    flag: guess.flag,
+    color: guess.color,
     modified: guess.modified
   }
 
   if (guess.modified) {
-    const index = rows.findIndex((row) => row.player.username == guess.username)
+    const index = rows.findIndex((row) => row.username == guess.username)
     rows.splice(index, 1)
-    // TODO find a better soluion, animation is not triggered if we push too fast because key:username is remaining in the DOM
+    // TODO maybe find a better soluion
+    // Animation is not triggered if we push too fast because key:username is remaining in the DOM
     setTimeout(() => {
       rows.push(formatedRow)
     }, 50)
@@ -241,11 +236,9 @@ function restoreGuesses(restoredGuesses: RoundResult[]) {
   const formatedRows = restoredGuesses.map((restoredGuess, i) => {
     return {
       index: { value: i + 1, display: i + 1 },
-      player: {
-        username: restoredGuess.username,
-        flag: restoredGuess.flag,
-        color: restoredGuess.color
-      },
+      username: restoredGuess.username,
+      flag: restoredGuess.flag,
+      color: restoredGuess.color,
       streak: { value: restoredGuess.streak, display: restoredGuess.streak },
       distance: { value: restoredGuess.distance, display: toMeter(restoredGuess.distance) },
       score: { value: restoredGuess.score, display: restoredGuess.score }
@@ -257,11 +250,9 @@ function restoreGuesses(restoredGuesses: RoundResult[]) {
 function restoreMultiGuesses(restoredGuesses: RoundParticipant[]) {
   const formatedRows = restoredGuesses.map((restoredGuess) => {
     return {
-      player: {
-        username: restoredGuess.username,
-        flag: restoredGuess.flag,
-        color: restoredGuess.color
-      }
+      username: restoredGuess.username,
+      flag: restoredGuess.flag,
+      color: restoredGuess.color
     }
   })
   Object.assign(rows, formatedRows)
@@ -271,7 +262,9 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
   const formatedRows = roundResults.map((result, i) => {
     return {
       index: { value: i + 1, display: i + 1 },
-      player: { username: result.username, flag: result.flag, color: result.color },
+      username: result.username,
+      flag: result.flag,
+      color: result.color,
       streak: {
         value: result.streak,
         display: result.lastStreak ? result.streak + ` [` + result.lastStreak + `]` : result.streak
@@ -328,9 +321,8 @@ function showGameResults(gameResults: GameResult[]) {
   scrollToTop()
 }
 
-function sortByCol(col: Column) {
+function sortByCol(col: ScoreboardColumn) {
   if (!col.sortable) return
-
   rows.sort((a, b) => {
     const x = a[col.value].value
     const y = b[col.value].value
@@ -343,14 +335,16 @@ function isSorted(col: string) {
   return JSON.stringify(arr) === JSON.stringify(arr.sort((a, b) => b - a))
 }
 
-const { y, arrivedState } = useScroll(tableContainer, { behavior: 'smooth' })
-let direction = 1 // 0: up, 1: down
-
-function toggleAutoScroll() {
-  settings.autoScroll = !settings.autoScroll
-  runAutoScroll()
+function onRowClick(row: ScoreboardRow) {
+  if (props.gameState === 'round-results' && row.index && row.position) {
+    props.onRoundResultRowClick(row.index.value, row.position)
+  } else if (props.gameState === 'game-results') {
+    props.onGameResultRowClick(row)
+  }
 }
 
+const { y, arrivedState } = useScroll(tableContainer, { behavior: 'smooth' })
+let direction = 1 // 0: up, 1: down
 function runAutoScroll() {
   requestAnimationFrame(scrollFunc)
 
@@ -382,6 +376,11 @@ function runAutoScroll() {
   }
 }
 
+function toggleAutoScroll() {
+  settings.autoScroll = !settings.autoScroll
+  runAutoScroll()
+}
+
 function scrollToTop() {
   y.value = 0
   direction = 0
@@ -393,10 +392,6 @@ function toggleGuesses(event: Event) {
 
 function setSwitchOn(state: boolean) {
   switchOn.value = state
-}
-
-function savePosition() {
-  setLocalStorage('cg_scoreboard__position', position)
 }
 
 function toMeter(distance: number) {

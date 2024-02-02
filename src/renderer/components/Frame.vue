@@ -6,7 +6,8 @@
         ref="scoreboard"
         :game-state="gameState"
         :is-multi-guess="isMultiGuess"
-        :on-row-click="onRowClick"
+        :on-round-result-row-click="onRoundResultRowClick"
+        :on-game-result-row-click="onGameResultRowClick"
         :set-guesses-open="chatguessrApi.setGuessesOpen"
       />
     </transition>
@@ -257,15 +258,14 @@ onBeforeUnmount(
   })
 )
 
-// TODO: make sure this works with guessMarkersLimit
-function onRowClick(row: ScoreboardRow) {
-  console.log('🚀 ~ onRowClick ~ row:', row)
-  if (gameState.value === 'round-results' && row.index && row.position && guessMarkersLimit.value) {
-    if (row.index.value <= guessMarkersLimit.value) {
-      rendererApi.focusOnGuess(row.position)
-    }
-  } else if (gameState.value === 'game-results' && gameResultLocations.value) {
-    rendererApi.drawPlayerResults(gameResultLocations.value, row)
+function onRoundResultRowClick(index: number, position: LatLng) {
+  if (guessMarkersLimit.value && index <= guessMarkersLimit.value) {
+    rendererApi.focusOnGuess(position)
+  }
+}
+function onGameResultRowClick(row: ScoreboardRow) {
+  if (gameResultLocations.value) {
+    rendererApi.drawPlayerResults(gameResultLocations.value, row as GameResultDisplay)
   }
 }
 

@@ -10,7 +10,7 @@ type ChatUserstate = import('tmi.js').ChatUserstate
 
 type Database = import('./utils/useDatabase').Database
 
-interface Settings {
+type Settings = {
   channelName: string
   token: string
   cgCmd: string
@@ -85,43 +85,6 @@ type GameResult = {
   distances: (number | null)[]
   totalScore: number
   totalDistance: number
-}
-
-type GameResultDisplay = {
-  username: string
-  flag: string | null
-  color: string
-  guesses: (LatLng | null)[]
-  distances: (number | null)[]
-  scores: (number | null)[]
-}
-
-type ScoreboardRow = {
-  index?: { value: number; display: string | number }
-  player: {
-    username: string
-    flag: string | null
-    color: string
-  }
-  streak?: {
-    value: number
-    display: number | string
-  }
-  distance?: {
-    value: number
-    display: number | string
-  }
-  score?: {
-    value: number
-    display: number | string
-  }
-  modified?: boolean
-  position?: LatLng
-  totalScore?: number
-  totalDistance?: number
-  guesses?: (LatLng | null)[]
-  scores?: (number | null)[]
-  distances?: (number | null)[]
 }
 
 type Bounds = {
