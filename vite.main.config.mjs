@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-// import commonjs from '@rollup/plugin-commonjs'
 
 // https://vitejs.dev/config
 export default defineConfig({
@@ -9,23 +8,10 @@ export default defineConfig({
     conditions: ['node'],
     mainFields: ['module', 'jsnext:main', 'jsnext']
   },
-  plugins: [
-    // commonjs({
-    // ignoreDynamicRequires: true
-    // dynamicRequireTargets: [
-    // include using a glob pattern (either a string or an array of strings)
-    // 'node_modules/better_sqlite3/*.js',
-    // 'node_modules/better-sqlite3/*.js',
-    // 'node_modules/better-sqlite3/*',
-    // 'node_modules/better-sqlite3/*'
-    // 'better-sqlite3'
-    // ]
-    // })
-  ],
-
   build: {
     rollupOptions: {
-      external: ['coordinate_to_country']
+      // if we don't include 'bufferutil', 'utf-8-validate' we get 'Could not resolve "utf-8-validate" imported by "ws"'
+      external: ['coordinate_to_country', 'bufferutil', 'utf-8-validate']
     }
   }
 })

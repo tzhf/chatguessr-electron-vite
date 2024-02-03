@@ -205,8 +205,7 @@ function renderGuess(guess: Guess) {
 
   rows.sort((a, b) => a.distance!.value - b.distance!.value)
   for (let i = 0; i < rows.length; i++) {
-    rows[i].index!.value = i + 1
-    rows[i].index!.display = i + 1
+    rows[i].index = { value: i + 1, display: i + 1 }
   }
 }
 
