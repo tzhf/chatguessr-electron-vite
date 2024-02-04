@@ -2,7 +2,7 @@
   <div id="CGFrameContainer" :class="{ hidden: gameState === 'none' }">
     <transition name="scoreboard_modal">
       <Scoreboard
-        v-show="gameState !== 'none' && widgetVisibility.scoreboardVisible"
+        v-show="widgetVisibility.scoreboardVisible"
         ref="scoreboard"
         :game-state="gameState"
         :is-multi-guess="isMultiGuess"
@@ -20,18 +20,6 @@
       :class="{ hidden: gameState !== 'in-round' || !widgetVisibility.timerVisible }"
     />
   </div>
-
-  <Suspense>
-    <transition name="settings_modal">
-      <Settings
-        v-if="settingsVisible"
-        :chatguessr-api="chatguessrApi"
-        :socket-connection-state="socketConnectionState"
-        :twitch-connection-state="twitchConnectionState"
-        @close="settingsVisible = false"
-      />
-    </transition>
-  </Suspense>
 
   <div class="cg-menu">
     <button
@@ -78,6 +66,18 @@
       <span class="icon cg-icon--flag"></span>
     </button>
   </div>
+
+  <Suspense>
+    <transition name="settings_modal">
+      <Settings
+        v-if="settingsVisible"
+        :chatguessr-api="chatguessrApi"
+        :socket-connection-state="socketConnectionState"
+        :twitch-connection-state="twitchConnectionState"
+        @close="settingsVisible = false"
+      />
+    </transition>
+  </Suspense>
 </template>
 
 <script lang="ts" setup>

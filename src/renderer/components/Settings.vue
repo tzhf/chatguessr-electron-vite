@@ -149,6 +149,19 @@
                     : 'Login'
               }}
             </button>
+          </div>
+          <h2>Status :</h2>
+          <div class="ml-05">
+            <div class="form__group">
+              Twitch :<span :class="[twitchConnectionState.state]">{{
+                twitchConnectionState.state
+              }}</span>
+            </div>
+            <div class="form__group">
+              ChatGuessr server :<span :class="[socketConnectionState.state]">{{
+                socketConnectionState.state
+              }}</span>
+            </div>
             <div class="form__group" data-tip="Your streamer account">
               Your streaming channel :
               <form @submit.prevent="onChannelNameUpdate()">
@@ -186,19 +199,6 @@
                 />
                 <button class="btn bg-primary" style="width: 70px">Copy🖊️</button>
               </div>
-            </div>
-          </div>
-          <h2>Status :</h2>
-          <div class="ml-05">
-            <div class="form__group">
-              Twitch :<span :class="[twitchConnectionState.state]">{{
-                twitchConnectionState.state
-              }}</span>
-            </div>
-            <div class="form__group">
-              ChatGuessr server :<span :class="[socketConnectionState.state]">{{
-                socketConnectionState.state
-              }}</span>
             </div>
           </div>
         </div>

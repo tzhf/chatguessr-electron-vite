@@ -2,7 +2,7 @@ import { store } from './useStore'
 
 const storedSettings = store.get('settings')
 
-const settings: Settings = storedSettings || {
+const settings: Settings = storedSettings ?? {
   channelName: '',
   token: '',
   cgCmd: '!cg',
