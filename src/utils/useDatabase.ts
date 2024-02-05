@@ -855,7 +855,7 @@ export class Database {
    * Run a custom SQL query, for use in tests only.
    */
   [Symbol.for('chatguessr-test-run-query')](query, data) {
-    if (process.env.VITE_NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test') {
       throw new Error('Do not run queries outside of the test environment')
     }
 

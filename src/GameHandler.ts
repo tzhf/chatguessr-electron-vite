@@ -515,7 +515,7 @@ export default class GameHandler {
     }
 
     // streamer commands
-    if (userstate.badges?.broadcaster !== '1' || import.meta.env.VITE_NODE_ENV !== 'development') {
+    if (userstate.badges?.broadcaster !== '1' || process.env.NODE_ENV !== 'development') {
       return
     }
 
