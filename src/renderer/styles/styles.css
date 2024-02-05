@@ -58,16 +58,12 @@ small {
   font-family: inherit;
   font-size: inherit;
   font-weight: 700;
-  background: rgba(0, 0, 0, 0.5);
-  color: #ffffff;
   text-align: center;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
-  overflow: hidden;
   outline: 0;
   cursor: pointer;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
 }
 
 .form__group input[type='color'] {
@@ -87,7 +83,8 @@ small {
 
 .form__group input[type='text'],
 .form__group select {
-  border: 1px solid var(--primary);
+  border: unset;
+  border-bottom: 1px solid var(--primary);
 }
 
 .form__group input[type='range'] {

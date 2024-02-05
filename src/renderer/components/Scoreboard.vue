@@ -191,7 +191,6 @@ function onStartRound() {
 }
 
 function renderGuess(guess: Guess) {
-  console.log('🚀 ~ renderGuess:', guess)
   const formatedRow = {
     index: { value: 0, display: '' },
     username: guess.username,
@@ -210,7 +209,6 @@ function renderGuess(guess: Guess) {
 }
 
 function renderMultiGuess(guess: Guess) {
-  console.log('🚀 ~ renderMultiGuess:', guess)
   const formatedRow = {
     username: guess.username,
     flag: guess.flag,

@@ -17,7 +17,6 @@ module.exports = {
   rules: {
     'no-empty': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
-    // '@typescript-eslint/explicit-function-return-type': 'error',
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }],
