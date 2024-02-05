@@ -11,7 +11,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       // if we don't include 'bufferutil', 'utf-8-validate' we get 'Could not resolve "utf-8-validate" imported by "ws"'
-      external: ['coordinate_to_country', 'bufferutil', 'utf-8-validate']
+      external: ['better-sqlite3', 'coordinate_to_country', 'bufferutil', 'utf-8-validate']
     }
   }
 })

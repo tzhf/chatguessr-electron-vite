@@ -339,31 +339,33 @@ function useSocketConnectionState() {
 }
 
 .cg-menu {
-  z-index: 23;
+  position: fixed;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  top: 100px;
-  position: fixed;
+  top: 120px;
   right: 7px;
+  z-index: 1;
 }
 
 .cg-button {
-  box-sizing: content-box;
+  /* box-sizing: content-box; */
   display: flex;
-  user-select: none;
-  background: rgba(0, 0, 0, 0.4);
-  border: none;
-  border-radius: 50px;
+  width: 2.7rem;
+  height: 2.7rem;
   padding: 0.5rem;
-  width: 1.7rem;
-  height: 1.7rem;
-  transition: 0.3s;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50px;
   cursor: pointer;
+  transition: 0.3s;
 }
 
 .cg-button:hover {
   background: rgba(0, 0, 0, 0.5);
+}
+.cg-button:active {
+  transform: scale(0.9);
 }
 
 .cg-button.disconnected {
@@ -402,5 +404,6 @@ function useSocketConnectionState() {
 .drv,
 .vdr-container {
   border: none;
+  z-index: 2;
 }
 </style>

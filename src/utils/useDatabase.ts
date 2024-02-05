@@ -1,19 +1,12 @@
+import SQLite from 'better-sqlite3'
 import { randomUUID } from 'crypto'
-
-// Using import instead of require will return this error :
-// "Error: Could not dynamically require "...\build\better_sqlite3.node".
-// Please configure the dynamicRequireTargets or/and ignoreDynamicRequires option of @rollup/plugin-commonjs appropriately for this require call to work."
-// Couldn't get this config to work properly
-const SQLite = require('better-sqlite3')
-
-type SQLite = import('better-sqlite3').Database
 
 function timestamp() {
   return Math.floor(Date.now() / 1000)
 }
 
 // NEVER modify existing migrations, ONLY add new ones.
-const migrations: ((db: SQLite) => void)[] = [
+const migrations: ((db: SQLite.Database) => void)[] = [
   function initialSetup(db) {
     const usersTable = db.prepare(`CREATE TABLE users (
             -- Twitch user ID
@@ -182,7 +175,7 @@ const migrations: ((db: SQLite) => void)[] = [
 ]
 
 export class Database {
-  #db: SQLite
+  #db: SQLite.Database
 
   constructor(file: string) {
     this.#db = new SQLite(file)

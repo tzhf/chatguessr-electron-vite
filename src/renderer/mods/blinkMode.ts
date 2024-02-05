@@ -105,23 +105,27 @@ import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
     }
   }
 
-  let mapRoot: HTMLElement
+  let mapRoot: HTMLElement | null = null
+  function getMapRoot() {
+    return document.querySelector('[data-qa=panorama]') as HTMLElement
+  }
+
   function hidePanorama() {
-    mapRoot = document.querySelector('.mapsConsumerUiSceneInternalCoreScene__root') || mapRoot
+    mapRoot = getMapRoot() || mapRoot
     hidePanoramaCached()
   }
 
   function hidePanoramaCached() {
-    mapRoot.style.filter = 'brightness(0%)'
+    mapRoot!.style.filter = 'brightness(0%)'
   }
 
   function showPanorama() {
-    mapRoot = document.querySelector('.mapsConsumerUiSceneInternalCoreScene__root') || mapRoot
+    mapRoot = getMapRoot() || mapRoot
     showPanoramaCached()
   }
 
   function showPanoramaCached() {
-    mapRoot.style.filter = 'brightness(100%)'
+    mapRoot!.style.filter = 'brightness(100%)'
   }
 
   function isLoading() {

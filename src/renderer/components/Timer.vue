@@ -509,7 +509,6 @@ const handleImportAudioFile = async () => {
   text-wrap: nowrap;
   transform: translateX(-50%);
   user-select: none;
-  z-index: 999999;
 }
 
 .timer * {
