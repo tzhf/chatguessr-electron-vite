@@ -100,7 +100,8 @@ async function authenticateWithTwitch(gameHandler: GameHandler, parentWindow: Br
   const authConfig = await supabase.auth.signInWithOAuth({
     provider: 'twitch',
     options: {
-      redirectTo: new URL('/streamer/redirect', `https://${process.env.CG_PUBLIC_URL}`).href,
+      redirectTo: new URL('/streamer/redirect', `https://${import.meta.env.VITE_CG_PUBLIC_URL}`)
+        .href,
       scopes: ['chat:read', 'chat:edit', 'whispers:read'].join(' ')
     }
   })

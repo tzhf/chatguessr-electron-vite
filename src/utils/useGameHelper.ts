@@ -7,8 +7,8 @@ import countryIso from 'coordinate_to_country'
 import countryCodes from './countryCodes.json'
 
 const GEOGUESSR_URL = 'https://geoguessr.com'
-const CG_API_URL = process.env.CG_API_URL ?? 'https://chatguessr.com/api'
-const CG_PUBLIC_URL = process.env.CG_PUBLIC_URL ?? 'chatguessr.com'
+const CG_API_URL = import.meta.env.VITE_CG_API_URL ?? 'https://chatguessr.com/api'
+const CG_PUBLIC_URL = import.meta.env.VITE_CG_PUBLIC_URL ?? 'chatguessr.com'
 
 /**
  * Checks if the URL is an in-game page.

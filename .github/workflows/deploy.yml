@@ -25,11 +25,11 @@ jobs:
       - name: Write .env
         run: node create-env.js
         env:
-          CG_PUBLIC_URL: ${{secrets.CG_PUBLIC_URL}}
-          CG_API_URL: ${{secrets.CG_API_URL}}
-          SOCKET_SERVER_URL: ${{secrets.SOCKET_SERVER_URL}}
-          SUPABASE_URL: ${{secrets.SUPABASE_URL}}
-          SUPABASE_ANON_KEY: ${{secrets.SUPABASE_ANON_KEY}}
+          VITE_CG_PUBLIC_URL: ${{secrets.VITE_CG_PUBLIC_URL}}
+          VITE_CG_API_URL: ${{secrets.VITE_CG_API_URL}}
+          VITE_SOCKET_SERVER_URL: ${{secrets.VITE_SOCKET_SERVER_URL}}
+          VITE_SUPABASE_URL: ${{secrets.VITE_SUPABASE_URL}}
+          VITE_SUPABASE_ANON_KEY: ${{secrets.VITE_SUPABASE_ANON_KEY}}
       - name: Publish
         run: npm run publish
         env:

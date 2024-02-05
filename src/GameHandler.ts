@@ -7,7 +7,8 @@ import { settings, saveSettings } from './utils/useSettings'
 import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/useGameHelper'
 import { getEmoji, randomCountryFlag, selectFlag } from './utils/flags/flags'
 
-const SOCKET_SERVER_URL = process.env.SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
+const SOCKET_SERVER_URL =
+  import.meta.env.VITE_SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
 
 export default class GameHandler {
   #db: Database
@@ -514,7 +515,7 @@ export default class GameHandler {
     }
 
     // streamer commands
-    if (userstate.badges?.broadcaster !== '1' || process.env.NODE_ENV !== 'development') {
+    if (userstate.badges?.broadcaster !== '1' || import.meta.env.VITE_NODE_ENV !== 'development') {
       return
     }
 
