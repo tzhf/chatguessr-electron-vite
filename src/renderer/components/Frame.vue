@@ -27,7 +27,7 @@
       title="settings"
       @click="settingsVisible = true"
     >
-      <span class="icon cg-icon--gear"></span>
+      <IconGear />
     </button>
     <button
       class="cg-button"
@@ -35,12 +35,8 @@
       :hidden="gameState === 'none'"
       @click="widgetVisibility.timerVisible = !widgetVisibility.timerVisible"
     >
-      <span
-        :class="[
-          'icon',
-          widgetVisibility.timerVisible ? 'cg-icon--timerVisible' : 'cg-icon--timerHidden'
-        ]"
-      ></span>
+      <IconTimerVisible v-if="widgetVisibility.timerVisible" />
+      <IconTimerHidden v-else />
     </button>
     <button
       class="cg-button"
@@ -48,14 +44,8 @@
       :hidden="gameState === 'none'"
       @click="widgetVisibility.scoreboardVisible = !widgetVisibility.scoreboardVisible"
     >
-      <span
-        :class="[
-          'icon',
-          widgetVisibility.scoreboardVisible
-            ? 'cg-icon--scoreboardVisible'
-            : 'cg-icon--scoreboardHidden'
-        ]"
-      ></span>
+      <IconScoreboardVisible v-if="widgetVisibility.scoreboardVisible" />
+      <IconScoreboardHidden v-else />
     </button>
     <button
       class="cg-button"
@@ -63,7 +53,7 @@
       :hidden="!satelliteMode.value.enabled || gameState !== 'in-round'"
       @click="onClickCenterSatelliteView"
     >
-      <span class="icon cg-icon--flag"></span>
+      <IconStartFlag />
     </button>
   </div>
 
@@ -83,10 +73,17 @@
 <script lang="ts" setup>
 import { ref, reactive, shallowRef, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useStyleTag } from '@vueuse/core'
+import { getLocalStorage, setLocalStorage } from '@/useLocalStorage'
 import Settings from './Settings.vue'
 import Scoreboard from './Scoreboard.vue'
 import Timer from './Timer.vue'
-import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
+
+import IconGear from '@/assets/icons/gear.svg'
+import IconTimerVisible from '@/assets/icons/timer_visible.svg'
+import IconScoreboardVisible from '@/assets/icons/scoreboard_visible.svg'
+import IconScoreboardHidden from '@/assets/icons/scoreboard_hidden.svg'
+import IconTimerHidden from '@/assets/icons/timer_hidden.svg'
+import IconStartFlag from '@/assets/icons/start_flag.svg'
 
 defineOptions({
   inheritAttrs: false
@@ -349,7 +346,6 @@ function useSocketConnectionState() {
 }
 
 .cg-button {
-  /* box-sizing: content-box; */
   display: flex;
   width: 2.7rem;
   height: 2.7rem;
@@ -374,30 +370,6 @@ function useSocketConnectionState() {
 
 .cg-button.connecting {
   background: blue;
-}
-
-.cg-icon--gear {
-  background-image: url(asset:icons/gear.svg);
-}
-
-.cg-icon--scoreboardVisible {
-  background-image: url(asset:icons/scoreboard_visible.svg);
-}
-
-.cg-icon--scoreboardHidden {
-  background-image: url(asset:icons/scoreboard_hidden.svg);
-}
-
-.cg-icon--timerVisible {
-  background-image: url(asset:icons/timer_visible.svg);
-}
-
-.cg-icon--timerHidden {
-  background-image: url(asset:icons/timer_hidden.svg);
-}
-
-.cg-icon--flag {
-  background-image: url(asset:icons/start_flag.svg);
 }
 
 /* Vue draggable-resizable */

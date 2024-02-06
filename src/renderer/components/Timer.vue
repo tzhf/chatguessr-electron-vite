@@ -30,64 +30,16 @@
 
       <div :class="iconsVisibility ? 'expanded' : 'collapsed'">
         <div class="flex flex-center gap-05">
-          <svg
-            v-if="!isStarted || isPaused"
-            class="icon"
-            :fill="settings.color"
-            stroke="#000"
-            stroke-width="16"
-            viewBox="0 0 512 512"
-            @click="start"
-          >
-            <path
-              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm115.7 272l-176 101c-15.8 8.8-35.7-2.5-35.7-21V152c0-18.4 19.8-29.8 35.7-21l176 107c16.4 9.2 16.4 32.9 0 42z"
-            />
-          </svg>
-          <svg
-            v-else
-            class="icon"
-            :fill="settings.color"
-            stroke="#000"
-            stroke-width="1"
-            viewBox="0 0 45.812 45.812"
-            @click="pause"
-          >
-            <path
-              d="M39.104,6.708c-8.946-8.943-23.449-8.946-32.395,0c-8.946,8.944-8.946,23.447,0,32.394 c8.944,8.946,23.449,8.946,32.395,0C48.047,30.156,48.047,15.653,39.104,6.708z M20.051,31.704c0,1.459-1.183,2.64-2.641,2.64 s-2.64-1.181-2.64-2.64V14.108c0-1.457,1.182-2.64,2.64-2.64s2.641,1.183,2.641,2.64V31.704z M31.041,31.704 c0,1.459-1.183,2.64-2.64,2.64s-2.64-1.181-2.64-2.64V14.108c0-1.457,1.183-2.64,2.64-2.64s2.64,1.183,2.64,2.64V31.704z"
-            />
-          </svg>
-          <svg
-            v-if="isStarted"
-            class="icon"
-            :fill="settings.color"
-            stroke="#000"
-            stroke-width="16"
-            viewBox="-32 0 512 512"
-            @click="reset"
-          >
-            <path
-              d="M400 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48z"
-            />
-          </svg>
-          <svg
-            class="icon"
-            :fill="settings.color"
-            stroke="#000"
-            stroke-width="1"
-            viewBox="0 0 24 24"
-            @click="settingsVisibility = !settingsVisibility"
-          >
-            <path
-              d="M24 13.616v-3.232c-1.651-.587-2.694-.752-3.219-2.019v-.001c-.527-1.271.1-2.134.847-3.707l-2.285-2.285c-1.561.742-2.433 1.375-3.707.847h-.001c-1.269-.526-1.435-1.576-2.019-3.219h-3.232c-.582 1.635-.749 2.692-2.019 3.219h-.001c-1.271.528-2.132-.098-3.707-.847l-2.285 2.285c.745 1.568 1.375 2.434.847 3.707-.527 1.271-1.584 1.438-3.219 2.02v3.232c1.632.58 2.692.749 3.219 2.019.53 1.282-.114 2.166-.847 3.707l2.285 2.286c1.562-.743 2.434-1.375 3.707-.847h.001c1.27.526 1.436 1.579 2.019 3.219h3.232c.582-1.636.75-2.69 2.027-3.222h.001c1.262-.524 2.12.101 3.698.851l2.285-2.286c-.744-1.563-1.375-2.433-.848-3.706.527-1.271 1.588-1.44 3.221-2.021zm-12 2.384c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z"
-            />
-          </svg>
+          <IconStart v-if="!isStarted || isPaused" class="icon" @click="start" />
+          <IconPause v-else class="icon" @click="pause" />
+          <IconStop v-if="isStarted" class="icon" @click="reset" />
+          <IconGearStroke class="icon" @click="settingsVisibility = !settingsVisibility" />
         </div>
       </div>
 
       <div
+        :class="['timer_settings', settingsVisibility ? 'expanded' : 'collapsed']"
         :hidden="!settingsVisibility"
-        :class="settingsVisibility ? 'expanded' : 'collapsed'"
-        class="timer_settings"
       >
         <label class="form__group"
           >Start timer at round start :
@@ -141,17 +93,8 @@
             <button class="btn bg-primary" type="button" @click="handleImportAudioFile">
               Import
             </button>
-            <svg
-              v-if="audioPath"
-              class="icon"
-              fill="#59f3b3"
-              viewBox="0 0 260 228"
-              @click="playAudio()"
-            >
-              <path
-                d="M170.81,78.043l15.653-15.653c14.848,12.299,24.323,30.868,24.323,51.61c0,21.04-9.757,39.836-24.974,52.128l-15.68-15.68 c11.291-8.184,18.655-21.469,18.655-36.448C188.786,99.32,181.719,86.262,170.81,78.043z M236,114 c0,28.068-12.569,53.253-32.371,70.231l15.584,15.584C242.982,178.82,258,148.133,258,114c0-33.836-14.757-64.286-38.168-85.265 L204.257,44.31C223.696,61.28,236,86.229,236,114z M146,2L56.4,66H2v96h54.4l89.6,64V2z"
-              ></path>
-            </svg>
+            <!-- <span v-if="audioPath" class="icon icon-audio" @click="playAudio()"></span> -->
+            <IconAudio v-if="audioPath" class="icon" @click="playAudio()" />
           </div>
         </div>
         <label class="form__group"
@@ -216,7 +159,12 @@
 
 <script setup lang="ts">
 import { ref, watch, reactive, onMounted } from 'vue'
-import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
+import { getLocalStorage, setLocalStorage } from '@/useLocalStorage'
+import IconStart from '@/assets/icons/start.svg'
+import IconPause from '@/assets/icons/pause.svg'
+import IconStop from '@/assets/icons/stop.svg'
+import IconGearStroke from '@/assets/icons/gear_stroke.svg'
+import IconAudio from '@/assets/icons/audio.svg'
 
 const props = defineProps<{
   gameState: GameState
@@ -530,23 +478,19 @@ const handleImportAudioFile = async () => {
 .icon {
   width: 20px;
   height: 20px;
-  transition: all ease-in-out 150ms;
+  transition: transform ease-in-out 150ms;
   cursor: pointer;
 }
-
 .icon:hover {
   transform: scale(1.1);
 }
-
 .icon:active {
   transform: scale(0.8);
 }
-
 .expanded {
   opacity: 1;
   animation: fadeIn 150ms ease-out forwards;
 }
-
 .collapsed {
   opacity: 0;
   animation: fadeOut 150ms ease-out forwards;
@@ -557,27 +501,22 @@ const handleImportAudioFile = async () => {
     display: none;
     opacity: 0;
   }
-
   1% {
     display: block;
   }
-
   100% {
     display: block;
     opacity: 1;
   }
 }
-
 @keyframes fadeOut {
   0% {
     display: block;
     opacity: 1;
   }
-
   99% {
     display: block;
   }
-
   100% {
     display: none;
     opacity: 0;

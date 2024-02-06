@@ -16,24 +16,10 @@
     <div class="scoreboard_header">
       <div class="scoreboard_settings">
         <button class="btn btn-icon" @click="toggleAutoScroll">
-          <svg width="16" height="16" viewBox="0 0 24 24">
-            <g :fill="settings.autoScroll ? '#59f3b3' : 'white'">
-              <path
-                d="M10.293,16.293,9,17.586V4A1,1,0,0,0,7,4V17.586L5.707,16.293a1,1,0,0,0-1.414,1.414l3,3a1,1,0,0,0,1.416,0l3-3a1,1,0,0,0-1.414-1.414Z"
-              />
-              <path
-                d="M19.707,6.293l-3-3a1,1,0,0,0-1.416,0l-3,3a1,1,0,0,0,1.414,1.414L15,6.414V20a1,1,0,0,0,2,0V6.414l1.293,1.293a1,1,0,0,0,1.414-1.414Z"
-              />
-            </g>
-          </svg>
+          <IconAutoScroll :fill="settings.autoScroll ? '#59f3b3' : 'white'" />
         </button>
         <button class="btn btn-icon" @click="isColumnVisibilityOpen = !isColumnVisibilityOpen">
-          <svg width="14" height="14" viewBox="0 0 24 24">
-            <path
-              :fill="isColumnVisibilityOpen ? '#59f3b3' : 'white'"
-              d="M24 13.616v-3.232c-1.651-.587-2.694-.752-3.219-2.019v-.001c-.527-1.271.1-2.134.847-3.707l-2.285-2.285c-1.561.742-2.433 1.375-3.707.847h-.001c-1.269-.526-1.435-1.576-2.019-3.219h-3.232c-.582 1.635-.749 2.692-2.019 3.219h-.001c-1.271.528-2.132-.098-3.707-.847l-2.285 2.285c.745 1.568 1.375 2.434.847 3.707-.527 1.271-1.584 1.438-3.219 2.02v3.232c1.632.58 2.692.749 3.219 2.019.53 1.282-.114 2.166-.847 3.707l2.285 2.286c1.562-.743 2.434-1.375 3.707-.847h.001c1.27.526 1.436 1.579 2.019 3.219h3.232c.582-1.636.75-2.69 2.027-3.222h.001c1.262-.524 2.12.101 3.698.851l2.285-2.286c-.744-1.563-1.375-2.433-.848-3.706.527-1.271 1.588-1.44 3.221-2.021zm-12 2.384c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z"
-            />
-          </svg>
+          <IconGear :fill="isColumnVisibilityOpen ? '#59f3b3' : 'white'" />
         </button>
         <div v-if="isColumnVisibilityOpen" class="column_visibility">
           <button
@@ -123,8 +109,10 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { useScroll } from '@vueuse/core'
-import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
 import formatDuration from 'format-duration'
+import { getLocalStorage, setLocalStorage } from '@/useLocalStorage'
+import IconAutoScroll from '@/assets/icons/auto_scroll.svg'
+import IconGear from '@/assets/icons/gear.svg'
 
 const props = defineProps<{
   gameState: GameState
@@ -477,16 +465,13 @@ defineExpose({
   transition: background-position 0.3s;
   -webkit-transition: background-position 0.3s;
 }
-
 .btn-icon {
   width: 32px;
   height: 22px;
 }
-
 .btn:hover:not([disabled]) {
   background-position: right center;
 }
-
 .btn.active:not([disabled]) {
   background-image: linear-gradient(to right, #1cd997 0%, #33b09b 51%, #1cd997 100%);
 }
@@ -499,16 +484,13 @@ defineExpose({
   height: 22px;
   margin-left: auto;
 }
-
 .switch_container:hover {
   transition: box-shadow 0.3s;
   box-shadow: 2px 2px 5px -2px #000;
 }
-
 .switch_container input {
   display: none;
 }
-
 .switch {
   position: absolute;
   cursor: pointer;
@@ -520,7 +502,6 @@ defineExpose({
   border-radius: 4px;
   background-color: #e04352;
 }
-
 .switch:before {
   position: absolute;
   content: '';
@@ -537,7 +518,6 @@ defineExpose({
 input:checked + .switch {
   background-color: #1cd997;
 }
-
 input:checked + .switch:before {
   transform: translateX(11px);
 }
@@ -557,45 +537,36 @@ table {
   font-weight: bold;
   line-height: 1em;
 }
-
 thead {
   top: 0;
   position: sticky;
   background-color: rgba(0, 0, 0);
   z-index: 2;
 }
-
 th,
 td {
   padding: 8px 0;
 }
-
 tbody td {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 tbody tr:nth-child(odd) {
   background-color: rgba(0, 0, 0, 0.1);
 }
-
 tbody tr:nth-child(even) {
   background-color: rgba(0, 0, 0, 0.2);
 }
-
 tbody tr:hover {
   background-color: rgba(0, 0, 0, 0.3);
   transition: transform 0.1s;
   transform: scale(1.01);
-  /* -webkit-transition: 0.1s; */
 }
-
 th.sortable {
   cursor: pointer;
   transition: color 0.2s ease-in-out;
 }
-
 th.sortable:hover {
   color: rgb(180, 180, 180);
 }
@@ -611,23 +582,19 @@ th.sortable:hover {
   outline: none;
   opacity: 0.2;
   transition: opacity 0.3s;
-  /* -webkit-transition: opacity 0.3s; */
 }
-
 .scrollspeed_slider:hover {
   opacity: 1;
 }
-
 .scrollspeed_slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
   appearance: none;
+  -webkit-appearance: none;
   width: 30px;
   height: 7px;
   background: #63db85;
-  cursor: pointer;
   border-radius: 5px;
+  cursor: pointer;
 }
-
 .scrollspeed_slider::-moz-range-thumb {
   width: 30px;
   height: 7px;
@@ -642,7 +609,6 @@ th.sortable:hover {
 }
 
 /* ROWS ANIMATION */
-
 .vdr-container:not(.dragging, .resizing) .scoreboard_rows-move {
   transition: transform 0.2s ease;
 }

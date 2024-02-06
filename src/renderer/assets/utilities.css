@@ -70,6 +70,9 @@
 .mb-05 {
   margin-bottom: 0.5rem;
 }
+.mb-1 {
+  margin-bottom: 1rem;
+}
 .gap-02 {
   gap: 0.2rem;
 }
@@ -78,4 +81,7 @@
 }
 .gap-05 {
   gap: 0.5rem;
+}
+.gap-1 {
+  gap: 1rem;
 }

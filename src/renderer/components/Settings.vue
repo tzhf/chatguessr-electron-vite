@@ -128,8 +128,8 @@
         </div>
 
         <div v-show="currentTab === 2" class="modal-content">
-          <div class="flex flex-col flex-center gap-05 mx-1">
-            <span class="icon twitch-icon"></span>
+          <div class="flex flex-col flex-center gap-1 mx-1">
+            <IconTwitch />
             <span :class="[twitchConnectionState.state]">{{
               twitchConnectionState.state === 'connected'
                 ? 'connected as ' + twitchConnectionState.botUsername
@@ -169,9 +169,9 @@
                   <input
                     v-model="newChannelName"
                     type="text"
+                    style="width: 240px"
                     spellcheck="false"
                     required
-                    style="width: 240px"
                   />
                   <button
                     :disabled="newChannelName === settings.channelName"
@@ -205,7 +205,7 @@
 
         <div v-show="currentTab === 3" class="modal-content">
           <h3>Banned users :</h3>
-          <div class="flex flex-wrap gap-03 mb-05">
+          <div class="flex flex-wrap gap-03 mb-1">
             <span
               v-for="(user, index) of bannedUsers"
               :key="index"
@@ -215,15 +215,16 @@
               >{{ user.username }}</span
             >
           </div>
-          <div class="form__group gap-05">
-            <input
-              v-model.trim="newBannedUser"
-              class="form__group"
-              type="text"
-              spellcheck="false"
-              @keyup.enter="addBannedUser()"
-            />
-            <button type="button" class="btn bg-danger" @click="addBannedUser()">Ban User</button>
+          <div class="form__group">
+            <div class="flex gap-03">
+              <input
+                v-model.trim="newBannedUser"
+                type="text"
+                spellcheck="false"
+                @keyup.enter="addBannedUser()"
+              />
+              <button type="button" class="btn bg-danger" @click="addBannedUser()">Ban User</button>
+            </div>
           </div>
         </div>
       </div>
@@ -233,6 +234,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, shallowRef } from 'vue'
+import IconTwitch from '@/assets/icons/twitch.svg'
 
 const { chatguessrApi, socketConnectionState, twitchConnectionState } = defineProps<{
   chatguessrApi: Window['chatguessrApi']
@@ -396,13 +398,6 @@ span.connecting {
 span.disconnected,
 span.error {
   color: var(--danger);
-}
-
-.twitch-icon {
-  background-image: url(asset:icons/twitch_icon.svg);
-  display: block;
-  width: 60px;
-  height: 60px;
 }
 
 .badge {

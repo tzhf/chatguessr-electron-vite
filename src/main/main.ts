@@ -21,7 +21,7 @@ const db = database(dbPath)
 // This method will be called when Electron has finished initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
-  serveAssets()
+  // serveAssets()
   await serveFlags()
 
   const mainWindow = createMainWindow()
@@ -157,17 +157,17 @@ if (require('electron-squirrel-startup')) {
 
 // Serve assets to 'asset:' file protocol
 // Assets must be placed in the public folder because rollup cannot resolve urls with `asset:` prefix
-function serveAssets() {
-  const assetDir = join(__dirname, './assets')
-  protocol.interceptFileProtocol('asset', (request, callback) => {
-    const assetFile = join(assetDir, new URL(request.url).pathname)
-    if (!assetFile.startsWith(assetDir)) {
-      callback({ statusCode: 404, data: 'Not Found' })
-    } else {
-      callback({ path: assetFile })
-    }
-  })
-}
+// function serveAssets() {
+//   const assetDir = join(__dirname, './assets')
+//   protocol.interceptFileProtocol('asset', (request, callback) => {
+//     const assetFile = join(assetDir, new URL(request.url).pathname)
+//     if (!assetFile.startsWith(assetDir)) {
+//       callback({ statusCode: 404, data: 'Not Found' })
+//     } else {
+//       callback({ path: assetFile })
+//     }
+//   })
+// }
 
 async function serveFlags() {
   await loadCustomFlags()
