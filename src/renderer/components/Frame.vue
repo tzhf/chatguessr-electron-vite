@@ -1,5 +1,5 @@
 <template>
-  <div id="CGFrameContainer" :class="{ hidden: gameState === 'none' }">
+  <div :class="['cg-frame-container', { hidden: gameState === 'none' }]">
     <transition name="scoreboard_modal">
       <Scoreboard
         v-show="widgetVisibility.scoreboardVisible"
@@ -325,7 +325,7 @@ function useSocketConnectionState() {
   display: none !important;
 }
 
-#CGFrameContainer {
+.cg-frame-container {
   position: absolute;
   top: 0;
   left: 0;

@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
-import { getLocalStorage, setLocalStorage } from './useLocalStorage'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
+import { getLocalStorage, setLocalStorage } from './useLocalStorage'
 import Frame from './components/Frame.vue'
 import './assets/styles.css'
 

@@ -13,34 +13,31 @@
     @drag-end="savePosition"
     @resize-end="savePosition"
   >
-    <div class="scoreboard_header">
-      <div class="scoreboard_settings">
+    <div class="scoreboard-header">
+      <div class="scoreboard-settings">
         <button class="btn btn-icon" @click="toggleAutoScroll">
           <IconAutoScroll :fill="settings.autoScroll ? '#59f3b3' : 'white'" />
         </button>
         <button class="btn btn-icon" @click="isColumnVisibilityOpen = !isColumnVisibilityOpen">
           <IconGear :fill="isColumnVisibilityOpen ? '#59f3b3' : 'white'" />
         </button>
-        <div v-if="isColumnVisibilityOpen" class="column_visibility">
+        <div v-if="isColumnVisibilityOpen" class="column-visibility">
           <button
-            class="btn"
-            :class="{ active: settings.streak }"
+            :class="['btn', { active: settings.streak }]"
             :disabled="isMultiGuess"
             @click="settings.streak = !settings.streak"
           >
             {{ columns[2].name }}
           </button>
           <button
-            class="btn"
-            :class="{ active: settings.distance }"
+            :class="['btn', { active: settings.distance }]"
             :disabled="isMultiGuess"
             @click="settings.distance = !settings.distance"
           >
             {{ columns[3].name }}
           </button>
           <button
-            class="btn"
-            :class="{ active: settings.score }"
+            :class="['btn', { active: settings.score }]"
             :disabled="isMultiGuess"
             @click="settings.score = !settings.score"
           >
@@ -48,12 +45,12 @@
           </button>
         </div>
       </div>
-      <div class="scoreboard_title">{{ title }} ({{ rows.length }})</div>
-      <label v-if="gameState === 'in-round'" class="switch_container">
-        <input type="checkbox" :checked="switchOn" @input="(event) => toggleGuesses(event)" />
+      <div class="scoreboard-title">{{ title }} ({{ rows.length }})</div>
+      <label v-if="gameState === 'in-round'" class="switch-container">
+        <input type="checkbox" :checked="switchOn" @input="(e) => toggleGuesses(e)" />
         <div class="switch"></div>
       </label>
-      <div v-if="isMultiGuess && gameState === 'in-round'" class="scoreboard_hint">
+      <div v-if="gameState === 'in-round' && isMultiGuess" class="scoreboard-hint">
         Ordered by guess time
       </div>
     </div>
@@ -63,12 +60,11 @@
       min="0.5"
       step="0.1"
       max="2"
-      class="scrollspeed_slider"
-      :class="{ hidden: !settings.autoScroll }"
+      :class="['scrollspeed-slider', { hidden: !settings.autoScroll }]"
       @mouseover="isDraggable = false"
       @mouseleave="isDraggable = true"
     />
-    <div ref="tableContainer" class="table_container">
+    <div ref="tableContainer" class="table-container">
       <table>
         <thead>
           <tr>
@@ -87,7 +83,7 @@
           <TransitionGroup name="scoreboard_rows">
             <tr v-for="row in rows" :key="row.username" @click="onRowClick(row)">
               <td v-for="col in activeCols" :key="col.value">
-                <span v-if="col.value === 'player'" :style="{ color: row.color }" class="username">
+                <span v-if="col.value === 'player'" class="username" :style="{ color: row.color }">
                   <span
                     v-if="row.flag"
                     class="flag-icon"
@@ -371,8 +367,8 @@ function scrollToTop() {
   direction = 0
 }
 
-function toggleGuesses(event: Event) {
-  props.setGuessesOpen((event.target as HTMLInputElement).checked)
+function toggleGuesses(e: Event) {
+  props.setGuessesOpen((e.target as HTMLInputElement).checked)
 }
 
 function setSwitchOn(state: boolean) {
@@ -410,7 +406,7 @@ defineExpose({
   cursor: move;
   z-index: 24;
 }
-.scoreboard_header {
+.scoreboard-header {
   display: grid;
   grid-template-areas:
     'settings title switch'
@@ -420,13 +416,13 @@ defineExpose({
   font-size: 18px;
   align-items: center;
 }
-.scoreboard_settings {
+.scoreboard-settings {
   grid-area: settings;
   display: flex;
   gap: 0.2rem;
 }
 
-.scoreboard_title {
+.scoreboard-title {
   height: 36px;
   display: flex;
   justify-content: center;
@@ -434,12 +430,12 @@ defineExpose({
   grid-area: title;
 }
 
-.scoreboard_hint {
+.scoreboard-hint {
   grid-area: hint;
   font-size: 0.75rem;
 }
 
-.column_visibility {
+.column-visibility {
   font-size: 12px;
   position: absolute;
   display: flex;
@@ -476,7 +472,7 @@ defineExpose({
   background-image: linear-gradient(to right, #1cd997 0%, #33b09b 51%, #1cd997 100%);
 }
 
-.switch_container {
+.switch-container {
   grid-area: switch;
   position: relative;
   display: inline-block;
@@ -484,11 +480,11 @@ defineExpose({
   height: 22px;
   margin-left: auto;
 }
-.switch_container:hover {
+.switch-container:hover {
   transition: box-shadow 0.3s;
   box-shadow: 2px 2px 5px -2px #000;
 }
-.switch_container input {
+.switch-container input {
   display: none;
 }
 .switch {
@@ -522,11 +518,11 @@ input:checked + .switch:before {
   transform: translateX(11px);
 }
 
-.table_container {
+.table-container {
   height: calc(100% - 60px);
   overflow: auto;
 }
-.table_container::-webkit-scrollbar {
+.table-container::-webkit-scrollbar {
   display: none;
 }
 
@@ -572,7 +568,7 @@ th.sortable:hover {
 }
 
 /* SCROLL SLIDER */
-.scrollspeed_slider {
+.scrollspeed-slider {
   height: 5px;
   padding: 0;
   appearance: none;
@@ -583,10 +579,10 @@ th.sortable:hover {
   opacity: 0.2;
   transition: opacity 0.3s;
 }
-.scrollspeed_slider:hover {
+.scrollspeed-slider:hover {
   opacity: 1;
 }
-.scrollspeed_slider::-webkit-slider-thumb {
+.scrollspeed-slider::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
   width: 30px;
@@ -595,7 +591,7 @@ th.sortable:hover {
   border-radius: 5px;
   cursor: pointer;
 }
-.scrollspeed_slider::-moz-range-thumb {
+.scrollspeed-slider::-moz-range-thumb {
   width: 30px;
   height: 7px;
   background: #63db85;

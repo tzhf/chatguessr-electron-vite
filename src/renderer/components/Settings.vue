@@ -60,7 +60,7 @@
 
           <h2>Twitch commands <small>(leave empty to disable)</small></h2>
           <div class="ml-05">
-            <div class="grid__col">
+            <div class="grid-col">
               <div>
                 <label class="form__group" data-tip="Get map link (default: !cg)">
                   Get map link :
@@ -339,7 +339,7 @@ textarea {
   padding: 0.5rem 1rem;
 }
 
-.grid__col {
+.grid-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 1rem;

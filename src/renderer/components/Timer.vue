@@ -30,15 +30,15 @@
 
       <div :class="iconsVisibility ? 'expanded' : 'collapsed'">
         <div class="flex flex-center gap-05">
-          <IconStart v-if="!isStarted || isPaused" class="icon" @click="start" />
-          <IconPause v-else class="icon" @click="pause" />
-          <IconStop v-if="isStarted" class="icon" @click="reset" />
-          <IconGearStroke class="icon" @click="settingsVisibility = !settingsVisibility" />
+          <IconStart v-if="!isStarted || isPaused" @click="start" />
+          <IconPause v-else @click="pause" />
+          <IconStop v-if="isStarted" @click="reset" />
+          <IconGearStroke @click="settingsVisibility = !settingsVisibility" />
         </div>
       </div>
 
       <div
-        :class="['timer_settings', settingsVisibility ? 'expanded' : 'collapsed']"
+        :class="['timer-settings', settingsVisibility ? 'expanded' : 'collapsed']"
         :hidden="!settingsVisibility"
       >
         <label class="form__group"
@@ -93,7 +93,6 @@
             <button class="btn bg-primary" type="button" @click="handleImportAudioFile">
               Import
             </button>
-            <!-- <span v-if="audioPath" class="icon icon-audio" @click="playAudio()"></span> -->
             <IconAudio v-if="audioPath" class="icon" @click="playAudio()" />
           </div>
         </div>
@@ -463,7 +462,7 @@ const handleImportAudioFile = async () => {
   pointer-events: auto;
 }
 
-.timer_settings {
+.timer-settings {
   width: 380px;
   margin: 0.5rem auto;
   padding: 0.8rem;
@@ -475,16 +474,16 @@ const handleImportAudioFile = async () => {
   border-radius: 0.5rem;
 }
 
-.icon {
+svg {
   width: 20px;
   height: 20px;
   transition: transform ease-in-out 150ms;
   cursor: pointer;
 }
-.icon:hover {
+svg:hover {
   transform: scale(1.1);
 }
-.icon:active {
+svg:active {
   transform: scale(0.8);
 }
 .expanded {
