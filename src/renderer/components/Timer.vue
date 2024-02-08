@@ -165,11 +165,9 @@ import IconStop from '@/assets/icons/stop.svg'
 import IconGearStroke from '@/assets/icons/gear_stroke.svg'
 import IconAudio from '@/assets/icons/audio.svg'
 
+const { chatguessrApi } = window
 const props = defineProps<{
   gameState: GameState
-  importAudioFile: Window['chatguessrApi']['importAudioFile']
-  appDataPathExists: Window['chatguessrApi']['appDataPathExists']
-  setGuessesOpen: Window['chatguessrApi']['setGuessesOpen']
 }>()
 watch(
   () => props.gameState,
@@ -227,7 +225,7 @@ let pausedDifference = 0
 let frameInterval = () => {}
 
 onMounted(async () => {
-  audioPath.value = await props.appDataPathExists('\\timer\\timer_alert')
+  audioPath.value = await chatguessrApi.appDataPathExists('\\timer\\timer_alert')
 
   updateDisplay(settings.timeLimit * 1000)
 
@@ -386,7 +384,7 @@ const start = () => {
     if (targetTimestamp - Date.now() < 1) {
       reset()
       if (settings.timesUpMsg) display.value = settings.timesUpMsg
-      if (settings.autoCloseGuesses) props.setGuessesOpen(false)
+      if (settings.autoCloseGuesses) chatguessrApi.setGuessesOpen(false)
     } else updateDisplay()
 
     requestAnimationFrame(frameInterval)
@@ -437,7 +435,7 @@ const playAudio = () => {
 
 const handleImportAudioFile = async () => {
   try {
-    const path = await props.importAudioFile()
+    const path = await chatguessrApi.importAudioFile()
     if (path) {
       audioPath.value = path + '?cb=' + new Date().getTime()
     }

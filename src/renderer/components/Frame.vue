@@ -8,15 +8,11 @@
         :is-multi-guess="isMultiGuess"
         :on-round-result-row-click="onRoundResultRowClick"
         :on-game-result-row-click="onGameResultRowClick"
-        :set-guesses-open="chatguessrApi.setGuessesOpen"
       />
     </transition>
 
     <Timer
       :game-state="gameState"
-      :import-audio-file="chatguessrApi.importAudioFile"
-      :app-data-path-exists="chatguessrApi.appDataPathExists"
-      :set-guesses-open="chatguessrApi.setGuessesOpen"
       :class="{ hidden: gameState !== 'in-round' || !widgetVisibility.timerVisible }"
     />
   </div>
@@ -61,7 +57,6 @@
     <transition name="settings_modal">
       <Settings
         v-if="settingsVisible"
-        :chatguessr-api="chatguessrApi"
         :socket-connection-state="socketConnectionState"
         :twitch-connection-state="twitchConnectionState"
         @close="settingsVisible = false"
@@ -89,8 +84,8 @@ defineOptions({
   inheritAttrs: false
 })
 
-const { chatguessrApi, rendererApi } = defineProps<{
-  chatguessrApi: Window['chatguessrApi']
+const { chatguessrApi } = window
+const { rendererApi } = defineProps<{
   rendererApi: RendererApi
 }>()
 

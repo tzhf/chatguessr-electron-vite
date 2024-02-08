@@ -1,14 +1,6 @@
-type BrowserWindow = import('electron').BrowserWindow
-
-type IpcMainEvent = import('electron').IpcMainEvent
-
 type Socket = import('socket.io-client').Socket
 
-type Session = import('@supabase/supabase-js').Session
-
 type ChatUserstate = import('tmi.js').ChatUserstate
-
-type Database = import('./utils/useDatabase').Database
 
 type Settings = {
   channelName: string
@@ -85,6 +77,41 @@ type GameResult = {
   distances: (number | null)[]
   totalScore: number
   totalDistance: number
+}
+
+type GameResultDisplay = {
+  username: string
+  color: string
+  flag: string | null
+  guesses: (LatLng | null)[]
+  distances: (number | null)[]
+  scores: (number | null)[]
+}
+
+type ScoreboardRow = {
+  index?: { value: number; display: string | number }
+  username: string
+  flag: string | null
+  color: string
+  streak?: {
+    value: number
+    display: number | string
+  }
+  distance?: {
+    value: number
+    display: number | string
+  }
+  score?: {
+    value: number
+    display: number | string
+  }
+  modified?: boolean
+  position?: LatLng
+  guesses?: (LatLng | null)[]
+  distances?: (number | null)[]
+  scores?: (number | null)[]
+  totalScore?: number
+  totalDistance?: number
 }
 
 type Bounds = {

@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import pMap from 'p-map'
 import { store } from './utils/useStore'
 
@@ -44,7 +43,7 @@ export default class Game {
   guessesOpen = false
   isMultiGuess = false
 
-  constructor(db: Database, settings: Settings) {
+  constructor(db: IDatabase, settings: Settings) {
     this.#db = db
     this.#settings = settings
     this.lastLocation = store.get('lastLocation', undefined)
@@ -209,10 +208,7 @@ export default class Game {
     })
   }
 
-  async handleUserGuess(
-    userstate: import('tmi.js').ChatUserstate,
-    location: LatLng
-  ): Promise<Guess> {
+  async handleUserGuess(userstate: ChatUserstate, location: LatLng): Promise<Guess> {
     const dbUser = this.#db.getOrCreateUser(userstate['user-id'], userstate['display-name'])
 
     const existingGuess = this.#db.getUserGuess(this.#roundId, dbUser.id)

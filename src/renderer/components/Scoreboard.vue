@@ -110,10 +110,10 @@ import { getLocalStorage, setLocalStorage } from '@/useLocalStorage'
 import IconAutoScroll from '@/assets/icons/auto_scroll.svg'
 import IconGear from '@/assets/icons/gear.svg'
 
+const { chatguessrApi } = window
 const props = defineProps<{
   gameState: GameState
   isMultiGuess: boolean
-  setGuessesOpen: Window['chatguessrApi']['setGuessesOpen']
   onRoundResultRowClick: (index: number, position: LatLng) => void
   onGameResultRowClick: (row: ScoreboardRow) => void
 }>()
@@ -150,7 +150,13 @@ function savePosition() {
   setLocalStorage('cg_scoreboard__position', position)
 }
 
-const columns: ScoreboardColumn[] = [
+type Column = {
+  name: string
+  value: string
+  width: string
+  sortable: boolean
+}
+const columns: Column[] = [
   { name: '#', value: 'index', width: '30px', sortable: true },
   { name: 'Player', value: 'player', width: '100%', sortable: false },
   { name: 'Streak', value: 'streak', width: '60px', sortable: true },
@@ -302,7 +308,7 @@ function showGameResults(gameResults: GameResult[]) {
   scrollToTop()
 }
 
-function sortByCol(col: ScoreboardColumn) {
+function sortByCol(col: Column) {
   if (!col.sortable) return
   rows.sort((a, b) => {
     const x = a[col.value].value
@@ -368,7 +374,7 @@ function scrollToTop() {
 }
 
 function toggleGuesses(e: Event) {
-  props.setGuessesOpen((e.target as HTMLInputElement).checked)
+  chatguessrApi.setGuessesOpen((e.target as HTMLInputElement).checked)
 }
 
 function setSwitchOn(state: boolean) {

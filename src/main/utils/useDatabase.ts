@@ -174,7 +174,7 @@ const migrations: ((db: SQLite.Database) => void)[] = [
   }
 ]
 
-export class Database {
+class Database {
   #db: SQLite.Database
 
   constructor(file: string) {
@@ -668,7 +668,7 @@ export class Database {
     return user ? this.#parseUser(user) : undefined
   }
 
-  setUserFlag(userId: string, flag: string) {
+  setUserFlag(userId: string, flag: string | null) {
     this.#db.prepare(`UPDATE users SET flag = :flag WHERE id = :id`).run({
       id: userId,
       flag
@@ -864,3 +864,7 @@ export class Database {
 }
 
 export const database = (dbPath: string) => new Database(dbPath)
+
+declare global {
+  interface IDatabase extends Database {}
+}

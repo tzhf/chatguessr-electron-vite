@@ -1,6 +1,6 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  "include": ["src/**/*"],
+  // "include": ["src/**/*"],
   "exclude": ["src/renderer/*"],
   "compilerOptions": {
     "composite": true,

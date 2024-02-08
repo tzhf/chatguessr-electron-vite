@@ -5,11 +5,11 @@ import { updateElectronApp } from 'update-electron-app'
 
 import createMainWindow from './MainWindow'
 import createAuthWindow from '../auth/AuthWindow'
-import GameHandler from '../GameHandler'
-import { database } from '../utils/useDatabase'
-import { supabase } from '../utils/useSupabase'
-import { store } from '../utils/useStore'
-import { loadCustomFlags, findFlagFile } from '../utils/flags/flags'
+import GameHandler from './GameHandler'
+import { database } from './utils/useDatabase'
+import { supabase } from './utils/useSupabase'
+import { store } from './utils/useStore'
+import { loadCustomFlags, findFlagFile } from './utils/flags/flags'
 import { version } from '../../package.json'
 
 updateElectronApp()
@@ -122,7 +122,7 @@ async function authenticateWithTwitch(gameHandler: GameHandler, parentWindow: Br
     })
   }
 
-  const setSession = (_event: IpcMainEvent, session: Session) => {
+  const setSession = (_event: Electron.IpcMainEvent, session: Session) => {
     supabase.auth.setSession(session)
     gameHandler.authenticate(session)
 

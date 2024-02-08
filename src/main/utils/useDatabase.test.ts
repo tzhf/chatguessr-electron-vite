@@ -2,7 +2,7 @@ import { beforeEach, describe, it, expect } from 'vitest'
 import { randomUUID } from 'node:crypto'
 import { database } from './useDatabase'
 
-let db: Database
+let db: IDatabase
 
 beforeEach(() => {
   db = database(':memory:')

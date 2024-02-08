@@ -236,8 +236,8 @@
 import { ref, reactive, watch, shallowRef } from 'vue'
 import IconTwitch from '@/assets/icons/twitch.svg'
 
-const { chatguessrApi, socketConnectionState, twitchConnectionState } = defineProps<{
-  chatguessrApi: Window['chatguessrApi']
+const { chatguessrApi } = window
+const { socketConnectionState, twitchConnectionState } = defineProps<{
   twitchConnectionState: TwitchConnectionState
   socketConnectionState: SocketConnectionState
 }>()

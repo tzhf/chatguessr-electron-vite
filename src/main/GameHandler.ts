@@ -11,9 +11,9 @@ const SOCKET_SERVER_URL =
   import.meta.env.VITE_SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
 
 export default class GameHandler {
-  #db: Database
+  #db: IDatabase
 
-  #win: BrowserWindow
+  #win: Electron.BrowserWindow
 
   #session: Session | undefined
 
@@ -26,8 +26,8 @@ export default class GameHandler {
   #requestAuthentication: () => Promise<void>
 
   constructor(
-    db: Database,
-    win: BrowserWindow,
+    db: IDatabase,
+    win: Electron.BrowserWindow,
     options: { requestAuthentication: () => Promise<void> }
   ) {
     this.#db = db
@@ -328,6 +328,43 @@ export default class GameHandler {
     }
   }
 
+  async #initSocket(session: Session) {
+    if (this.#socket?.connected) {
+      this.#socket.disconnect()
+    }
+
+    const botUsername: string = session.user.user_metadata.name
+
+    this.#socket = io(SOCKET_SERVER_URL, {
+      transportOptions: {
+        polling: {
+          extraHeaders: {
+            access_token: session.access_token,
+            channelname: settings.channelName,
+            bot: botUsername
+          }
+        }
+      }
+    })
+
+    this.#socket.on('connect', () => {
+      this.#socket?.emit('join', botUsername)
+      this.#win.webContents.send('socket-connected')
+    })
+
+    this.#socket.on('disconnect', () => {
+      this.#win.webContents.send('socket-disconnected')
+    })
+
+    this.#socket.on('guess', (userData: ChatUserstate, guess: string) => {
+      this.#handleGuess(userData, guess).catch((err) => {
+        console.error(err)
+      })
+    })
+
+    await once(this.#socket, 'connect')
+  }
+
   async #handleGuess(userstate: ChatUserstate, message: string) {
     if (!message.startsWith('!g') || !this.#game.guessesOpen) return
     // Ignore guesses made by the broadcaster with the CG map: prevents seemingly duplicate guesses
@@ -387,7 +424,6 @@ export default class GameHandler {
   }
 
   #cgCooldown: boolean = false
-
   async #handleMessage(userstate: ChatUserstate, message: string) {
     if (!message.startsWith('!')) return
     if (!userstate['user-id'] || !userstate['display-name']) return
@@ -415,11 +451,13 @@ export default class GameHandler {
       const dbUser = this.#db.getOrCreateUser(userId, userstate['display-name'])
       if (!dbUser) return
 
-      let newFlag
+      let newFlag: string | null | undefined
       if (countryReq === 'none') {
         newFlag = null
+        await this.#backend?.sendMessage(`${userstate['display-name']} flag removed`)
       } else if (countryReq === 'random') {
         newFlag = randomCountryFlag()
+        await this.#backend?.sendMessage(`${userstate['display-name']} got ${getEmoji(newFlag)}`)
       } else {
         newFlag = selectFlag(countryReq)
         if (!newFlag) {
@@ -427,14 +465,7 @@ export default class GameHandler {
           return
         }
       }
-
       this.#db.setUserFlag(dbUser.id, newFlag)
-
-      if (countryReq === 'none') {
-        await this.#backend?.sendMessage(`${userstate['display-name']} flag removed`)
-      } else if (countryReq === 'random') {
-        await this.#backend?.sendMessage(`${userstate['display-name']} got ${getEmoji(newFlag)}`)
-      }
 
       return
     }
@@ -537,42 +568,5 @@ export default class GameHandler {
         )
       }
     }
-  }
-
-  async #initSocket(session: Session) {
-    if (this.#socket?.connected) {
-      this.#socket.disconnect()
-    }
-
-    const botUsername: string = session.user.user_metadata.name
-
-    this.#socket = io(SOCKET_SERVER_URL, {
-      transportOptions: {
-        polling: {
-          extraHeaders: {
-            access_token: session.access_token,
-            channelname: settings.channelName,
-            bot: botUsername
-          }
-        }
-      }
-    })
-
-    this.#socket.on('connect', () => {
-      this.#socket?.emit('join', botUsername)
-      this.#win.webContents.send('socket-connected')
-    })
-
-    this.#socket.on('disconnect', () => {
-      this.#win.webContents.send('socket-disconnected')
-    })
-
-    this.#socket.on('guess', (userData: ChatUserstate, guess: string) => {
-      this.#handleGuess(userData, guess).catch((err) => {
-        console.error(err)
-      })
-    })
-
-    await once(this.#socket, 'connect')
   }
 }
