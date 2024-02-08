@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   resolve: {
     // Some libs that can run in both Web and Node.js, such as `axios`, we need to tell Vite to build them in Node.js.
+    // @ts-expect-error (browserField is deprecated, but i couldn't get it working with mainFields for now)
     browserField: false,
     conditions: ['node'],
     mainFields: ['module', 'jsnext:main', 'jsnext']

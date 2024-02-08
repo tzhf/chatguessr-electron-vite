@@ -1,6 +1,6 @@
 {
   "name": "chatguessr-electron-vite",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "ChatGuessr electron-vite",
   "repository": "https://github.com/tzhf/chatguessr-electron-vite",
   "homepage": "https://chatguessr.com",
@@ -59,6 +59,7 @@
     "eslint-plugin-html": "^7.1.0",
     "eslint-plugin-vue": "^9.20.1",
     "prettier": "^3.2.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "vite-svg-loader": "^5.1.0",
     "vitest": "^1.2.2",
