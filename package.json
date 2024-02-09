@@ -1,6 +1,6 @@
 {
   "name": "chatguessr-electron-vite",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "ChatGuessr electron-vite",
   "repository": "https://github.com/tzhf/chatguessr-electron-vite",
   "homepage": "https://chatguessr.com",
