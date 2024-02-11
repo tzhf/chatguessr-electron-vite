@@ -1,9 +1,19 @@
 {
-  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  // "include": ["src/**/*"],
-  "exclude": ["src/renderer/*"],
+  "exclude": ["src/renderer"],
   "compilerOptions": {
-    "composite": true,
-    "types":["vite/client"]
-  }
+    "strict": true,
+    "target": "esnext",
+    "module": "esnext",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noEmit": true
+  },
 }

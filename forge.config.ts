@@ -11,7 +11,6 @@ const config: ForgeConfig = {
     icon: 'build/icon',
     executableName: 'chatguessr-electron-vite'
   },
-  rebuildConfig: {},
   makers: [
     new MakerSquirrel({
       name: 'chatguessr-electron-vite',
@@ -56,7 +55,8 @@ const config: ForgeConfig = {
           entry: 'src/auth/auth_impl.ts'
         }
       ],
-      // Usually renderer goes here but in our case we need the compiled JS so we can inject it into GeoGuessr instead of running a vite dev server
+      // Usually renderer goes here but in our case we need the compiled JS
+      // so we can inject it into GeoGuessr instead of running a vite dev server
       renderer: []
     })
   ]

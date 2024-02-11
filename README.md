@@ -1,6 +1,6 @@
 # ChatGuessr
 
-<center>
+<p>
   <a href="https://github.com/tzhf/chatguessr-electron-vite/releases">
      <img alt="releases url" src="https://img.shields.io/github/v/release/tzhf/chatguessr-electron-vite?style=for-the-badge&labelColor=1C1E26&color=61ffca"/>
   </a>
@@ -10,7 +10,7 @@
   <a href="https://paypal.me/chatguessr">
     <img alt="paypal url" src="https://img.shields.io/badge/support%20on-paypal-1C1E26?style=for-the-badge&labelColor=1C1E26&color=B181F1"/>
   </a>
-</center>
+</p>
 
 <center>This is the source code for the ChatGuessr application. Are you a streamers or player? Check [the website](https://chatguessr.com) instead.</center>
 
