@@ -12,7 +12,7 @@ import { store } from './utils/useStore'
 import { loadCustomFlags, findFlagFile } from './utils/flags/flags'
 import { version } from '../../package.json'
 
-updateElectronApp()
+if (process.platform == 'win32') updateElectronApp()
 
 const appDataPath = app.getPath('userData')
 const dbPath = join(appDataPath, 'scores.db')
