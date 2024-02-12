@@ -1,6 +1,9 @@
-# ChatGuessr
+<div align="center">
+  <img src="./build/icon.png" style="width:40px">
+  <h1>ChatGuessr</h1>
+</div>
 
-<p>
+<p align="center">
   <a href="https://github.com/tzhf/chatguessr-electron-vite/releases">
      <img alt="releases url" src="https://img.shields.io/github/v/release/tzhf/chatguessr-electron-vite?style=for-the-badge&labelColor=1C1E26&color=61ffca"/>
   </a>
@@ -12,7 +15,7 @@
   </a>
 </p>
 
-<center>This is the source code for the ChatGuessr application. Are you a streamers or player? Check [the website](https://chatguessr.com) instead.</center>
+<p align=center>This is the source code for the ChatGuessr application. Are you a streamer or a player ? Check <a href="https://chatguessr.com">the website</a> instead.</span></p>
 
 ## Build
 
@@ -50,4 +53,4 @@ npm run format
 
 The ChatGuessr source is available under the [MIT License](./LICENSE).
 
-The Montserrat and Comfortaa fonts are used under the [Open Font License](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL).
+The Montserrat font is used under the [Open Font License](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL).
