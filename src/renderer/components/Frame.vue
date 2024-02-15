@@ -119,7 +119,7 @@ const satelliteMode = {
 
 // Remove the game's own markers while on a results screen (where we draw our own)
 const markerRemover = useStyleTag(
-  '[data-qa="result-view-top"] [data-qa="guess-marker"], [data-qa="result-view-top"] [data-qa="correct-location-marker"], [class^="coordinate-result-map_line__"] { display: none; }',
+  '[data-qa="result-view-top"] [data-qa="guess-marker"], [class^="coordinate-result-map_line__"] { display: none; }',
   {
     id: 'cg-marker-remover',
     manual: true
@@ -238,7 +238,7 @@ onBeforeUnmount(
     gameState.value = 'game-results'
     gameResultLocations.value = locations
 
-    rendererApi.drawGameLocations(locations)
+    // rendererApi.drawGameLocations(locations)
     rendererApi.drawPlayerResults(locations, gameResults[0])
     scoreboard.value!.showGameResults(gameResults)
   })

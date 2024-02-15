@@ -7,11 +7,7 @@ const settings: Settings = storedSettings ?? {
   token: '',
   cgCmd: '!cg',
   cgCmdCooldown: 30,
-  cgMsg: `
-      Two ways to play:
-      1. Login with Twitch, make your guess and press guess (spacebar).
-      2. Paste the command into chat without editing: <your cg link>
-    `,
+  cgMsg: `Two ways to play: Link your Twitch account, guess and plonk with spacebar | or paste the command into chat without editing: <your cg link>`,
   flagsCmd: '!flags',
   getUserStatsCmd: '!me',
   getBestStatsCmd: '!best',
@@ -22,7 +18,7 @@ const settings: Settings = storedSettings ?? {
   showGuessChanged: true,
   showSubmittedPreviousGuess: true,
   isMultiGuess: false,
-  guessMarkersLimit: 100
+  guessMarkersLimit: 30
 }
 
 const saveSettings = (settings_: Settings): void => {

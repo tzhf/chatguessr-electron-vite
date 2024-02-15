@@ -2,6 +2,10 @@ type Socket = import('socket.io-client').Socket
 
 type ChatUserstate = import('tmi.js').ChatUserstate
 
+interface UserData extends ChatUserstate {
+  avatar?: string
+}
+
 type Settings = {
   channelName: string
   token: string
@@ -37,6 +41,7 @@ type Guess = {
   username: string
   color: string
   flag: string | null
+  avatar: string | null
   position: LatLng
   streak: number
   lastStreak: number | null
@@ -51,6 +56,7 @@ type RoundResult = {
   username: string
   user: string
   color: string
+  avatar: string | null
   flag: string | null
   streak: number
   lastStreak: number | null
@@ -64,12 +70,14 @@ type RoundParticipant = {
   id: string
   username: string
   color: string
+  avatar: string | null
   flag: string | null
 }
 
 type GameResult = {
   username: string
   color: string
+  avatar: string | null
   flag: string | null
   streak: number
   guesses: (LatLng | null)[]
@@ -82,6 +90,7 @@ type GameResult = {
 type GameResultDisplay = {
   username: string
   color: string
+  avatar: string | null
   flag: string | null
   guesses: (LatLng | null)[]
   distances: (number | null)[]
@@ -91,8 +100,9 @@ type GameResultDisplay = {
 type ScoreboardRow = {
   index?: { value: number; display: string | number }
   username: string
-  flag: string | null
   color: string
+  avatar: string | null
+  flag: string | null
   streak?: {
     value: number
     display: number | string

@@ -13,7 +13,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       // external: ['better-sqlite3', 'coordinate_to_country', 'bufferutil', 'utf-8-validate'],
-      // Some third-party Node.js libraries may not be built correctly by Vite, especially `C/C++` addons,
+      // Some third-party Node.js libraries may not be built correctly by Vite,
       // we can use `external` to exclude them to ensure they work correctly.
       external: Object.keys('dependencies' in pkg ? pkg.dependencies : {})
     }

@@ -66,13 +66,13 @@ small {
   cursor: pointer;
 }
 
-.form__group input[type='color'] {
-  padding: 1px 2px;
-}
-
 .form__group input:hover,
 .form__group select:hover {
   filter: brightness(120%);
+}
+
+.form__group input[type='color'] {
+  padding: 1px 2px;
 }
 
 .form__group input[type='text'],
@@ -196,11 +196,6 @@ textarea:focus {
   background-color: rgb(91, 91, 91);
 }
 
-.username {
-  font-size: 14px;
-  text-shadow: white 1px 1px 1px;
-}
-
 .flag-icon {
   background-size: contain;
   background-position: 50%;
@@ -208,14 +203,13 @@ textarea:focus {
   position: relative;
   display: inline-block;
   width: 1.33333333em;
-  margin-right: 5px;
 }
 
 .flag-icon:before {
   content: '\00a0';
 }
 
-/* These styles cannot be scoped in so we put em in here */
+/* These Scoreboard styles cannot be scoped in so we put em in here */
 .scoreboard_handle {
   display: block !important;
   background: none;
@@ -242,4 +236,36 @@ textarea:focus {
   width: 12px;
   height: 12px;
   z-index: 99;
+}
+
+/* GLOBAL MAP RENDERER */
+/* Small trick to select guess marker avatars cause we cannot add CSS class to google.maps.Marker */
+img[src$="#custom_marker"]{
+  border: 2px solid white !important;
+  border-radius: 50%;
+}
+
+.guess-marker-label {
+  background-color: white;
+  border-radius: 50%;
+  font-size: 10px !important;
+  font-weight: bold;
+  width: 13px;
+  height: 13px;
+}
+
+.username,
+.gm-style-iw-d .username {
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  text-shadow:
+    rgb(0 0 0) 1px 1px 0px,
+    rgb(255 255 255 / 69%) 1px 1px 3px;
+}
+.gm-style-iw-d .username {
+  font-size: 16px;
+  font-weight: bold;
 }

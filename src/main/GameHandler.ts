@@ -70,10 +70,6 @@ export default class GameHandler {
   #showRoundResults(location: Location_, roundResults: RoundResult[]) {
     const round = this.#game.isFinished ? this.#game.round : this.#game.round - 1
 
-    if (roundResults[0]) roundResults[0].color = '#E3BB39'
-    if (roundResults[1]) roundResults[1].color = '#C9C9C9'
-    if (roundResults[2]) roundResults[2].color = '#A3682E'
-
     this.#win.webContents.send(
       'show-round-results',
       round,
@@ -92,10 +88,6 @@ export default class GameHandler {
   async #showGameResults() {
     const gameResults = this.#game.getGameResults()
     const locations = this.#game.getLocations()
-
-    if (gameResults[0]) gameResults[0].color = '#E3BB39'
-    if (gameResults[1]) gameResults[1].color = '#C9C9C9'
-    if (gameResults[2]) gameResults[2].color = '#A3682E'
 
     this.#win.webContents.send('show-game-results', locations, gameResults)
 
@@ -307,13 +299,13 @@ export default class GameHandler {
       }
     })
 
-    this.#backend.on('guess', (userstate: ChatUserstate, message: string) => {
+    this.#backend.on('guess', (userstate: UserData, message: string) => {
       this.#handleGuess(userstate, message).catch((err) => {
         console.error(err)
       })
     })
 
-    this.#backend.on('message', (userstate: ChatUserstate, message: string) => {
+    this.#backend.on('message', (userstate: UserData, message: string) => {
       this.#handleMessage(userstate, message).catch((err) => {
         console.error(err)
       })
@@ -356,7 +348,7 @@ export default class GameHandler {
       this.#win.webContents.send('socket-disconnected')
     })
 
-    this.#socket.on('guess', (userData: ChatUserstate, guess: string) => {
+    this.#socket.on('guess', (userData: UserData, guess: string) => {
       this.#handleGuess(userData, guess).catch((err) => {
         console.error(err)
       })
@@ -365,7 +357,7 @@ export default class GameHandler {
     await once(this.#socket, 'connect')
   }
 
-  async #handleGuess(userstate: ChatUserstate, message: string) {
+  async #handleGuess(userstate: UserData, message: string) {
     if (!message.startsWith('!g') || !this.#game.guessesOpen) return
     // Ignore guesses made by the broadcaster with the CG map: prevents seemingly duplicate guesses
     if (userstate.username?.toLowerCase() === settings.channelName.toLowerCase()) return
@@ -424,11 +416,11 @@ export default class GameHandler {
   }
 
   #cgCooldown: boolean = false
-  async #handleMessage(userstate: ChatUserstate, message: string) {
+  async #handleMessage(userstate: UserData, message: string) {
     if (!message.startsWith('!')) return
     if (!userstate['user-id'] || !userstate['display-name']) return
     const userId = userstate.badges?.broadcaster === '1' ? 'BROADCASTER' : userstate['user-id']
-
+    // const avatar = userstate.avatar ?? 'asset:avatar-default.jpg'
     message = message.trim().toLowerCase()
 
     if (message === settings.cgCmd) {
@@ -442,13 +434,17 @@ export default class GameHandler {
       setTimeout(() => {
         this.#cgCooldown = false
       }, settings.cgCmdCooldown * 1000)
-
       return
     }
 
     if (message.startsWith('!flag ')) {
       const countryReq = message.slice(message.indexOf(' ') + 1).trim()
-      const dbUser = this.#db.getOrCreateUser(userId, userstate['display-name'])
+      const dbUser = this.#db.getOrCreateUser(
+        userId,
+        userstate['display-name'],
+        userstate.color,
+        userstate.avatar
+      )
       if (!dbUser) return
 
       let newFlag: string | null | undefined
@@ -466,13 +462,11 @@ export default class GameHandler {
         }
       }
       this.#db.setUserFlag(dbUser.id, newFlag)
-
       return
     }
 
     if (message === settings.flagsCmd) {
       await this.#backend?.sendMessage('Available flags: chatguessr.com/flags')
-
       return
     }
 
@@ -491,10 +485,9 @@ export default class GameHandler {
           }
 					Avg. score: ${Math.round(userInfo.meanScore)}.
 					Victories: ${userInfo.victories}.
-					Perfects: ${userInfo.perfects}.
+					5ks: ${userInfo.perfects}.
 				`)
       }
-
       return
     }
 
@@ -511,7 +504,7 @@ export default class GameHandler {
           msg += `Victories: ${victories.victories} (${victories.username}). `
         }
         if (perfects) {
-          msg += `Perfects: ${perfects.perfects} (${perfects.username}). `
+          msg += `5ks: ${perfects.perfects} (${perfects.username}). `
         }
         await this.#backend?.sendMessage(`Channels best: ${msg}`)
       }
@@ -541,21 +534,20 @@ export default class GameHandler {
       this.#handleGuess(userstate, randomGuess).catch((err) => {
         console.error(err)
       })
-
       return
     }
 
     // streamer commands
-    if (userstate.badges?.broadcaster !== '1' || process.env.NODE_ENV !== 'development') {
-      return
-    }
+    if (process.env.NODE_ENV !== 'development' || userstate.badges?.broadcaster !== '1') return
 
     if (message.startsWith('!spamguess')) {
       const max = parseInt(message.split(' ')[1] ?? '50', 10)
-      for (let i = 0; i < max; i += 1) {
+
+      let i = 0
+      const interval = setInterval(async () => {
         const userId = `123450${i}`
-        // const flag = randomCountryFlag()
-        // this.#db.setUserFlag(userId, flag)
+        const flag = randomCountryFlag()
+        this.#db.setUserFlag(userId, flag)
         const { lat, lng } = await getRandomCoordsInLand(this.#game.seed!.bounds)
         await this.#handleGuess(
           {
@@ -563,10 +555,15 @@ export default class GameHandler {
             username: `fake_${i}`,
             'display-name': `fake_${i}`,
             color: `#${Math.random().toString(16).slice(2, 8).padStart(6, '0')}`
+            // avatar: 'asset:avatar-default.jpg'
           },
           `!g ${lat},${lng}`
         )
-      }
+        i++
+        if (i === max) {
+          clearInterval(interval)
+        }
+      }, 200)
     }
   }
 }

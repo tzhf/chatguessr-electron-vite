@@ -30,8 +30,8 @@
                 v-model.number="settings.guessMarkersLimit"
                 type="range"
                 min="10"
-                step="10"
-                max="1000"
+                step="5"
+                max="100"
               />
             </label>
           </div>

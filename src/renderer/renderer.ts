@@ -12,18 +12,21 @@ import './mods/satelliteMode'
 const wrapper = document.createElement('div')
 document.body.append(wrapper)
 
-createApp(Frame, {
-  rendererApi: {
-    drawRoundResults,
-    drawPlayerResults,
-    drawGameLocations,
-    focusOnGuess,
-    clearMarkers,
-    showSatelliteMap,
-    hideSatelliteMap,
-    centerSatelliteView
-  }
-})
+declare global {
+  type RendererApi = typeof rendererApi
+}
+
+const rendererApi = {
+  drawRoundResults,
+  drawPlayerResults,
+  focusOnGuess,
+  clearMarkers,
+  showSatelliteMap,
+  hideSatelliteMap,
+  centerSatelliteView
+}
+
+createApp(Frame, { rendererApi })
   .use(Vue3DraggableResizable)
   .mount(wrapper)
   .$nextTick(() => {
@@ -31,39 +34,29 @@ createApp(Frame, {
   })
 
 let globalMap: google.maps.Map | undefined = undefined
+const mapReady = hijackMap()
+
+let guessMarkers: google.maps.Marker[] = []
+let polylines: google.maps.Polyline[] = []
+
 let satelliteLayer: google.maps.Map | undefined = undefined
 let satelliteMarker: google.maps.Marker | undefined = undefined
 const satelliteCanvas = document.createElement('div')
 satelliteCanvas.id = 'satelliteCanvas'
 
-const mapReady = hijackMap()
-
-let guessMarkers: google.maps.Marker[] = []
-let locationMarkers: google.maps.Marker[] = []
-let polylines: google.maps.Polyline[] = []
-
 function drawRoundResults(location: Location_, roundResults: RoundResult[], limit: number = 100) {
   const map = globalMap
   const infowindow = new google.maps.InfoWindow()
 
-  const icon = makeIcon()
-  const locationMarker = makeLocationMarker(location, icon, map)
-  locationMarkers.push(locationMarker)
-
-  icon.scale = 1
   roundResults.forEach((result, index) => {
     if (index >= limit) return
 
-    icon.fillColor = result.color
-
     const guessMarker = new google.maps.Marker({
-      position: result.position,
-      icon,
       map,
+      position: result.position,
+      icon: makeIcon(result.avatar),
       label: {
-        color: '#000',
-        fontWeight: 'bold',
-        fontSize: '16px',
+        className: 'guess-marker-label',
         text: `${index + 1}`
       },
       optimized: true
@@ -84,47 +77,32 @@ function drawRoundResults(location: Location_, roundResults: RoundResult[], limi
 
     polylines.push(
       new google.maps.Polyline({
+        map,
         strokeColor: result.color,
         strokeWeight: 4,
         strokeOpacity: 0.6,
         geodesic: true,
-        map,
         path: [result.position, location]
       })
     )
   })
 }
 
-function drawGameLocations(locations: Location_[]) {
-  const map = globalMap
-  const icon = makeIcon()
-
-  locations.forEach((location, index) => {
-    const locationMarker = makeLocationMarker(location, icon, map, index + 1)
-    locationMarkers.push(locationMarker)
-  })
-}
-
 function drawPlayerResults(locations: Location_[], result: GameResultDisplay) {
   const map = globalMap
+  clearMarkers()
+
   const infowindow = new google.maps.InfoWindow()
-  const color = result.color || '#fff'
-
-  clearMarkers(true)
-
-  const icon = makeIcon()
-  icon.scale = 1
-  icon.fillColor = color
+  const icon = makeIcon(result.avatar)
 
   result.guesses.forEach((guess, index) => {
     if (!guess) return
-
-    const guessMarker = new google.maps.Marker({ position: guess, icon, map, optimized: true })
-
+    // We cannot apply classes if 'optimized' is set to true, anyway it's just 5 markers here
+    const guessMarker = new google.maps.Marker({ map, position: guess, icon, optimized: false })
     guessMarker.addListener('mouseover', () => {
       infowindow.setContent(`
 				${result.flag ? `<span class="flag-icon" style="background-image: url(flag:${result.flag})"></span>` : ''}
-        <span class="username" style="color:${color}">${result.username}</span><br>
+        <span class="username" style="color:${result.color}">${result.username}</span><br>
         ${result.scores[index]}<br>
 				${toMeter(result.distances[index]!)}
 			`)
@@ -133,16 +111,15 @@ function drawPlayerResults(locations: Location_[], result: GameResultDisplay) {
     guessMarker.addListener('mouseout', () => {
       infowindow.close()
     })
-
     guessMarkers.push(guessMarker)
 
     polylines.push(
       new google.maps.Polyline({
-        strokeColor: color,
+        map,
+        strokeColor: result.color,
         strokeWeight: 4,
         strokeOpacity: 0.6,
         geodesic: true,
-        map,
         path: [guess, locations[index]]
       })
     )
@@ -155,55 +132,17 @@ function focusOnGuess(location: LatLng) {
   globalMap.setZoom(8)
 }
 
-function makeIcon(): google.maps.Symbol {
+function makeIcon(_avatar: string | null): google.maps.Icon {
+  const avatar = _avatar ?? 'asset:avatar-default.jpg'
   return {
-    path: `M13.04,41.77c-0.11-1.29-0.35-3.2-0.99-5.42c-0.91-3.17-4.74-9.54-5.49-10.79c-3.64-6.1-5.46-9.21-5.45-12.07
-            c0.03-4.57,2.77-7.72,3.21-8.22c0.52-0.58,4.12-4.47,9.8-4.17c4.73,0.24,7.67,3.23,8.45,4.07c0.47,0.51,3.22,3.61,3.31,8.11
-            c0.06,3.01-1.89,6.26-5.78,12.77c-0.18,0.3-4.15,6.95-5.1,10.26c-0.64,2.24-0.89,4.17-1,5.48C13.68,41.78,13.36,41.78,13.04,41.77z`,
-    fillColor: '#de3e3e',
-    fillOpacity: 0.7,
-    scale: 1.2,
-    strokeColor: '#000',
-    strokeWeight: 1,
-    anchor: new google.maps.Point(14, 43),
-    labelOrigin: new google.maps.Point(13.5, 15)
+    url: avatar + '#custom_marker',
+    scaledSize: new google.maps.Size(32, 32),
+    anchor: new google.maps.Point(16, 16),
+    labelOrigin: new google.maps.Point(27, 27)
   }
 }
 
-function makeLocationMarker(
-  location: Location_,
-  icon: google.maps.Symbol,
-  map?: google.maps.Map,
-  index: number | null = null
-): google.maps.Marker {
-  const locationMarker = new google.maps.Marker({ position: location, icon, map, optimized: true })
-
-  if (index) {
-    locationMarker.setLabel({
-      color: '#000',
-      fontWeight: 'bold',
-      fontSize: '16px',
-      text: `${index}`
-    })
-  }
-
-  locationMarker.addListener('click', () => {
-    const url = new URL('https://www.google.com/maps/@?api=1&map_action=pano')
-    if (location.panoId) {
-      url.searchParams.set('pano', location.panoId)
-    }
-    url.searchParams.set('viewpoint', `${location.lat},${location.lng}`)
-    url.searchParams.set('heading', String(location.heading))
-    url.searchParams.set('pitch', String(location.pitch))
-    const fov = 180 / 2 ** location.zoom
-    url.searchParams.set('fov', String(fov))
-    window.open(url.href, '_blank')
-  })
-
-  return locationMarker
-}
-
-function clearMarkers(keepLocationMarkers = false) {
+function clearMarkers() {
   for (const marker of guessMarkers) {
     marker.setMap(null)
   }
@@ -212,13 +151,6 @@ function clearMarkers(keepLocationMarkers = false) {
   }
   guessMarkers = []
   polylines = []
-
-  if (!keepLocationMarkers) {
-    for (const marker of locationMarkers) {
-      marker.setMap(null)
-    }
-    locationMarkers = []
-  }
 }
 
 async function hijackMap() {
@@ -395,17 +327,4 @@ function getBounds(location: LatLng, limitInKm: number) {
 
 function toMeter(distance: number) {
   return distance >= 1 ? distance.toFixed(1) + 'km' : Math.floor(distance * 1000) + 'm'
-}
-
-declare global {
-  interface RendererApi {
-    drawRoundResults: typeof drawRoundResults
-    drawPlayerResults: typeof drawPlayerResults
-    drawGameLocations: typeof drawGameLocations
-    focusOnGuess: typeof focusOnGuess
-    clearMarkers: typeof clearMarkers
-    showSatelliteMap: typeof showSatelliteMap
-    hideSatelliteMap: typeof hideSatelliteMap
-    centerSatelliteView: typeof centerSatelliteView
-  }
 }

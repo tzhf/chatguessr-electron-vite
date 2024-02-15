@@ -28,7 +28,7 @@ function createGame() {
 
 describe('getUserStats', () => {
   it('counts victories', () => {
-    const user = db.getOrCreateUser('1234567', 'libreanna')
+    const user = db.getOrCreateUser('1234567', 'libreanna', undefined, undefined)
     const token = createGame()
     const createGuess = () => {
       const roundId = db.createRound(token, {
@@ -41,8 +41,6 @@ describe('getUserStats', () => {
         streakLocationCode: null
       })
       db.createGuess(roundId, user!.id, {
-        color: '#fff',
-        flag: 'jo',
         location: { lat: 0, lng: 0 },
         country: null,
         streak: 0,
@@ -68,9 +66,9 @@ describe('getUserStats', () => {
 
 describe('getRoundResults', () => {
   it('sorts by score and distance', () => {
-    const user = db.getOrCreateUser('1234567', 'libreanna')
-    const user2 = db.getOrCreateUser('1234568', 'zehef_')
-    const user3 = db.getOrCreateUser('1234569', 'mramericanmike')
+    const user = db.getOrCreateUser('1234567', 'libreanna', undefined, undefined)
+    const user2 = db.getOrCreateUser('1234568', 'zehef_', undefined, undefined)
+    const user3 = db.getOrCreateUser('1234569', 'mramericanmike', undefined, undefined)
     const token = createGame()
 
     const roundId = db.createRound(token, {
@@ -84,8 +82,6 @@ describe('getRoundResults', () => {
     })
 
     db.createGuess(roundId, user2!.id, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,
@@ -94,8 +90,6 @@ describe('getRoundResults', () => {
       score: 3000
     })
     db.createGuess(roundId, user!.id, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,
@@ -104,8 +98,6 @@ describe('getRoundResults', () => {
       score: 3600
     })
     db.createGuess(roundId, user3!.id, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,
@@ -119,9 +111,9 @@ describe('getRoundResults', () => {
   })
 
   it('sorts 5Ks by time', async () => {
-    const user = db.getOrCreateUser('1234567', 'libreanna')
-    const user2 = db.getOrCreateUser('1234568', 'zehef_')
-    const user3 = db.getOrCreateUser('1234569', 'mramericanmike')
+    const user = db.getOrCreateUser('1234567', 'libreanna', undefined, undefined)
+    const user2 = db.getOrCreateUser('1234568', 'zehef_', undefined, undefined)
+    const user3 = db.getOrCreateUser('1234569', 'mramericanmike', undefined, undefined)
     const token = createGame()
 
     const roundId = db.createRound(token, {
@@ -135,8 +127,6 @@ describe('getRoundResults', () => {
     })
 
     db.createGuess(roundId, user!.id, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,
@@ -145,8 +135,6 @@ describe('getRoundResults', () => {
       score: 5000
     })
     db.createGuess(roundId, user3!.id, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,
@@ -155,8 +143,6 @@ describe('getRoundResults', () => {
       score: 4800
     })
     const second5k = db.createGuess(roundId, user2!.id, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,
@@ -178,8 +164,8 @@ describe('getRoundResults', () => {
   })
 
   it('sorts by time in multi-guess', async () => {
-    const user = db.getOrCreateUser('1234567', 'libreanna')
-    const user2 = db.getOrCreateUser('1234568', 'zehef_')
+    const user = db.getOrCreateUser('1234567', 'libreanna', undefined, undefined)
+    const user2 = db.getOrCreateUser('1234568', 'zehef_', undefined, undefined)
     const token = createGame()
 
     const roundId = db.createRound(token, {
@@ -193,8 +179,6 @@ describe('getRoundResults', () => {
     })
 
     const non5k = db.createGuess(roundId, user!.id, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,
@@ -211,8 +195,6 @@ describe('getRoundResults', () => {
     )
 
     db.createGuess(roundId, user2!.id, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,
@@ -221,8 +203,6 @@ describe('getRoundResults', () => {
       score: 5000
     })
     db.updateGuess(non5k, {
-      color: '#fff',
-      flag: 'jo',
       location: { lat: 0, lng: 0 },
       country: null,
       streak: 0,

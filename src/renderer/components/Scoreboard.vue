@@ -83,15 +83,20 @@
           <TransitionGroup name="scoreboard_rows">
             <tr v-for="row in rows" :key="row.username" @click="onRowClick(row)">
               <td v-for="col in activeCols" :key="col.value">
-                <span v-if="col.value === 'player'" class="username" :style="{ color: row.color }">
+                <div v-if="col.value === 'player'" class="flex gap-03">
+                  <span
+                    class="scoreboard-avatar"
+                    :style="{ backgroundImage: `url(${row.avatar ?? 'asset:avatar-default.jpg'})` }"
+                  ></span>
                   <span
                     v-if="row.flag"
-                    class="flag-icon"
+                    class="scoreboard-flag"
                     :style="{ backgroundImage: `url('flag:${row.flag}')` }"
                   ></span>
-                  {{ row.username }}
-                  <span v-if="row.modified">*</span>
-                </span>
+                  <span class="username" :style="{ color: row.color }">
+                    {{ row.username }}{{ row.modified ? '*' : '' }}
+                  </span>
+                </div>
                 <span v-else>{{ row[col.value].display }}</span>
               </td>
             </tr>
@@ -157,16 +162,16 @@ type Column = {
   sortable: boolean
 }
 const columns: Column[] = [
-  { name: '#', value: 'index', width: '30px', sortable: true },
+  { name: '#', value: 'index', width: '25px', sortable: true },
   { name: 'Player', value: 'player', width: '100%', sortable: false },
-  { name: 'Streak', value: 'streak', width: '60px', sortable: true },
+  { name: 'Streak', value: 'streak', width: '50px', sortable: true },
   { name: 'Distance', value: 'distance', width: '85px', sortable: true },
   { name: 'Score', value: 'score', width: '65px', sortable: true }
 ]
 const activeCols = computed(() =>
   props.gameState === 'in-round'
     ? props.isMultiGuess
-      ? [columns[1]]
+      ? [columns[0], columns[1]]
       : columns.filter(
           (f) => f.value === 'index' || f.value === 'player' || settings[f.value] === true
         )
@@ -186,6 +191,7 @@ function renderGuess(guess: Guess) {
     username: guess.username,
     flag: guess.flag,
     color: guess.color,
+    avatar: guess.avatar,
     streak: { value: guess.streak, display: guess.streak },
     distance: { value: guess.distance, display: toMeter(guess.distance) },
     score: { value: guess.score, display: guess.score }
@@ -200,8 +206,10 @@ function renderGuess(guess: Guess) {
 
 function renderMultiGuess(guess: Guess) {
   const formatedRow = {
+    index: { value: rows.length, display: rows.length },
     username: guess.username,
     flag: guess.flag,
+    avatar: guess.avatar,
     color: guess.color,
     modified: guess.modified
   }
@@ -225,6 +233,7 @@ function restoreGuesses(restoredGuesses: RoundResult[]) {
       index: { value: i + 1, display: i + 1 },
       username: restoredGuess.username,
       flag: restoredGuess.flag,
+      avatar: restoredGuess.avatar,
       color: restoredGuess.color,
       streak: { value: restoredGuess.streak, display: restoredGuess.streak },
       distance: { value: restoredGuess.distance, display: toMeter(restoredGuess.distance) },
@@ -235,11 +244,13 @@ function restoreGuesses(restoredGuesses: RoundResult[]) {
 }
 
 function restoreMultiGuesses(restoredGuesses: RoundParticipant[]) {
-  const formatedRows = restoredGuesses.map((restoredGuess) => {
+  const formatedRows = restoredGuesses.map((restoredGuess, i) => {
     return {
+      index: { value: i + 1, display: i + 1 },
       username: restoredGuess.username,
       flag: restoredGuess.flag,
-      color: restoredGuess.color
+      color: restoredGuess.color,
+      avatar: restoredGuess.avatar
     }
   })
   Object.assign(rows, formatedRows)
@@ -252,6 +263,7 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
       username: result.username,
       flag: result.flag,
       color: result.color,
+      avatar: result.avatar,
       streak: {
         value: result.streak,
         display: result.lastStreak ? result.streak + ` [` + result.lastStreak + `]` : result.streak
@@ -283,6 +295,7 @@ function showGameResults(gameResults: GameResult[]) {
       username: result.username,
       flag: result.flag,
       color: result.color,
+      avatar: result.avatar,
       guesses: result.guesses,
       scores: result.scores,
       distances: result.distances,
@@ -308,6 +321,14 @@ function showGameResults(gameResults: GameResult[]) {
   scrollToTop()
 }
 
+function onRowClick(row: ScoreboardRow) {
+  if (props.gameState === 'round-results' && row.index && row.position) {
+    props.onRoundResultRowClick(row.index.value, row.position)
+  } else if (props.gameState === 'game-results') {
+    props.onGameResultRowClick(row)
+  }
+}
+
 function sortByCol(col: Column) {
   if (!col.sortable) return
   rows.sort((a, b) => {
@@ -320,14 +341,6 @@ function sortByCol(col: Column) {
 function isSorted(col: string) {
   const arr: number[] = rows.map((row) => row[col].value)
   return JSON.stringify(arr) === JSON.stringify(arr.sort((a, b) => b - a))
-}
-
-function onRowClick(row: ScoreboardRow) {
-  if (props.gameState === 'round-results' && row.index && row.position) {
-    props.onRoundResultRowClick(row.index.value, row.position)
-  } else if (props.gameState === 'game-results') {
-    props.onGameResultRowClick(row)
-  }
 }
 
 const { y, arrivedState } = useScroll(tableContainer, { behavior: 'smooth' })
@@ -545,15 +558,10 @@ thead {
   background-color: rgba(0, 0, 0);
   z-index: 2;
 }
-th,
-td {
-  padding: 8px 0;
+tr {
+  height: 28px;
 }
-tbody td {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+
 tbody tr:nth-child(odd) {
   background-color: rgba(0, 0, 0, 0.1);
 }
@@ -603,6 +611,28 @@ th.sortable:hover {
   background: #63db85;
   cursor: pointer;
   border-radius: 5px;
+}
+
+.scoreboard-avatar {
+  background-size: contain;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid var(--primary);
+}
+
+.scoreboard-flag {
+  background-size: contain;
+  background-position: 50%;
+  background-repeat: no-repeat;
+  position: relative;
+  display: inline-block;
+  width: 1.33333333em;
+  flex-shrink: 0;
+}
+.scoreboard-flag:before {
+  content: '\00a0';
 }
 
 .medal {

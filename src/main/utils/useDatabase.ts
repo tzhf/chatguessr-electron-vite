@@ -171,6 +171,14 @@ const migrations: ((db: SQLite.Database) => void)[] = [
   },
   function createLastStreakField(db) {
     db.prepare(`ALTER TABLE guesses ADD COLUMN last_streak INTEGER DEFAULT NULL`).run()
+  },
+  function moveFlagColorFieldsToUsersTable(db) {
+    db.prepare(`ALTER TABLE guesses DROP COLUMN color`).run()
+    db.prepare(`ALTER TABLE guesses DROP COLUMN flag`).run()
+    db.prepare(`ALTER TABLE users ADD COLUMN color STRING DEFAULT "#FFF"`).run()
+  },
+  function createAvatarField(db) {
+    db.prepare(`ALTER TABLE users ADD COLUMN avatar STRING DEFAULT NULL`).run()
   }
 ]
 
@@ -274,8 +282,6 @@ class Database {
     roundId: string,
     userId: string,
     guess: {
-      color: string
-      flag: string
       location: LatLng
       country: string | null
       streak: number
@@ -286,16 +292,14 @@ class Database {
   ) {
     const id = randomUUID()
     const insertGuess = this.#db.prepare(`
-      INSERT INTO guesses(id, round_id, user_id, color, flag, location, country, streak, last_streak, distance, score, created_at)
-      VALUES (:id, :roundId, :userId, :color, :flag, :location, :country, :streak, :lastStreak, :distance, :score, :createdAt)
+      INSERT INTO guesses(id, round_id, user_id, location, country, streak, last_streak, distance, score, created_at)
+      VALUES (:id, :roundId, :userId, :location, :country, :streak, :lastStreak, :distance, :score, :createdAt)
     `)
 
     insertGuess.run({
       id,
       roundId,
       userId,
-      color: guess.color,
-      flag: guess.flag,
       location: JSON.stringify(guess.location),
       country: guess.country,
       streak: guess.streak,
@@ -310,8 +314,19 @@ class Database {
 
   getUserGuess(roundId: string, userId: string) {
     const stmt = this.#db.prepare(`
-      SELECT id, color, flag, location, country, streak, last_streak AS lastStreak, distance, score
+      SELECT
+        guesses.id,
+        users.color,
+        users.avatar,
+        users.flag,
+        guesses.location,
+        guesses.country,
+        guesses.streak,
+        guesses.last_streak AS lastStreak,
+        guesses.distance,
+        guesses.score
       FROM guesses
+      JOIN users ON users.id = guesses.user_id
       WHERE round_id = ? AND user_id = ?
     `)
 
@@ -319,7 +334,8 @@ class Database {
       | {
           id: string
           color: string
-          flag: string
+          avatar: string | null
+          flag: string | null
           location: string
           country: string | null
           streak: number
@@ -342,8 +358,6 @@ class Database {
   updateGuess(
     guessId: string,
     guess: {
-      color: string
-      flag: string
       location: LatLng
       country: string | null
       streak: number
@@ -354,8 +368,7 @@ class Database {
   ) {
     const updateGuess = this.#db.prepare(`
       UPDATE guesses
-      SET color = :color,
-        flag = :flag,
+      SET
         location = :location,
         country = :country,
         streak = :streak,
@@ -368,8 +381,6 @@ class Database {
 
     updateGuess.run({
       id: guessId,
-      color: guess.color,
-      flag: guess.flag,
       location: JSON.stringify(guess.location),
       country: guess.country,
       streak: guess.streak,
@@ -478,21 +489,16 @@ class Database {
 			SELECT
 				guesses.id,
 				users.username,
-				guesses.color,
-				guesses.flag
+				users.color,
+				users.avatar,
+				users.flag
 			FROM guesses, users
 			WHERE round_id = ? AND users.id = guesses.user_id
 			ORDER BY created_at ASC
 		`)
 
-    const records = stmt.all(roundId) as {
-      id: string
-      username: string
-      color: string
-      flag: string
-    }[]
-
-    return records as RoundParticipant[]
+    const records = stmt.all(roundId) as RoundParticipant[]
+    return records
   }
 
   /**
@@ -505,8 +511,9 @@ class Database {
 				guesses.id,
 				guesses.user_id,
 				users.username,
-				guesses.color,
-				guesses.flag,
+				users.color,
+				users.avatar,
+				users.flag,
 				guesses.location,
 				guesses.streak,
 				guesses.last_streak,
@@ -528,7 +535,8 @@ class Database {
       user_id: string
       username: string
       color: string
-      flag: string
+      avatar: string | null
+      flag: string | null
       location: string
       streak: number
       last_streak: number | null
@@ -543,6 +551,7 @@ class Database {
       username: record.username,
       user: record.username,
       color: record.color,
+      avatar: record.avatar,
       flag: record.flag,
       streak: record.streak,
       lastStreak: record.last_streak,
@@ -572,7 +581,8 @@ class Database {
     const stmt = this.#db.prepare(`
 			SELECT
 				users.username,
-				guesses.color,
+				users.color,
+				users.avatar,
 				users.flag,
 				'[' || GROUP_CONCAT(COALESCE(guesses.location, 'null')) || ']' AS guesses,
 				'[' || GROUP_CONCAT(COALESCE(guesses.score, 'null')) || ']' AS scores,
@@ -604,7 +614,8 @@ class Database {
     const records = stmt.all(gameId, gameId) as {
       username: string
       color: string
-      flag: string
+      avatar: string | null
+      flag: string | null
       streak: number
       guesses: string
       scores: string
@@ -616,6 +627,7 @@ class Database {
     return records.map((record) => ({
       username: record.username,
       color: record.color,
+      avatar: record.avatar,
       flag: record.flag,
       streak: record.streak,
       guesses: JSON.parse(record.guesses),
@@ -629,6 +641,8 @@ class Database {
   #parseUser(record: Record<string, any>): {
     id: string
     username: string
+    color: string
+    avatar: string | null
     flag: string | null
     previousGuess: LatLng
     lastLocation: LatLng
@@ -637,6 +651,8 @@ class Database {
     return {
       id: record.id,
       username: record.username,
+      color: record.color,
+      avatar: record.avatar,
       flag: record.flag,
       previousGuess: record.previous_guess ? JSON.parse(record.previous_guess) : null,
       lastLocation: record.last_location ? JSON.parse(record.last_location) : null,
@@ -647,23 +663,31 @@ class Database {
   getUser(id: string) {
     const user = this.#db
       .prepare(
-        'SELECT id, username, flag, previous_guess, last_location, reset_at FROM users WHERE id = ?'
+        'SELECT id, username, color, avatar, flag, previous_guess, last_location, reset_at FROM users WHERE id = ?'
       )
       .get(id)
 
     return user ? this.#parseUser(user) : undefined
   }
 
-  getOrCreateUser(id: string, username: string) {
+  getOrCreateUser(
+    id: string,
+    username: string,
+    color: string | undefined,
+    avatar: string | undefined
+  ) {
     const stmt = this.#db.prepare(`
-      INSERT INTO users(id, username)
-      VALUES (:id, :username)
+      INSERT INTO users(id, username, color, avatar)
+      VALUES (:id, :username, :color, :avatar)
       ON CONFLICT (id) DO
-        UPDATE SET username = :username
+        UPDATE SET
+          username = :username,
+          color = :color,
+          avatar = :avatar
       RETURNING *
     `)
 
-    const user = stmt.get({ id, username })
+    const user = stmt.get({ id, username, color, avatar })
 
     return user ? this.#parseUser(user) : undefined
   }

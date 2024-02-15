@@ -12,7 +12,7 @@ import {
 } from './utils/useGameHelper'
 
 export default class Game {
-  #db: Database
+  #db: IDatabase
 
   /**
    * Play link for the current game.
@@ -40,7 +40,9 @@ export default class Game {
   lastLocation: LatLng | undefined
 
   isInGame = false
+
   guessesOpen = false
+
   isMultiGuess = false
 
   constructor(db: IDatabase, settings: Settings) {
@@ -181,7 +183,15 @@ export default class Game {
     const streamerGuess = this.seed.player.guesses[this.seed.round - index]
     const location = { lat: streamerGuess.lat, lng: streamerGuess.lng }
 
-    const dbUser = this.#db.getOrCreateUser('BROADCASTER', this.#settings.channelName)
+    // TODO GET AVATAR FROM ENDPOINT
+    const avatar =
+      'https://static-cdn.jtvnw.net/jtv_user_pictures/90fe5728-5e40-4855-9849-0f11e92fb9c9-profile_image-300x300.png'
+    const dbUser = this.#db.getOrCreateUser(
+      'BROADCASTER',
+      this.#settings.channelName,
+      '#FFF',
+      avatar
+    )
 
     const guessedCountry = await getCountryCode(location)
     let lastStreak: number | null = null
@@ -197,8 +207,6 @@ export default class Game {
     const streak = this.#db.getUserStreak(dbUser.id)
 
     this.#db.createGuess(this.#roundId, dbUser.id, {
-      color: '#fff',
-      flag: dbUser.flag,
       location,
       country: guessedCountry,
       streak: streak?.count ?? 0,
@@ -208,8 +216,13 @@ export default class Game {
     })
   }
 
-  async handleUserGuess(userstate: ChatUserstate, location: LatLng): Promise<Guess> {
-    const dbUser = this.#db.getOrCreateUser(userstate['user-id'], userstate['display-name'])
+  async handleUserGuess(userstate: UserData, location: LatLng): Promise<Guess> {
+    const dbUser = this.#db.getOrCreateUser(
+      userstate['user-id'],
+      userstate['display-name'],
+      userstate.color,
+      userstate.avatar
+    )
 
     const existingGuess = this.#db.getUserGuess(this.#roundId, dbUser.id)
     if (!this.isMultiGuess && existingGuess) {
@@ -244,15 +257,11 @@ export default class Game {
     const streak = this.#db.getUserStreak(dbUser.id)
     const distance = haversineDistance(location, this.location)
     const score = calculateScore(distance, this.mapScale)
-    let modified = false
-
-    userstate.color = userstate.color || '#FFF'
 
     // Modify guess or push it
+    let modified = false
     if (this.isMultiGuess && existingGuess) {
       this.#db.updateGuess(existingGuess.id, {
-        color: userstate.color,
-        flag: dbUser.flag,
         location,
         country: guessedCountry,
         streak: streak?.count ?? 0,
@@ -263,8 +272,6 @@ export default class Game {
       modified = true
     } else {
       this.#db.createGuess(this.#roundId, dbUser.id, {
-        color: userstate.color,
-        flag: dbUser.flag,
         location,
         country: guessedCountry,
         streak: streak?.count ?? 0,
@@ -281,7 +288,8 @@ export default class Game {
     return {
       user: userstate.username,
       username: userstate['display-name'],
-      color: userstate.color,
+      color: dbUser.color,
+      avatar: dbUser.avatar,
       flag: dbUser.flag,
       position: location,
       streak: streak?.count ?? 0,
