@@ -199,7 +199,6 @@ function onStartRound() {
 }
 
 function renderGuess(guess: Guess) {
-  console.log('🚀 ~ renderGuess ~ guess:', guess)
   const formatedRow = {
     index: { value: 0, display: '' },
     player: guess.player,
@@ -217,7 +216,8 @@ function renderGuess(guess: Guess) {
 
 function renderMultiGuess(guess: Guess) {
   const formatedRow = {
-    player: guess.player
+    player: guess.player,
+    modified: guess.modified
   }
 
   if (guess.modified) {
@@ -623,6 +623,28 @@ th.sortable:hover {
   background: #63db85;
   cursor: pointer;
   border-radius: 5px;
+}
+
+.scoreboard-avatar {
+  background-size: contain;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  outline: 1px solid var(--primary);
+}
+
+.scoreboard-flag {
+  background-size: contain;
+  background-position: 50%;
+  background-repeat: no-repeat;
+  position: relative;
+  display: inline-block;
+  width: 1.33333333em;
+  flex-shrink: 0;
+}
+.scoreboard-flag:before {
+  content: '\00a0';
 }
 
 .medal {

@@ -375,7 +375,7 @@ export default class GameHandler {
         this.#win.webContents.send('render-guess', guess)
         if (settings.showHasGuessed) {
           await this.#backend?.sendMessage(
-            `${getEmoji(guess.player.flag)} ${userstate['display-name']} has guessed`
+            `${getEmoji(guess.player.flag)} ${guess.player.username} has guessed`
           )
         }
       } else {
@@ -384,13 +384,13 @@ export default class GameHandler {
         if (!guess.modified) {
           if (settings.showHasGuessed) {
             await this.#backend?.sendMessage(
-              `${getEmoji(guess.player.flag)} ${userstate['display-name']} has guessed`
+              `${getEmoji(guess.player.flag)} ${guess.player.username} has guessed`
             )
           }
         } else {
           if (settings.showGuessChanged) {
             await this.#backend?.sendMessage(
-              `${getEmoji(guess.player.flag)} ${userstate['display-name']} guess changed`
+              `${getEmoji(guess.player.flag)} ${guess.player.username} guess changed`
             )
           }
         }
@@ -447,14 +447,14 @@ export default class GameHandler {
       let newFlag: string | null | undefined
       if (countryReq === 'none') {
         newFlag = null
-        await this.#backend?.sendMessage(`${userstate['display-name']} flag removed`)
+        await this.#backend?.sendMessage(`${dbUser.username} flag removed`)
       } else if (countryReq === 'random') {
         newFlag = randomCountryFlag()
-        await this.#backend?.sendMessage(`${userstate['display-name']} got ${getEmoji(newFlag)}`)
+        await this.#backend?.sendMessage(`${dbUser.username} got ${getEmoji(newFlag)}`)
       } else {
         newFlag = selectFlag(countryReq)
         if (!newFlag) {
-          await this.#backend?.sendMessage(`${userstate['display-name']} no flag found`)
+          await this.#backend?.sendMessage(`${dbUser.username} no flag found`)
           return
         }
       }
@@ -513,7 +513,7 @@ export default class GameHandler {
       if (dbUser) {
         this.#db.resetUserStats(dbUser.id)
         await this.#backend?.sendMessage(
-          `${getEmoji(dbUser.flag)} ${userstate['display-name']} 🗑️ stats cleared !`
+          `${getEmoji(dbUser.flag)} ${dbUser.username} 🗑️ stats cleared !`
         )
       } else {
         await this.#backend?.sendMessage(`${userstate['display-name']} you've never guessed yet.`)
@@ -541,8 +541,8 @@ export default class GameHandler {
       let i = 0
       const interval = setInterval(async () => {
         const userId = `123450${i}`
-        const flag = randomCountryFlag()
-        this.#db.setUserFlag(userId, flag)
+        // const flag = randomCountryFlag()
+        // this.#db.setUserFlag(userId, flag)
         const { lat, lng } = await getRandomCoordsInLand(this.#game.seed!.bounds)
         await this.#handleGuess(
           {

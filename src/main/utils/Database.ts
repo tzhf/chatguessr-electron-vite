@@ -678,12 +678,7 @@ class db {
     return user ? this.#parseUser(user) : undefined
   }
 
-  getOrCreateUser(
-    id: string,
-    username: string,
-    color: string | undefined,
-    avatar: string | undefined
-  ) {
+  getOrCreateUser(id: string, username: string, color = '#FFF', avatar: string | undefined) {
     const stmt = this.#db.prepare(`
       INSERT INTO users(id, username, color, avatar)
       VALUES (:id, :username, :color, :avatar)
