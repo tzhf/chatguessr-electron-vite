@@ -6,7 +6,7 @@
     v-model:h="position.h"
     :draggable="isDraggable"
     :min-w="340"
-    :min-h="186"
+    :min-h="173"
     :parent="true"
     class="scoreboard"
     class-name-handle="scoreboard_handle"
@@ -46,14 +46,17 @@
         </div>
       </div>
       <div class="scoreboard-title">{{ title }} ({{ rows.length }})</div>
-      <label v-if="gameState === 'in-round'" class="switch-container">
-        <input type="checkbox" :checked="switchOn" @input="(e) => toggleGuesses(e)" />
-        <div class="switch"></div>
-      </label>
-      <div v-if="gameState === 'in-round' && isMultiGuess" class="scoreboard-hint">
-        Ordered by guess time
+      <div style="width: 65px">
+        <label :class="['switch-container', { hidden: gameState !== 'in-round' }]">
+          <input type="checkbox" :checked="switchOn" @input="(e) => toggleGuesses(e)" />
+          <div class="switch"></div>
+        </label>
       </div>
     </div>
+    <div :class="['scoreboard-hint', { hidden: !isMultiGuess || gameState !== 'in-round' }]">
+      Ordered by guess time
+    </div>
+
     <input
       v-model.number="settings.scrollSpeed"
       type="range"
@@ -81,23 +84,31 @@
         </thead>
         <tbody>
           <TransitionGroup name="scoreboard_rows">
-            <tr v-for="row in rows" :key="row.username" @click="onRowClick(row)">
+            <tr v-for="row in rows" :key="row.player.username" @click="onRowClick(row)">
               <td v-for="col in activeCols" :key="col.value">
                 <div v-if="col.value === 'player'" class="flex gap-03">
                   <span
                     class="scoreboard-avatar"
-                    :style="{ backgroundImage: `url(${row.avatar ?? 'asset:avatar-default.jpg'})` }"
+                    :style="{
+                      backgroundImage: `url(${row.player.avatar ?? 'asset:avatar-default.jpg'})`
+                    }"
                   ></span>
                   <span
-                    v-if="row.flag"
+                    v-if="row.player.flag"
                     class="scoreboard-flag"
-                    :style="{ backgroundImage: `url('flag:${row.flag}')` }"
+                    :style="{ backgroundImage: `url('flag:${row.player.flag}')` }"
                   ></span>
-                  <span class="username" :style="{ color: row.color }">
-                    {{ row.username }}{{ row.modified ? '*' : '' }}
+                  <span class="username" :style="{ color: row.player.color }">
+                    {{ row.player.username }}{{ row.modified ? '*' : '' }}
                   </span>
                 </div>
-                <span v-else>{{ row[col.value].display }}</span>
+
+                <!-- <div
+                  v-if="col.value === 'player'"
+                  class="flex gap-03"
+                  v-html="row.player.display"
+                ></div> -->
+                <div v-else>{{ row[col.value].display }}</div>
               </td>
             </tr>
           </TransitionGroup>
@@ -164,18 +175,20 @@ type Column = {
 const columns: Column[] = [
   { name: '#', value: 'index', width: '25px', sortable: true },
   { name: 'Player', value: 'player', width: '100%', sortable: false },
-  { name: 'Streak', value: 'streak', width: '50px', sortable: true },
+  { name: 'Streak', value: 'streak', width: '55px', sortable: true },
   { name: 'Distance', value: 'distance', width: '85px', sortable: true },
   { name: 'Score', value: 'score', width: '65px', sortable: true }
 ]
 const activeCols = computed(() =>
-  props.gameState === 'in-round'
-    ? props.isMultiGuess
-      ? [columns[0], columns[1]]
-      : columns.filter(
-          (f) => f.value === 'index' || f.value === 'player' || settings[f.value] === true
-        )
-    : columns
+  props.gameState === 'none'
+    ? []
+    : props.gameState === 'in-round'
+      ? props.isMultiGuess
+        ? [columns[1]]
+        : columns.filter(
+            (f) => f.value === 'index' || f.value === 'player' || settings[f.value] === true
+          )
+      : columns
 )
 
 const rows = reactive<ScoreboardRow[]>([])
@@ -186,12 +199,10 @@ function onStartRound() {
 }
 
 function renderGuess(guess: Guess) {
+  console.log('🚀 ~ renderGuess ~ guess:', guess)
   const formatedRow = {
     index: { value: 0, display: '' },
-    username: guess.username,
-    flag: guess.flag,
-    color: guess.color,
-    avatar: guess.avatar,
+    player: guess.player,
     streak: { value: guess.streak, display: guess.streak },
     distance: { value: guess.distance, display: toMeter(guess.distance) },
     score: { value: guess.score, display: guess.score }
@@ -206,16 +217,11 @@ function renderGuess(guess: Guess) {
 
 function renderMultiGuess(guess: Guess) {
   const formatedRow = {
-    index: { value: rows.length, display: rows.length },
-    username: guess.username,
-    flag: guess.flag,
-    avatar: guess.avatar,
-    color: guess.color,
-    modified: guess.modified
+    player: guess.player
   }
 
   if (guess.modified) {
-    const index = rows.findIndex((row) => row.username == guess.username)
+    const index = rows.findIndex((row) => row.player.username == guess.player.username)
     rows.splice(index, 1)
     // TODO maybe find a better soluion
     // Animation is not triggered if we push too fast because key:username is remaining in the DOM
@@ -228,30 +234,41 @@ function renderMultiGuess(guess: Guess) {
 }
 
 function restoreGuesses(restoredGuesses: RoundResult[]) {
-  const formatedRows = restoredGuesses.map((restoredGuess, i) => {
+  const formatedRows = restoredGuesses.map((guess, i) => {
     return {
       index: { value: i + 1, display: i + 1 },
-      username: restoredGuess.username,
-      flag: restoredGuess.flag,
-      avatar: restoredGuess.avatar,
-      color: restoredGuess.color,
-      streak: { value: restoredGuess.streak, display: restoredGuess.streak },
-      distance: { value: restoredGuess.distance, display: toMeter(restoredGuess.distance) },
-      score: { value: restoredGuess.score, display: restoredGuess.score }
+      player: guess.player,
+      streak: { value: guess.streak, display: guess.streak },
+      distance: { value: guess.distance, display: toMeter(guess.distance) },
+      score: { value: guess.score, display: guess.score }
     }
   })
   Object.assign(rows, formatedRows)
 }
 
-function restoreMultiGuesses(restoredGuesses: RoundParticipant[]) {
-  const formatedRows = restoredGuesses.map((restoredGuess, i) => {
-    return {
-      index: { value: i + 1, display: i + 1 },
-      username: restoredGuess.username,
-      flag: restoredGuess.flag,
-      color: restoredGuess.color,
-      avatar: restoredGuess.avatar
-    }
+// function formatPlayerField(player: Player) {
+//   return `
+//     <span
+//       class="scoreboard-avatar"
+//       style="background-image: url(${player.avatar ?? 'asset:avatar-default.jpg'})"
+//     ></span>
+//     ${
+//       player.flag
+//         ? `<span
+//       class="scoreboard-flag"
+//       style="background-image: url('flag:${player.flag}')"
+//     ></span>`
+//         : ''
+//     }
+//     <span class="username" style="color: ${player.color}">
+//       ${player.username}
+//     </span>
+//   `
+// }
+
+function restoreMultiGuesses(players: Player[]) {
+  const formatedRows = players.map((player) => {
+    return { player: player }
   })
   Object.assign(rows, formatedRows)
 }
@@ -260,10 +277,7 @@ function showRoundResults(round: number, roundResults: RoundResult[]) {
   const formatedRows = roundResults.map((result, i) => {
     return {
       index: { value: i + 1, display: i + 1 },
-      username: result.username,
-      flag: result.flag,
-      color: result.color,
-      avatar: result.avatar,
+      player: result.player,
       streak: {
         value: result.streak,
         display: result.lastStreak ? result.streak + ` [` + result.lastStreak + `]` : result.streak
@@ -292,15 +306,7 @@ function showGameResults(gameResults: GameResult[]) {
   const formatedRows = gameResults.map((result, i) => {
     return {
       index: { value: i + 1, display: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1 },
-      username: result.username,
-      flag: result.flag,
-      color: result.color,
-      avatar: result.avatar,
-      guesses: result.guesses,
-      scores: result.scores,
-      distances: result.distances,
-      totalScore: result.totalScore,
-      totalDistance: result.totalDistance,
+      player: result.player,
       streak: {
         value: result.streak,
         display: result.streak
@@ -312,7 +318,12 @@ function showGameResults(gameResults: GameResult[]) {
       score: {
         value: result.totalScore,
         display: `${result.totalScore} [${result.guesses.filter(Boolean).length}]`
-      }
+      },
+      guesses: result.guesses,
+      scores: result.scores,
+      distances: result.distances,
+      totalScore: result.totalScore,
+      totalDistance: result.totalDistance
     }
   })
   Object.assign(rows, formatedRows)
@@ -346,6 +357,7 @@ function isSorted(col: string) {
 const { y, arrivedState } = useScroll(tableContainer, { behavior: 'smooth' })
 let direction = 1 // 0: up, 1: down
 function runAutoScroll() {
+  let newY = y.value
   requestAnimationFrame(scrollFunc)
 
   function scrollFunc() {
@@ -359,13 +371,15 @@ function runAutoScroll() {
           requestAnimationFrame(scrollFunc)
         }, 2000)
       } else {
-        y.value += settings.scrollSpeed
+        newY += settings.scrollSpeed
+        y.value = newY
         requestAnimationFrame(scrollFunc)
       }
     } else {
       if (arrivedState.top) {
         setTimeout(() => {
           direction = 1
+          newY = y.value
           requestAnimationFrame(scrollFunc)
         }, 3500)
       } else {
@@ -414,90 +428,51 @@ defineExpose({
 .scoreboard {
   font-family: 'Montserrat', sans-serif;
   text-align: center;
-  padding: 5px;
+  padding: 3px;
   color: #fff;
   font-size: 13px;
   background-color: var(--bg-dark-transparent);
   box-shadow: 2px 2px 7px -2px #000;
-  border-radius: 10px;
+  border-radius: 5px;
   pointer-events: auto;
   user-select: none;
   cursor: move;
   z-index: 24;
 }
 .scoreboard-header {
-  display: grid;
-  grid-template-areas:
+  display: flex;
+  justify-content: space-between;
+  /* grid-template-areas:
     'settings title switch'
     'hint hint hint';
-  grid-template-columns: 90px auto 80px;
-  margin-top: 10px;
-  font-size: 18px;
+  grid-template-columns: 70px auto 70px; */
   align-items: center;
+  margin-top: 8px;
 }
 .scoreboard-settings {
-  grid-area: settings;
+  width: 70px;
+  /* grid-area: settings; */
   display: flex;
   gap: 0.2rem;
 }
 
 .scoreboard-title {
-  height: 36px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  grid-area: title;
+  /* grid-area: title; */
+  font-size: 16px;
 }
 
 .scoreboard-hint {
-  grid-area: hint;
-  font-size: 0.75rem;
-}
-
-.column-visibility {
-  font-size: 12px;
-  position: absolute;
-  display: flex;
-  gap: 0.19rem;
-  margin-top: -7px;
-  left: 75px;
-  padding: 0.2rem;
-  background-color: #000;
-  border-radius: 5px;
-  z-index: 999999;
-}
-
-.btn {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 65px;
-  color: #fff;
-  font-weight: 700;
-  background-size: 200% auto;
-  background-image: linear-gradient(to right, #2e2e2e 0%, #454545 51%, #2e2e2e 100%);
-  border: 1px solid #000;
-  transition: background-position 0.3s;
-  -webkit-transition: background-position 0.3s;
-}
-.btn-icon {
-  width: 32px;
-  height: 22px;
-}
-.btn:hover:not([disabled]) {
-  background-position: right center;
-}
-.btn.active:not([disabled]) {
-  background-image: linear-gradient(to right, #1cd997 0%, #33b09b 51%, #1cd997 100%);
+  /* grid-area: hint; */
+  font-size: 11px;
 }
 
 .switch-container {
-  grid-area: switch;
+  /* grid-area: switch; */
   position: relative;
   display: inline-block;
   width: 32px;
   height: 22px;
-  margin-left: auto;
+  float: right;
 }
 .switch-container:hover {
   transition: box-shadow 0.3s;
@@ -530,6 +505,43 @@ defineExpose({
   -webkit-transition: transform 0.2s;
 }
 
+.column-visibility {
+  position: absolute;
+  display: flex;
+  gap: 0.19rem;
+  margin-top: -7px;
+  left: 75px;
+  padding: 0.2rem;
+  font-size: 12px;
+  background-color: #000;
+  border-radius: 5px;
+  z-index: 999999;
+}
+
+.btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 65px;
+  color: #fff;
+  font-weight: 700;
+  background-size: 200% auto;
+  background-image: linear-gradient(to right, #2e2e2e 0%, #454545 51%, #2e2e2e 100%);
+  border: 1px solid #000;
+  transition: background-position 0.3s;
+  -webkit-transition: background-position 0.3s;
+}
+.btn-icon {
+  width: 32px;
+  height: 22px;
+}
+.btn:hover:not([disabled]) {
+  background-position: right center;
+}
+.btn.active:not([disabled]) {
+  background-image: linear-gradient(to right, #1cd997 0%, #33b09b 51%, #1cd997 100%);
+}
+
 input:checked + .switch {
   background-color: #1cd997;
 }
@@ -538,7 +550,7 @@ input:checked + .switch:before {
 }
 
 .table-container {
-  height: calc(100% - 60px);
+  height: calc(100% - 55px);
   overflow: auto;
 }
 .table-container::-webkit-scrollbar {
@@ -611,28 +623,6 @@ th.sortable:hover {
   background: #63db85;
   cursor: pointer;
   border-radius: 5px;
-}
-
-.scoreboard-avatar {
-  background-size: contain;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  border: 1px solid var(--primary);
-}
-
-.scoreboard-flag {
-  background-size: contain;
-  background-position: 50%;
-  background-repeat: no-repeat;
-  position: relative;
-  display: inline-block;
-  width: 1.33333333em;
-  flex-shrink: 0;
-}
-.scoreboard-flag:before {
-  content: '\00a0';
 }
 
 .medal {

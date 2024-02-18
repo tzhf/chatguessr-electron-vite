@@ -23,7 +23,7 @@
             </label>
             <label
               class="form__group"
-              data-tip="Drawing too much guess markers on the map may affect performance (default: 100)"
+              data-tip="Drawing too much guess markers on the map may affect performance (default: 30)"
             >
               Guess markers limit ({{ settings.guessMarkersLimit }}) :
               <input

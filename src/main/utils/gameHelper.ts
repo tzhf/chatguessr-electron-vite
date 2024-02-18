@@ -4,7 +4,7 @@ import countryIso from 'coordinate_to_country'
  * Country code mapping for 2-character ISO codes that should be considered
  * part of another country for GeoGuessr streak purposes.
  */
-import countryCodes from './countryCodes.json'
+import countryCodes from '../lib/countryCodes.json'
 
 const GEOGUESSR_URL = 'https://geoguessr.com'
 const CG_API_URL = import.meta.env.VITE_CG_API_URL ?? 'https://chatguessr.com/api'
@@ -107,26 +107,26 @@ export function calculateScore(distance: number, scale: number): number {
 /**
  * Upload scores to the Chatguessr API and return the game summary link
  */
-export async function makeLink(
-  accessToken: string,
-  bot: string,
-  streamer: string,
-  map: string,
-  mode: object,
-  locations: Location_[],
+export async function makeLink(params: {
+  accessToken: string
+  bot: string
+  streamer: string
+  map: string
+  mode: GameMode
+  locations: Location_[]
   gameResults: GameResult[]
-): Promise<string> {
+}): Promise<string> {
   const res = await axios.post<{ code: string }>(
     `${CG_API_URL}/game`,
     {
-      bot: bot,
-      streamer: streamer,
-      map: map,
-      mode: mode,
-      locations: locations,
-      players: gameResults
+      bot: params.bot,
+      streamer: params.streamer,
+      map: params.map,
+      mode: params.mode,
+      locations: params.locations,
+      players: params.gameResults
     },
-    { headers: { access_token: accessToken } }
+    { headers: { access_token: params.accessToken } }
   )
 
   return `${CG_PUBLIC_URL}/game/${res.data.code}`

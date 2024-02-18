@@ -4,14 +4,14 @@ import { io } from 'socket.io-client'
 import Game from './Game'
 import TwitchBackend from './utils/useTwitchJS'
 import { settings, saveSettings } from './utils/useSettings'
-import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/useGameHelper'
-import { getEmoji, randomCountryFlag, selectFlag } from './utils/flags/flags'
+import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/gameHelper'
+import { getEmoji, randomCountryFlag, selectFlag } from './lib/flags/flags'
 
 const SOCKET_SERVER_URL =
   import.meta.env.VITE_SOCKET_SERVER_URL ?? 'https://chatguessr-server.herokuapp.com'
 
 export default class GameHandler {
-  #db: IDatabase
+  #db: Database
 
   #win: Electron.BrowserWindow
 
@@ -26,7 +26,7 @@ export default class GameHandler {
   #requestAuthentication: () => Promise<void>
 
   constructor(
-    db: IDatabase,
+    db: Database,
     win: Electron.BrowserWindow,
     options: { requestAuthentication: () => Promise<void> }
   ) {
@@ -78,8 +78,8 @@ export default class GameHandler {
       settings.guessMarkersLimit
     )
     this.#backend?.sendMessage(
-      `🌎 Round ${round} has finished. Congrats ${getEmoji(roundResults[0].flag)} ${
-        roundResults[0].username
+      `🌎 Round ${round} has finished. Congrats ${getEmoji(roundResults[0].player.flag)} ${
+        roundResults[0].player.username
       } !`,
       { system: true }
     )
@@ -92,21 +92,22 @@ export default class GameHandler {
     this.#win.webContents.send('show-game-results', locations, gameResults)
 
     let link: string | undefined
+
     try {
-      link = await makeLink(
-        this.#session!.access_token,
-        this.#session!.user.user_metadata.name,
-        settings.channelName,
-        this.#game.mapName,
-        this.#game.mode,
+      link = await makeLink({
+        accessToken: this.#session!.access_token,
+        bot: this.#session!.user.user_metadata.name,
+        streamer: settings.channelName,
+        map: this.#game.mapName,
+        mode: this.#game.mode,
         locations,
         gameResults
-      )
+      })
     } catch (err) {
       console.error('could not upload summary', err)
     }
     await this.#backend?.sendMessage(
-      `🌎 Game finished. Congrats ${getEmoji(gameResults[0].flag)} ${gameResults[0].username} 🏆! ${
+      `🌎 Game finished. Congrats ${getEmoji(gameResults[0].player.flag)} ${gameResults[0].player.username} 🏆! ${
         link != undefined ? `Game summary: ${link}` : ''
       }`,
       { system: true }
@@ -238,7 +239,7 @@ export default class GameHandler {
     })
   }
 
-  getTwitchConnectionState() {
+  getTwitchConnectionState(): TwitchConnectionState {
     if (!this.#backend) {
       return { state: 'disconnected' }
     } else if (this.#backend.isConnected()) {
@@ -251,7 +252,7 @@ export default class GameHandler {
     return { state: 'connecting' }
   }
 
-  getSocketConnectionState() {
+  getSocketConnectionState(): SocketConnectionState {
     if (!this.#socket) {
       return { state: 'disconnected' }
     } else if (this.#socket.connected) {
@@ -361,14 +362,10 @@ export default class GameHandler {
     if (!message.startsWith('!g') || !this.#game.guessesOpen) return
     // Ignore guesses made by the broadcaster with the CG map: prevents seemingly duplicate guesses
     if (userstate.username?.toLowerCase() === settings.channelName.toLowerCase()) return
-
     // Check if user is banned
-    const bannedUsers = this.#db.getBannedUsers()
-    const isBanned = bannedUsers.some((user) => user.username === userstate.username)
-    if (isBanned) return
+    if (this.isUserBanned(userstate.username!)) return
 
     const location = parseCoordinates(message.replace(/^!g\s+/, ''))
-
     if (!location) return
 
     try {
@@ -378,7 +375,7 @@ export default class GameHandler {
         this.#win.webContents.send('render-guess', guess)
         if (settings.showHasGuessed) {
           await this.#backend?.sendMessage(
-            `${getEmoji(guess.flag)} ${userstate['display-name']} has guessed`
+            `${getEmoji(guess.player.flag)} ${userstate['display-name']} has guessed`
           )
         }
       } else {
@@ -387,13 +384,13 @@ export default class GameHandler {
         if (!guess.modified) {
           if (settings.showHasGuessed) {
             await this.#backend?.sendMessage(
-              `${getEmoji(guess.flag)} ${userstate['display-name']} has guessed`
+              `${getEmoji(guess.player.flag)} ${userstate['display-name']} has guessed`
             )
           }
         } else {
           if (settings.showGuessChanged) {
             await this.#backend?.sendMessage(
-              `${getEmoji(guess.flag)} ${userstate['display-name']} guess changed`
+              `${getEmoji(guess.player.flag)} ${userstate['display-name']} guess changed`
             )
           }
         }
@@ -419,8 +416,8 @@ export default class GameHandler {
   async #handleMessage(userstate: UserData, message: string) {
     if (!message.startsWith('!')) return
     if (!userstate['user-id'] || !userstate['display-name']) return
+
     const userId = userstate.badges?.broadcaster === '1' ? 'BROADCASTER' : userstate['user-id']
-    // const avatar = userstate.avatar ?? 'asset:avatar-default.jpg'
     message = message.trim().toLowerCase()
 
     if (message === settings.cgCmd) {
@@ -508,7 +505,6 @@ export default class GameHandler {
         }
         await this.#backend?.sendMessage(`Channels best: ${msg}`)
       }
-
       return
     }
 
@@ -522,7 +518,6 @@ export default class GameHandler {
       } else {
         await this.#backend?.sendMessage(`${userstate['display-name']} you've never guessed yet.`)
       }
-
       return
     }
 
@@ -555,7 +550,6 @@ export default class GameHandler {
             username: `fake_${i}`,
             'display-name': `fake_${i}`,
             color: `#${Math.random().toString(16).slice(2, 8).padStart(6, '0')}`
-            // avatar: 'asset:avatar-default.jpg'
           },
           `!g ${lat},${lng}`
         )
@@ -565,5 +559,11 @@ export default class GameHandler {
         }
       }, 200)
     }
+  }
+
+  isUserBanned(username: string) {
+    const bannedUsers = this.#db.getBannedUsers()
+    const isBanned = bannedUsers.some((user) => user.username === username)
+    return isBanned
   }
 }

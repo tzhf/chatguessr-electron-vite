@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import * as GameHelper from './useGameHelper'
+import * as GameHelper from './gameHelper'
 
 describe('getCountryCode', () => {
   // These are not political opinions, but checks to ensure we match whatever decisions

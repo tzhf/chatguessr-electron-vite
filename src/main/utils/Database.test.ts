@@ -1,8 +1,8 @@
 import { beforeEach, describe, it, expect } from 'vitest'
 import { randomUUID } from 'node:crypto'
-import { database } from './useDatabase'
+import { database } from './Database'
 
-let db: IDatabase
+let db: Database
 
 beforeEach(() => {
   db = database(':memory:')
@@ -37,8 +37,7 @@ describe('getUserStats', () => {
         panoId: null,
         heading: 0,
         pitch: 0,
-        zoom: 0,
-        streakLocationCode: null
+        zoom: 0
       })
       db.createGuess(roundId, user!.id, {
         location: { lat: 0, lng: 0 },
@@ -77,8 +76,7 @@ describe('getRoundResults', () => {
       panoId: null,
       heading: 0,
       pitch: 0,
-      zoom: 0,
-      streakLocationCode: null
+      zoom: 0
     })
 
     db.createGuess(roundId, user2!.id, {
@@ -106,7 +104,7 @@ describe('getRoundResults', () => {
       score: 3600
     })
 
-    const leaderboard = db.getRoundResults(roundId).map((score) => score.username)
+    const leaderboard = db.getRoundResults(roundId).map((score) => score.player.username)
     expect(leaderboard).toEqual(['mramericanmike', 'libreanna', 'zehef_'])
   })
 
@@ -122,8 +120,7 @@ describe('getRoundResults', () => {
       panoId: null,
       heading: 0,
       pitch: 0,
-      zoom: 0,
-      streakLocationCode: null
+      zoom: 0
     })
 
     db.createGuess(roundId, user!.id, {
@@ -159,7 +156,7 @@ describe('getRoundResults', () => {
       { id: second5k }
     )
 
-    const leaderboard = db.getRoundResults(roundId).map((score) => score.username)
+    const leaderboard = db.getRoundResults(roundId).map((score) => score.player.username)
     expect(leaderboard).toEqual(['libreanna', 'zehef_', 'mramericanmike'])
   })
 
@@ -174,8 +171,7 @@ describe('getRoundResults', () => {
       panoId: null,
       heading: 0,
       pitch: 0,
-      zoom: 0,
-      streakLocationCode: null
+      zoom: 0
     })
 
     const non5k = db.createGuess(roundId, user!.id, {
@@ -211,7 +207,7 @@ describe('getRoundResults', () => {
       score: 5000
     })
 
-    const leaderboard = db.getRoundResults(roundId).map((score) => score.username)
+    const leaderboard = db.getRoundResults(roundId).map((score) => score.player.username)
     expect(leaderboard).toEqual(['zehef_', 'libreanna'])
   })
 })

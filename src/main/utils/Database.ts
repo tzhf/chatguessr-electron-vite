@@ -182,7 +182,7 @@ const migrations: ((db: SQLite.Database) => void)[] = [
   }
 ]
 
-class Database {
+class db {
   #db: SQLite.Database
 
   constructor(file: string) {
@@ -246,7 +246,7 @@ class Database {
     return findRoundId.get(gameId) as string | undefined
   }
 
-  createRound(gameId: string, round: GameRound) {
+  createRound(gameId: string, round: Location_) {
     const insertRound = this.#db.prepare(`
       INSERT INTO rounds(id, game_id, location, created_at)
       VALUES (:id, :gameId, :location, :createdAt)
@@ -487,7 +487,6 @@ class Database {
   getRoundParticipants(roundId: string) {
     const stmt = this.#db.prepare(`
 			SELECT
-				guesses.id,
 				users.username,
 				users.color,
 				users.avatar,
@@ -497,8 +496,14 @@ class Database {
 			ORDER BY created_at ASC
 		`)
 
-    const records = stmt.all(roundId) as RoundParticipant[]
-    return records
+    const records = stmt.all(roundId) as Player[]
+
+    return records.map((record) => ({
+      username: record.username,
+      color: record.color,
+      avatar: record.avatar,
+      flag: record.flag
+    })) as Player[]
   }
 
   /**
@@ -547,12 +552,13 @@ class Database {
 
     return records.map((record) => ({
       id: record.id,
-      userId: record.user_id,
-      username: record.username,
-      user: record.username,
-      color: record.color,
-      avatar: record.avatar,
-      flag: record.flag,
+      player: {
+        userId: record.user_id,
+        username: record.username,
+        color: record.color,
+        avatar: record.avatar,
+        flag: record.flag
+      },
       streak: record.streak,
       lastStreak: record.last_streak,
       distance: record.distance,
@@ -625,10 +631,12 @@ class Database {
     }[]
 
     return records.map((record) => ({
-      username: record.username,
-      color: record.color,
-      avatar: record.avatar,
-      flag: record.flag,
+      player: {
+        username: record.username,
+        color: record.color,
+        avatar: record.avatar,
+        flag: record.flag
+      },
       streak: record.streak,
       guesses: JSON.parse(record.guesses),
       scores: JSON.parse(record.scores),
@@ -847,9 +855,9 @@ class Database {
   }
 
   getBannedUsers() {
-    const bannedUsers = this.#db.prepare(`SELECT username FROM banned_users`).all() as
-      | { username: string }[]
-      | []
+    const bannedUsers = this.#db.prepare(`SELECT username FROM banned_users`).all() as {
+      username: string
+    }[]
     return bannedUsers
   }
 
@@ -887,8 +895,8 @@ class Database {
   }
 }
 
-export const database = (dbPath: string) => new Database(dbPath)
+export const database = (dbPath: string) => new db(dbPath)
 
 declare global {
-  interface IDatabase extends Database {}
+  interface Database extends db {}
 }

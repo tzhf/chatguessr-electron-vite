@@ -54,7 +54,7 @@ function drawRoundResults(location: Location_, roundResults: RoundResult[], limi
     const guessMarker = new google.maps.Marker({
       map,
       position: result.position,
-      icon: makeIcon(result.avatar),
+      icon: makeIcon(result.player.avatar),
       label: {
         className: 'guess-marker-label',
         text: `${index + 1}`
@@ -63,8 +63,8 @@ function drawRoundResults(location: Location_, roundResults: RoundResult[], limi
     })
     guessMarker.addListener('mouseover', () => {
       infowindow.setContent(`
-        ${result.flag ? `<span class="flag-icon" style="background-image: url(flag:${result.flag})"></span>` : ''}
-        <span class="username" style="color:${result.color}">${result.username}</span><br>
+        ${result.player.flag ? `<span class="flag-icon" style="background-image: url(flag:${result.player.flag})"></span>` : ''}
+        <span class="username" style="color:${result.player.color}">${result.player.username}</span><br>
         ${result.score}<br>
         ${toMeter(result.distance)}
       `)
@@ -78,7 +78,7 @@ function drawRoundResults(location: Location_, roundResults: RoundResult[], limi
     polylines.push(
       new google.maps.Polyline({
         map,
-        strokeColor: result.color,
+        strokeColor: result.player.color,
         strokeWeight: 4,
         strokeOpacity: 0.6,
         geodesic: true,
@@ -93,7 +93,7 @@ function drawPlayerResults(locations: Location_[], result: GameResultDisplay) {
   clearMarkers()
 
   const infowindow = new google.maps.InfoWindow()
-  const icon = makeIcon(result.avatar)
+  const icon = makeIcon(result.player.avatar)
 
   result.guesses.forEach((guess, index) => {
     if (!guess) return
@@ -101,8 +101,8 @@ function drawPlayerResults(locations: Location_[], result: GameResultDisplay) {
     const guessMarker = new google.maps.Marker({ map, position: guess, icon, optimized: false })
     guessMarker.addListener('mouseover', () => {
       infowindow.setContent(`
-				${result.flag ? `<span class="flag-icon" style="background-image: url(flag:${result.flag})"></span>` : ''}
-        <span class="username" style="color:${result.color}">${result.username}</span><br>
+				${result.player.flag ? `<span class="flag-icon" style="background-image: url(flag:${result.player.flag})"></span>` : ''}
+        <span class="username" style="color:${result.player.color}">${result.player.username}</span><br>
         ${result.scores[index]}<br>
 				${toMeter(result.distances[index]!)}
 			`)
@@ -116,7 +116,7 @@ function drawPlayerResults(locations: Location_[], result: GameResultDisplay) {
     polylines.push(
       new google.maps.Polyline({
         map,
-        strokeColor: result.color,
+        strokeColor: result.player.color,
         strokeWeight: 4,
         strokeOpacity: 0.6,
         geodesic: true,

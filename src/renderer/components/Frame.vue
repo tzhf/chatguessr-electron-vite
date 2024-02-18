@@ -178,7 +178,7 @@ onBeforeUnmount(
 
     if (restoredGuesses.length > 0) {
       if (isMultiGuess.value) {
-        scoreboard.value!.restoreMultiGuesses(restoredGuesses as RoundParticipant[])
+        scoreboard.value!.restoreMultiGuesses(restoredGuesses as Player[])
       } else {
         scoreboard.value!.restoreGuesses(restoredGuesses as RoundResult[])
       }
@@ -238,7 +238,6 @@ onBeforeUnmount(
     gameState.value = 'game-results'
     gameResultLocations.value = locations
 
-    // rendererApi.drawGameLocations(locations)
     rendererApi.drawPlayerResults(locations, gameResults[0])
     scoreboard.value!.showGameResults(gameResults)
   })

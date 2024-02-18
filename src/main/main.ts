@@ -6,10 +6,10 @@ import { updateElectronApp } from 'update-electron-app'
 import createMainWindow from './MainWindow'
 import createAuthWindow from '../auth/AuthWindow'
 import GameHandler from './GameHandler'
-import { database } from './utils/useDatabase'
+import { database } from './utils/Database'
 import { supabase } from './utils/useSupabase'
-import { store } from './utils/useStore'
-import { loadCustomFlags, findFlagFile } from './utils/flags/flags'
+import { store } from './utils/store'
+import { loadCustomFlags, findFlagFile } from './lib/flags/flags'
 import { version } from '../../package.json'
 
 if (process.platform == 'win32') updateElectronApp()

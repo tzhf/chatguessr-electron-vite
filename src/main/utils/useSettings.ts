@@ -1,8 +1,12 @@
-import { store } from './useStore'
+import { store } from './store'
 
 const storedSettings = store.get('settings')
 
-const settings: Settings = storedSettings ?? {
+declare global {
+  type Settings = typeof defaultSettings
+}
+
+const defaultSettings = {
   channelName: '',
   token: '',
   cgCmd: '!cg',
@@ -20,6 +24,8 @@ const settings: Settings = storedSettings ?? {
   isMultiGuess: false,
   guessMarkersLimit: 30
 }
+
+const settings = storedSettings ?? defaultSettings
 
 const saveSettings = (settings_: Settings): void => {
   Object.assign(settings, settings_)

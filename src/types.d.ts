@@ -1,47 +1,29 @@
 type Socket = import('socket.io-client').Socket
-
 type ChatUserstate = import('tmi.js').ChatUserstate
 
 interface UserData extends ChatUserstate {
   avatar?: string
 }
 
-type Settings = {
-  channelName: string
-  token: string
-  cgCmd: string
-  cgCmdCooldown: number
-  cgMsg: string
-  flagsCmd: string
-  getUserStatsCmd: string
-  getBestStatsCmd: string
-  clearUserStatsCmd: string
-  randomPlonkCmd: string
-  showHasGuessed: boolean
-  showHasAlreadyGuessed: boolean
-  showGuessChanged: boolean
-  showSubmittedPreviousGuess: boolean
-  isMultiGuess: boolean
-  guessMarkersLimit: number
-}
-
 type LatLng = { lat: number; lng: number }
 
-type Location_ = {
-  lat: number
-  lng: number
+interface Location_ extends LatLng {
   panoId: string | null
   heading: number
   pitch: number
   zoom: number
 }
 
-type Guess = {
-  user: string
+type Player = {
+  userId?: string
   username: string
   color: string
-  flag: string | null
   avatar: string | null
+  flag: string | null
+}
+
+type Guess = {
+  player: Player
   position: LatLng
   streak: number
   lastStreak: number | null
@@ -51,13 +33,7 @@ type Guess = {
 }
 
 type RoundResult = {
-  id: string
-  userId: string
-  username: string
-  user: string
-  color: string
-  avatar: string | null
-  flag: string | null
+  player: Player
   streak: number
   lastStreak: number | null
   distance: number
@@ -66,19 +42,12 @@ type RoundResult = {
   position: LatLng
 }
 
-type RoundParticipant = {
-  id: string
-  username: string
-  color: string
-  avatar: string | null
-  flag: string | null
-}
+// type RoundParticipant = Player & {
+//   id: string
+// }
 
 type GameResult = {
-  username: string
-  color: string
-  avatar: string | null
-  flag: string | null
+  player: Player
   streak: number
   guesses: (LatLng | null)[]
   scores: (number | null)[]
@@ -87,22 +56,21 @@ type GameResult = {
   totalDistance: number
 }
 
-type GameResultDisplay = {
-  username: string
-  color: string
-  avatar: string | null
-  flag: string | null
+interface GameResultDisplay {
+  player: Player
   guesses: (LatLng | null)[]
   distances: (number | null)[]
   scores: (number | null)[]
 }
 
-type ScoreboardRow = {
+interface ScoreboardRow {
   index?: { value: number; display: string | number }
-  username: string
-  color: string
-  avatar: string | null
-  flag: string | null
+  player: {
+    username: string
+    color: string
+    avatar?: string | null
+    flag?: string | null
+  }
   streak?: {
     value: number
     display: number | string
@@ -124,39 +92,38 @@ type ScoreboardRow = {
   totalDistance?: number
 }
 
-type Bounds = {
-  min: LatLng
-  max: LatLng
-}
-
-type GameMode = 'standard' | 'streak'
-
 type GameType = 'standard' | 'streak'
 
 type GameStatus = 'started' | 'finished'
 
 type GameState = 'in-round' | 'round-results' | 'game-results' | 'none'
 
-type GameRound = {
-  lat: number
-  lng: number
-  panoId: string | null
-  heading: number
-  pitch: number
-  zoom: number
+interface Seed {
+  token: string
+  map: string
+  mapName: string
+  mode: GameType
+  type: GameType
+  forbidMoving: boolean
+  forbidRotating: boolean
+  forbidZooming: boolean
+  timeLimit: number
+  bounds: Bounds
+  round: number
+  roundCount: number
+  rounds: GameRound[]
+  player: GamePlayer
+  state: GameStatus
+}
+
+type GameRound = Location_ & {
   streakLocationCode: string | null
   // TODO: Add missing fields
 }
 
-type GeoGuessrRoundScore = {
-  amount: string
-  unit: string
-  percentage: number
-}
-
-type Distance = {
-  meters: { amount: string; unit: string }
-  miles: { amount: string; unit: string }
+type GamePlayer = {
+  guesses: GameGuess[]
+  // TODO: Add rest
 }
 
 type GameGuess = {
@@ -172,30 +139,26 @@ type GameGuess = {
   time: number
 }
 
-type GamePlayer = {
-  guesses: GameGuess[]
-  // TODO: Add rest
+type GeoGuessrRoundScore = {
+  amount: string
+  unit: string
+  percentage: number
 }
 
-type GameSettings = {
-  forbidMoving: boolean
-  forbidRotating: boolean
-  forbidZooming: boolean
-  timeLimit: number
+type Distance = {
+  meters: { amount: string; unit: string }
+  miles: { amount: string; unit: string }
 }
 
-type Seed = GameSettings & {
-  token: string
-  bounds: Bounds
-  map: string
-  mapName: string
-  mode: GameMode
-  round: number
-  roundCount: number
-  rounds: GameRound[]
-  player: GamePlayer
-  state: GameStatus
-  type: GameType
+type Bounds = {
+  min: LatLng
+  max: LatLng
+}
+
+type GameMode = {
+  noMove: boolean
+  noPan: boolean
+  noZoom: boolean
 }
 
 type Flag = {
