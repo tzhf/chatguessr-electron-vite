@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import Frame from './components/Frame.vue'
-import { rendererApi } from './rendererApi'
 import './assets/styles.css'
 
 import './mods/extenssrMenuItemsPlugin'
@@ -12,7 +11,7 @@ import './mods/satelliteMode'
 const wrapper = document.createElement('div')
 document.body.append(wrapper)
 
-createApp(Frame, { rendererApi })
+createApp(Frame)
   .use(Vue3DraggableResizable)
   .mount(wrapper)
   .$nextTick(() => {

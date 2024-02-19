@@ -14,7 +14,7 @@ interface Location_ extends LatLng {
   zoom: number
 }
 
-type Player = {
+interface Player {
   userId?: string
   username: string
   color: string
@@ -22,7 +22,7 @@ type Player = {
   flag: string | null
 }
 
-type Guess = {
+interface Guess {
   player: Player
   position: LatLng
   streak: number
@@ -32,7 +32,7 @@ type Guess = {
   modified?: boolean
 }
 
-type RoundResult = {
+interface RoundResult {
   player: Player
   streak: number
   lastStreak: number | null
@@ -42,11 +42,7 @@ type RoundResult = {
   position: LatLng
 }
 
-// type RoundParticipant = Player & {
-//   id: string
-// }
-
-type GameResult = {
+interface GameResult {
   player: Player
   streak: number
   guesses: (LatLng | null)[]
@@ -65,12 +61,7 @@ interface GameResultDisplay {
 
 interface ScoreboardRow {
   index?: { value: number; display: string | number }
-  player: {
-    username: string
-    color: string
-    avatar?: string | null
-    flag?: string | null
-  }
+  player: Player
   streak?: {
     value: number
     display: number | string

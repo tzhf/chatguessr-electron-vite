@@ -72,7 +72,6 @@ import { getLocalStorage, setLocalStorage } from '@/useLocalStorage'
 import Settings from './Settings.vue'
 import Scoreboard from './Scoreboard.vue'
 import Timer from './Timer.vue'
-
 import IconGear from '@/assets/icons/gear.svg'
 import IconTimerVisible from '@/assets/icons/timer_visible.svg'
 import IconScoreboardVisible from '@/assets/icons/scoreboard_visible.svg'
@@ -80,14 +79,13 @@ import IconScoreboardHidden from '@/assets/icons/scoreboard_hidden.svg'
 import IconTimerHidden from '@/assets/icons/timer_hidden.svg'
 import IconStartFlag from '@/assets/icons/start_flag.svg'
 
+import { rendererApi } from '../rendererApi'
+const { chatguessrApi } = window
+
+// probably not necessary
 defineOptions({
   inheritAttrs: false
 })
-
-const { chatguessrApi } = window
-const { rendererApi } = defineProps<{
-  rendererApi: RendererApi
-}>()
 
 const scoreboard = ref<InstanceType<typeof Scoreboard> | null>(null)
 const settingsVisible = ref(false)
@@ -254,9 +252,9 @@ function onRoundResultRowClick(index: number, position: LatLng) {
     rendererApi.focusOnGuess(position)
   }
 }
-function onGameResultRowClick(row: ScoreboardRow) {
+function onGameResultRowClick(row: GameResultDisplay) {
   if (gameResultLocations.value) {
-    rendererApi.drawPlayerResults(gameResultLocations.value, row as GameResultDisplay)
+    rendererApi.drawPlayerResults(gameResultLocations.value, row)
   }
 }
 

@@ -131,7 +131,7 @@ const props = defineProps<{
   gameState: GameState
   isMultiGuess: boolean
   onRoundResultRowClick: (index: number, position: LatLng) => void
-  onGameResultRowClick: (row: ScoreboardRow) => void
+  onGameResultRowClick: (row: GameResultDisplay) => void
 }>()
 
 const tableContainer = ref<HTMLDivElement | null>(null)
@@ -336,7 +336,7 @@ function onRowClick(row: ScoreboardRow) {
   if (props.gameState === 'round-results' && row.index && row.position) {
     props.onRoundResultRowClick(row.index.value, row.position)
   } else if (props.gameState === 'game-results') {
-    props.onGameResultRowClick(row)
+    props.onGameResultRowClick(row as GameResultDisplay)
   }
 }
 
