@@ -35,6 +35,7 @@ interface Guess {
 interface RoundResult {
   player: Player
   streak: number
+  country: string | null
   lastStreak: number | null
   distance: number
   score: number

@@ -1,6 +1,5 @@
 // @ts-nocheck
 import pMap from 'p-map'
-import { store } from './utils/store'
 
 import {
   latLngEqual,
@@ -48,7 +47,7 @@ export default class Game {
   constructor(db: Database, settings: Settings) {
     this.#db = db
     this.#settings = settings
-    this.lastLocation = store.get('lastLocation', undefined)
+    this.lastLocation = this.#db.getLastRoundLocation()
   }
 
   async start(url: string, isMultiGuess: boolean) {
@@ -144,27 +143,20 @@ export default class Game {
     await this.#processStreamerGuess()
 
     this.lastLocation = { lat: this.location.lat, lng: this.location.lng }
-    store.set('lastLocation', this.lastLocation)
   }
 
   /**
    * Update streaks for multi-guesses.
    */
   async #processMultiGuesses() {
-    // TODO only retrieve location and streak values
-    // Very slow
-    const guesses = this.#db.getRoundResults(this.#roundId)
+    const guesses = this.#db.getRoundResultsSimplified(this.#roundId)
     await pMap(
       guesses,
       async (guess) => {
-        const guessedCountry = await getCountryCode(guess.position)
+        const correct = guess.country === this.#country
 
-        // this.#db.setUserLastLocation(guess.userId, {lat: this.location.lng, lng: this.location.lng})
-
-        const correct = guessedCountry === this.#country
-        this.#db.setGuessCountry(
+        this.#db.setGuessStreak(
           guess.id,
-          guessedCountry,
           correct ? guess.streak + 1 : 0,
           correct ? null : guess.streak
         )
@@ -234,19 +226,16 @@ export default class Game {
       throw Object.assign(new Error('Same guess'), { code: 'submittedPreviousGuess' })
     }
 
+    const guessedCountry = await getCountryCode(location)
+    let streak = this.#db.getUserStreak(dbUser.id)
+    let lastStreak: number | null = null
+
     // Reset streak if the player skipped a round
-    if (!dbUser.lastLocation || !latLngEqual(dbUser.lastLocation, this.lastLocation)) {
+    if (streak && this.lastLocation && !latLngEqual(streak.lastLocation, this.lastLocation)) {
       this.#db.resetUserStreak(dbUser.id)
     }
 
-    let guessedCountry: string | null = null
-    let lastStreak: number | null = null
-
-    // DB streaks track their own last round id so then this would be unnecessary
-    this.#db.setUserLastLocation(dbUser.id, { lat: this.location.lat, lng: this.location.lng })
-
     if (!this.isMultiGuess) {
-      guessedCountry = await getCountryCode(location)
       if (guessedCountry === this.#country) {
         this.#db.addUserStreak(dbUser.id, this.#roundId)
       } else {
@@ -254,7 +243,7 @@ export default class Game {
       }
     }
 
-    const streak = this.#db.getUserStreak(dbUser.id)
+    streak = this.#db.getUserStreak(dbUser.id)
     const distance = haversineDistance(location, this.location)
     const score = calculateScore(distance, this.mapScale)
 

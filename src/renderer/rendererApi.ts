@@ -305,7 +305,3 @@ export const rendererApi = {
   hideSatelliteMap,
   centerSatelliteView
 }
-
-// declare global {
-//   type RendererApi = typeof rendererApi
-// }

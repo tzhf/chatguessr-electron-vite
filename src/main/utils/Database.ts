@@ -177,8 +177,11 @@ const migrations: ((db: SQLite.Database) => void)[] = [
     db.prepare(`ALTER TABLE guesses DROP COLUMN flag`).run()
     db.prepare(`ALTER TABLE users ADD COLUMN color STRING DEFAULT "#FFF"`).run()
   },
-  function createAvatarField(db) {
+  function createUsersAvatarField(db) {
     db.prepare(`ALTER TABLE users ADD COLUMN avatar STRING DEFAULT NULL`).run()
+  },
+  function removeUsersLastLocationField(db) {
+    db.prepare(`ALTER TABLE users DROP COLUMN last_location`).run()
   }
 ]
 
@@ -276,6 +279,13 @@ class db {
       id: roundId,
       country
     })
+  }
+
+  getLastRoundLocation() {
+    const stmt = this.#db
+      .prepare(`SELECT location from rounds ORDER BY created_at DESC LIMIT 1`)
+      .get()
+    return stmt as Location_ | undefined
   }
 
   createGuess(
@@ -391,21 +401,15 @@ class db {
     })
   }
 
-  setGuessCountry(
-    guessId: string,
-    country: string,
-    streak: number,
-    lastStreak: number | null = null
-  ) {
+  setGuessStreak(guessId: string, streak: number, lastStreak: number | null = null) {
     const updateGuess = this.#db.prepare(`
       UPDATE guesses
-      SET country = :country, streak = :streak, last_streak = :lastStreak
+      SET streak = :streak, last_streak = :lastStreak
       WHERE id = :id
     `)
 
     updateGuess.run({
       id: guessId,
-      country,
       streak,
       lastStreak
     })
@@ -521,6 +525,7 @@ class db {
 				users.flag,
 				guesses.location,
 				guesses.streak,
+        guesses.country,
 				guesses.last_streak,
 				guesses.distance,
 				guesses.score,
@@ -544,6 +549,7 @@ class db {
       flag: string | null
       location: string
       streak: number
+      country: string | null
       last_streak: number | null
       distance: number
       score: number
@@ -560,12 +566,45 @@ class db {
         flag: record.flag
       },
       streak: record.streak,
+      country: record.country,
       lastStreak: record.last_streak,
       distance: record.distance,
       score: record.score,
       time: record.time,
       position: JSON.parse(record.location) as LatLng
     })) as RoundResult[]
+  }
+
+  /**
+   * Retrieve only needed values for processMultiGuesses()
+   */
+  getRoundResultsSimplified(roundId: string) {
+    const stmt = this.#db.prepare(`
+      SELECT
+        guesses.id,
+        guesses.user_id,
+        guesses.streak,
+        guesses.country
+      FROM guesses, rounds
+      WHERE rounds.id = ?
+        AND guesses.round_id = rounds.id
+    `)
+
+    const records = stmt.all(roundId) as {
+      id: string
+      user_id: string
+      streak: number
+      country: string | null
+    }[]
+
+    return records.map((record) => ({
+      id: record.id,
+      player: {
+        userId: record.user_id
+      },
+      streak: record.streak,
+      country: record.country
+    }))
   }
 
   /**
@@ -653,7 +692,6 @@ class db {
     avatar: string | null
     flag: string | null
     previousGuess: LatLng
-    lastLocation: LatLng
     resetAt: number
   } {
     return {
@@ -663,7 +701,6 @@ class db {
       avatar: record.avatar,
       flag: record.flag,
       previousGuess: record.previous_guess ? JSON.parse(record.previous_guess) : null,
-      lastLocation: record.last_location ? JSON.parse(record.last_location) : null,
       resetAt: record.reset_at * 1000
     }
   }
@@ -671,7 +708,7 @@ class db {
   getUser(id: string) {
     const user = this.#db
       .prepare(
-        'SELECT id, username, color, avatar, flag, previous_guess, last_location, reset_at FROM users WHERE id = ?'
+        'SELECT id, username, color, avatar, flag, previous_guess, reset_at FROM users WHERE id = ?'
       )
       .get(id)
 
@@ -699,13 +736,6 @@ class db {
     this.#db.prepare(`UPDATE users SET flag = :flag WHERE id = :id`).run({
       id: userId,
       flag
-    })
-  }
-
-  setUserLastLocation(userId: string, lastLocation: LatLng) {
-    this.#db.prepare(`UPDATE users SET last_location = :lastLocation WHERE id = :id`).run({
-      id: userId,
-      lastLocation: JSON.stringify(lastLocation)
     })
   }
 
