@@ -42,6 +42,8 @@ describe('getUserStats', () => {
       db.createGuess(roundId, user!.id, {
         location: { lat: 0, lng: 0 },
         country: null,
+        streak: 0,
+        lastStreak: null,
         distance: 0,
         score: 5000
       })
@@ -80,18 +82,24 @@ describe('getRoundResults', () => {
     db.createGuess(roundId, user2!.id, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 1234,
       score: 3000
     })
     db.createGuess(roundId, user!.id, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 1000,
       score: 3600
     })
     db.createGuess(roundId, user3!.id, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 998,
       score: 3600
     })
@@ -118,18 +126,24 @@ describe('getRoundResults', () => {
     db.createGuess(roundId, user!.id, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 12,
       score: 5000
     })
     db.createGuess(roundId, user3!.id, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 998,
       score: 4800
     })
     const second5k = db.createGuess(roundId, user2!.id, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 8,
       score: 5000
     })
@@ -163,6 +177,8 @@ describe('getRoundResults', () => {
     const non5k = db.createGuess(roundId, user!.id, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 988,
       score: 4924
     })
@@ -177,12 +193,16 @@ describe('getRoundResults', () => {
     db.createGuess(roundId, user2!.id, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 8,
       score: 5000
     })
     db.updateGuess(non5k, {
       location: { lat: 0, lng: 0 },
       country: null,
+      streak: 0,
+      lastStreak: null,
       distance: 12,
       score: 5000
     })

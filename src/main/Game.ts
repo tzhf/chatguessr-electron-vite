@@ -149,15 +149,21 @@ export default class Game {
    * Update streaks for multi-guesses.
    */
   async #processMultiGuesses() {
-    const guesses = this.#db.getRoundGuesses(this.#roundId)
+    const guesses = this.#db.getRoundResultsSimplified(this.#roundId)
     await pMap(
       guesses,
       async (guess) => {
         const correct = guess.country === this.#country
+
+        this.#db.setGuessStreak(
+          guess.id,
+          correct ? guess.streak + 1 : 0,
+          correct ? null : guess.streak
+        )
         if (correct) {
-          this.#db.addUserStreak(guess.user_id, this.#roundId)
+          this.#db.addUserStreak(guess.player.userId, this.#roundId)
         } else {
-          this.#db.resetUserStreak(guess.user_id)
+          this.#db.resetUserStreak(guess.player.userId)
         }
       },
       { concurrency: 10 }
@@ -180,18 +186,23 @@ export default class Game {
     )
 
     const guessedCountry = await getCountryCode(location)
+    let lastStreak: number | null = null
     if (guessedCountry === this.#country) {
       this.#db.addUserStreak(dbUser.id, this.#roundId)
     } else {
-      this.#db.resetUserStreak(dbUser.id)
+      lastStreak = this.#db.resetUserStreak(dbUser.id)
     }
 
     const distance = haversineDistance(location, this.location)
     const score = streamerGuess.timedOut ? 0 : calculateScore(distance, this.mapScale)
 
+    const streak = this.#db.getUserStreak(dbUser.id)
+
     this.#db.createGuess(this.#roundId, dbUser.id, {
       location,
       country: guessedCountry,
+      streak: streak?.count ?? 0,
+      lastStreak,
       distance,
       score
     })
@@ -206,8 +217,8 @@ export default class Game {
     )
     if (!dbUser) return
 
-    const guessExists = this.#db.guessExists(this.#roundId, dbUser.id)
-    if (guessExists && !this.isMultiGuess) {
+    const existingGuess = this.#db.getUserGuess(this.#roundId, dbUser.id)
+    if (!this.isMultiGuess && existingGuess) {
       throw Object.assign(new Error('User already guessed'), { code: 'alreadyGuessed' })
     }
 
@@ -238,10 +249,12 @@ export default class Game {
 
     // Modify guess or push it
     let modified = false
-    if (this.isMultiGuess && guessExists) {
-      this.#db.updateGuess(guessExists.id, {
+    if (this.isMultiGuess && existingGuess) {
+      this.#db.updateGuess(existingGuess.id, {
         location,
         country: guessedCountry,
+        streak: streak?.count ?? 0,
+        lastStreak,
         distance,
         score
       })
@@ -250,6 +263,8 @@ export default class Game {
       this.#db.createGuess(this.#roundId, dbUser.id, {
         location,
         country: guessedCountry,
+        streak: streak?.count ?? 0,
+        lastStreak,
         distance,
         score
       })
@@ -258,7 +273,9 @@ export default class Game {
     // TODO save previous guess? No, fetch previous guess from the DB
     this.#db.setUserPreviousGuess(dbUser.id, location)
 
+    // Old shape, for the scoreboard UI
     return {
+      // user: userstate.username,
       player: {
         username: dbUser.username,
         color: dbUser.color,
