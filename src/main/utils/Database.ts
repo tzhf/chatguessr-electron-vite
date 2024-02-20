@@ -165,9 +165,7 @@ const migrations: ((db: SQLite.Database) => void)[] = [
     ).run()
   },
   function createBannedUsers(db) {
-    const bannedUsersTable = db.prepare(`CREATE TABLE banned_users (username TEXT NOT NULL)`)
-
-    bannedUsersTable.run()
+    db.prepare(`CREATE TABLE banned_users (username TEXT NOT NULL)`).run()
   },
   function createLastStreakField(db) {
     db.prepare(`ALTER TABLE guesses ADD COLUMN last_streak INTEGER DEFAULT NULL`).run()
@@ -182,6 +180,11 @@ const migrations: ((db: SQLite.Database) => void)[] = [
   },
   function removeUsersLastLocationField(db) {
     db.prepare(`ALTER TABLE users DROP COLUMN last_location`).run()
+  },
+  function removeStreakLastStreakFromGuessesTable(db) {
+    db.prepare(`ALTER TABLE guesses DROP COLUMN streak`).run()
+    db.prepare(`ALTER TABLE guesses DROP COLUMN last_streak`).run()
+    db.prepare(`ALTER TABLE users ADD COLUMN last_streak INTEGER DEFAULT NULL`).run()
   }
 ]
 
@@ -294,16 +297,14 @@ class db {
     guess: {
       location: LatLng
       country: string | null
-      streak: number
-      lastStreak: number | null
       distance: number
       score: number
     }
   ) {
     const id = randomUUID()
     const insertGuess = this.#db.prepare(`
-      INSERT INTO guesses(id, round_id, user_id, location, country, streak, last_streak, distance, score, created_at)
-      VALUES (:id, :roundId, :userId, :location, :country, :streak, :lastStreak, :distance, :score, :createdAt)
+      INSERT INTO guesses(id, round_id, user_id, location, country, distance, score, created_at)
+      VALUES (:id, :roundId, :userId, :location, :country, :distance, :score, :createdAt)
     `)
 
     insertGuess.run({
@@ -312,8 +313,6 @@ class db {
       userId,
       location: JSON.stringify(guess.location),
       country: guess.country,
-      streak: guess.streak,
-      lastStreak: guess.lastStreak,
       distance: guess.distance,
       score: guess.score,
       createdAt: timestamp()
@@ -322,56 +321,11 @@ class db {
     return id
   }
 
-  getUserGuess(roundId: string, userId: string) {
-    const stmt = this.#db.prepare(`
-      SELECT
-        guesses.id,
-        users.color,
-        users.avatar,
-        users.flag,
-        guesses.location,
-        guesses.country,
-        guesses.streak,
-        guesses.last_streak AS lastStreak,
-        guesses.distance,
-        guesses.score
-      FROM guesses
-      JOIN users ON users.id = guesses.user_id
-      WHERE round_id = ? AND user_id = ?
-    `)
-
-    const row = stmt.get(roundId, userId) as
-      | {
-          id: string
-          color: string
-          avatar: string | null
-          flag: string | null
-          location: string
-          country: string | null
-          streak: number
-          lastStreak: number | null
-          distance: number
-          score: number
-        }
-      | undefined
-
-    if (!row) {
-      return
-    }
-
-    return {
-      ...row,
-      location: JSON.parse(row.location) as LatLng
-    }
-  }
-
   updateGuess(
     guessId: string,
     guess: {
       location: LatLng
       country: string | null
-      streak: number
-      lastStreak: number | null
       distance: number
       score: number
     }
@@ -381,8 +335,6 @@ class db {
       SET
         location = :location,
         country = :country,
-        streak = :streak,
-        last_streak = :lastStreak,
         distance = :distance,
         score = :score,
         created_at = :updatedAt
@@ -393,26 +345,21 @@ class db {
       id: guessId,
       location: JSON.stringify(guess.location),
       country: guess.country,
-      streak: guess.streak,
-      lastStreak: guess.lastStreak,
       distance: guess.distance,
       score: guess.score,
       updatedAt: timestamp()
     })
   }
 
-  setGuessStreak(guessId: string, streak: number, lastStreak: number | null = null) {
-    const updateGuess = this.#db.prepare(`
-      UPDATE guesses
-      SET streak = :streak, last_streak = :lastStreak
-      WHERE id = :id
+  guessExists(roundId: string, userId: string) {
+    const stmt = this.#db.prepare(`
+      SELECT id
+      FROM guesses
+      WHERE round_id = ? AND user_id = ?
     `)
 
-    updateGuess.run({
-      id: guessId,
-      streak,
-      lastStreak
-    })
+    const row = stmt.get(roundId, userId) as { id: string } | undefined
+    return row
   }
 
   getUserStreak(userId: string): { id: string; count: number; lastLocation: LatLng } | undefined {
@@ -453,10 +400,20 @@ class db {
           roundId,
           createdAt: timestamp()
         })
-      this.#db.prepare(`UPDATE users SET current_streak_id = :streakId WHERE id = :userId`).run({
-        userId,
-        streakId: id
-      })
+      this.#db
+        .prepare(
+          `
+            UPDATE users
+            SET
+              current_streak_id = :streakId,
+              last_streak = NULL
+            WHERE id = :userId
+          `
+        )
+        .run({
+          userId,
+          streakId: id
+        })
     } else {
       this.#db
         .prepare(
@@ -479,7 +436,17 @@ class db {
   resetUserStreak(userId: string): number | null {
     const tx = this.#db.transaction(() => {
       const streak = this.getUserStreak(userId)
-      this.#db.prepare('UPDATE users SET current_streak_id = NULL WHERE id = ?').run(userId)
+      this.#db
+        .prepare(
+          `
+          UPDATE users
+          SET
+            current_streak_id = NULL,
+            last_streak = :streak
+          WHERE id = :userId
+        `
+        )
+        .run({ userId, streak: streak?.count ?? null })
       return streak
     })
     return tx()?.count ?? null
@@ -523,15 +490,16 @@ class db {
 				users.color,
 				users.avatar,
 				users.flag,
+				streaks.count AS streak,
+				users.last_streak,
 				guesses.location,
-				guesses.streak,
         guesses.country,
-				guesses.last_streak,
 				guesses.distance,
 				guesses.score,
 				guesses.created_at - rounds.created_at AS time,
 				IIF(guesses.score = 5000, guesses.created_at - rounds.created_at, NULL) AS time_to_5k
 			FROM rounds, guesses, users
+      LEFT JOIN streaks ON streaks.id = users.current_streak_id
 			WHERE rounds.id = ?
         AND guesses.round_id = rounds.id
         AND users.id = guesses.user_id
@@ -548,8 +516,8 @@ class db {
       avatar: string | null
       flag: string | null
       location: string
-      streak: number
       country: string | null
+      streak: number | null
       last_streak: number | null
       distance: number
       score: number
@@ -565,8 +533,8 @@ class db {
         avatar: record.avatar,
         flag: record.flag
       },
-      streak: record.streak,
       country: record.country,
+      streak: record.streak ?? 0,
       lastStreak: record.last_streak,
       distance: record.distance,
       score: record.score,
@@ -578,12 +546,10 @@ class db {
   /**
    * Retrieve only needed values for processMultiGuesses()
    */
-  getRoundResultsSimplified(roundId: string) {
+  getRoundGuesses(roundId: string) {
     const stmt = this.#db.prepare(`
       SELECT
-        guesses.id,
         guesses.user_id,
-        guesses.streak,
         guesses.country
       FROM guesses, rounds
       WHERE rounds.id = ?
@@ -591,20 +557,11 @@ class db {
     `)
 
     const records = stmt.all(roundId) as {
-      id: string
       user_id: string
-      streak: number
       country: string | null
     }[]
 
-    return records.map((record) => ({
-      id: record.id,
-      player: {
-        userId: record.user_id
-      },
-      streak: record.streak,
-      country: record.country
-    }))
+    return records
   }
 
   /**
@@ -634,15 +591,7 @@ class db {
 				'[' || GROUP_CONCAT(COALESCE(guesses.distance, 'null')) || ']' AS distances,
 				SUM(guesses.score) AS total_score,
 				SUM(guesses.distance) AS total_distance,
-				(
-					SELECT streak
-					FROM guesses ig, rounds ir
-					WHERE ir.game_id = rounds.game_id
-						AND ig.round_id = ir.id
-						AND ig.user_id = users.id
-					ORDER BY ig.created_at DESC
-					LIMIT 1
-				) AS streak
+				streaks.count AS streak
 			FROM rounds
 			JOIN users ON users.id IN (
 				SELECT DISTINCT g.user_id
@@ -650,6 +599,7 @@ class db {
 				JOIN guesses g ON g.round_id = r.id
 				WHERE r.game_id = ?
 			)
+      LEFT JOIN streaks ON streaks.id = users.current_streak_id
 			LEFT JOIN guesses ON guesses.round_id = rounds.id AND users.id = guesses.user_id
 			WHERE rounds.game_id = ?
 			GROUP BY users.id
@@ -661,7 +611,7 @@ class db {
       color: string
       avatar: string | null
       flag: string | null
-      streak: number
+      streak: number | null
       guesses: string
       scores: string
       distances: string
@@ -676,7 +626,9 @@ class db {
         avatar: record.avatar,
         flag: record.flag
       },
-      streak: record.streak,
+      // After a skipped round, a streak is not reseted until the player submits a new guess,
+      // so the next line is just to make sure we show the correct streak in Game Results
+      streak: JSON.parse(record.guesses).pop() ? record.streak : 0,
       guesses: JSON.parse(record.guesses),
       scores: JSON.parse(record.scores),
       distances: JSON.parse(record.distances),
