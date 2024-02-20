@@ -130,14 +130,14 @@ import { getLocalStorage, setLocalStorage } from '../useLocalStorage'
 
   function isLoading() {
     return (
-      document.querySelector('.fullscreen-spinner_root__IwRRr') ||
+      document.querySelector('[class^="fullscreen-spinner_root__"]') ||
       !document.querySelector('.widget-scene-canvas')
     )
   }
 
   let wasBackdropThereOrLoading = false
   function isBackdropThereOrLoading() {
-    return isLoading() || document.querySelector('.result-layout_root__NfX12')
+    return isLoading() || document.querySelector('[class^="result-layout_root__"]')
   }
 
   let showTimeoutID: NodeJS.Timeout

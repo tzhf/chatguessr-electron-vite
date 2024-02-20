@@ -1,5 +1,6 @@
 import axios from 'axios'
 import countryIso from 'coordinate_to_country'
+import { session } from 'electron'
 /**
  * Country code mapping for 2-character ISO codes that should be considered
  * part of another country for GeoGuessr streak purposes.
@@ -26,14 +27,30 @@ export function getGameId(url: string): string | void {
   if (id.length == 16) return id
 }
 
+// Get GeoGuessr cookies
+const getCookies = async () => {
+  return session.defaultSession.cookies
+    .get({ url: 'https://www.geoguessr.com' })
+    .then((cookies) => {
+      const ncfa = cookies.find((cookie) => cookie.name === '_ncfa')
+      return ncfa ? { Cookie: `${ncfa.name}=${ncfa.value}` } : null
+    })
+    .catch((err) => {
+      console.error(err)
+    })
+}
+
 /**
  * Fetch a game seed from the GeoGuessr API.
  */
 export async function fetchSeed(url: string): Promise<Seed | undefined> {
+  const cookies = await getCookies()
   const gameId = getGameId(url)
-  if (!gameId) return
+  if (!gameId || !cookies) {
+    return
+  }
 
-  const { data } = await axios.get(`${GEOGUESSR_URL}/api/v3/games/${gameId}`)
+  const { data } = await axios.get(`${GEOGUESSR_URL}/api/v3/games/${gameId}`, { headers: cookies })
   return data
 }
 

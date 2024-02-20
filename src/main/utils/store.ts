@@ -2,7 +2,6 @@ import ElectronStore from 'electron-store'
 
 type Schema = {
   settings: Settings
-  // lastLocation: LatLng | undefined
   session: Session | null
 }
 

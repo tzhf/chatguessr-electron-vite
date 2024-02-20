@@ -202,7 +202,10 @@ function renderGuess(guess: Guess) {
   const formatedRow = {
     index: { value: 0, display: '' },
     player: guess.player,
-    streak: { value: guess.streak, display: guess.streak },
+    streak: {
+      value: guess.streak,
+      display: guess.lastStreak ? guess.streak + ` [` + guess.lastStreak + `]` : guess.streak
+    },
     distance: { value: guess.distance, display: toMeter(guess.distance) },
     score: { value: guess.score, display: guess.score }
   }
@@ -238,7 +241,10 @@ function restoreGuesses(restoredGuesses: RoundResult[]) {
     return {
       index: { value: i + 1, display: i + 1 },
       player: guess.player,
-      streak: { value: guess.streak, display: guess.streak },
+      streak: {
+        value: guess.streak,
+        display: guess.lastStreak ? guess.streak + ` [` + guess.lastStreak + `]` : guess.streak
+      },
       distance: { value: guess.distance, display: toMeter(guess.distance) },
       score: { value: guess.score, display: guess.score }
     }

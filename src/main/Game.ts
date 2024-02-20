@@ -218,7 +218,7 @@ export default class Game {
     if (!dbUser) return
 
     const existingGuess = this.#db.getUserGuess(this.#roundId, dbUser.id)
-    if (!this.isMultiGuess && existingGuess) {
+    if (existingGuess && !this.isMultiGuess) {
       throw Object.assign(new Error('User already guessed'), { code: 'alreadyGuessed' })
     }
 
@@ -273,9 +273,7 @@ export default class Game {
     // TODO save previous guess? No, fetch previous guess from the DB
     this.#db.setUserPreviousGuess(dbUser.id, location)
 
-    // Old shape, for the scoreboard UI
     return {
-      // user: userstate.username,
       player: {
         username: dbUser.username,
         color: dbUser.color,
