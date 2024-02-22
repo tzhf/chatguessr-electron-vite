@@ -48,7 +48,7 @@
       <div class="scoreboard-title">{{ title }} ({{ rows.length }})</div>
       <div style="width: 65px">
         <label :class="['switch-container', { hidden: gameState !== 'in-round' }]">
-          <input type="checkbox" :checked="switchOn" @input="(e) => toggleGuesses(e)" />
+          <input type="checkbox" :checked="switchState" @input="(e) => toggleGuesses(e)" />
           <div class="switch"></div>
         </label>
       </div>
@@ -60,9 +60,9 @@
     <input
       v-model.number="settings.scrollSpeed"
       type="range"
-      min="0.5"
-      step="0.1"
-      max="2"
+      min="1"
+      step="1"
+      max="60"
       :class="['scrollspeed-slider', { hidden: !settings.autoScroll }]"
       @mouseover="isDraggable = false"
       @mouseleave="isDraggable = true"
@@ -86,7 +86,7 @@
           <TransitionGroup name="scoreboard_rows">
             <tr v-for="row in rows" :key="row.player.username" @click="onRowClick(row)">
               <td v-for="col in activeCols" :key="col.value">
-                <div v-if="col.value === 'player'" class="flex gap-03">
+                <div v-if="col.value === 'player'" class="flex flex-center gap-03">
                   <span
                     class="scoreboard-avatar"
                     :style="{
@@ -119,8 +119,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch, computed } from 'vue'
-import { useScroll } from '@vueuse/core'
+import { ref, reactive, onMounted, toRef, watch, computed } from 'vue'
+import { useScroll, useIntervalFn } from '@vueuse/core'
 import formatDuration from 'format-duration'
 import { getLocalStorage, setLocalStorage } from '@/useLocalStorage'
 import IconAutoScroll from '@/assets/icons/auto_scroll.svg'
@@ -138,7 +138,7 @@ const tableContainer = ref<HTMLDivElement | null>(null)
 const isDraggable = ref(true)
 const isColumnVisibilityOpen = ref(false)
 const title = ref('GUESSES')
-const switchOn = ref(true)
+const switchState = ref(true)
 
 const position = reactive({ x: 20, y: 50, w: 340, h: 390 })
 onMounted(async () => {
@@ -146,13 +146,12 @@ onMounted(async () => {
     position,
     getLocalStorage('cg_scoreboard__position', { x: 20, y: 50, w: 340, h: 390 })
   )
-  runAutoScroll()
 })
 
 const settings = reactive(
   getLocalStorage('cg_scoreboard__settings', {
     autoScroll: false,
-    scrollSpeed: 1,
+    scrollSpeed: 30,
     streak: true,
     distance: true,
     score: true
@@ -334,7 +333,7 @@ function showGameResults(gameResults: GameResult[]) {
   })
   Object.assign(rows, formatedRows)
 
-  title.value = 'HIGHSCORES'
+  title.value = 'GAME RESULTS'
   scrollToTop()
 }
 
@@ -361,57 +360,62 @@ function isSorted(col: string) {
 }
 
 const { y, arrivedState } = useScroll(tableContainer, { behavior: 'smooth' })
-let direction = 1 // 0: up, 1: down
-function runAutoScroll() {
-  let newY = y.value
-  requestAnimationFrame(scrollFunc)
+const scrollSpeed = toRef(() => settings.scrollSpeed)
+const { pause, resume } = useIntervalFn(
+  () => {
+    scroller()
+  },
+  scrollSpeed,
+  { immediate: settings.autoScroll }
+)
 
-  function scrollFunc() {
-    if (!settings.autoScroll) return
-    if (arrivedState.top && arrivedState.bottom) arrivedState.bottom = false
-
-    if (direction) {
-      if (arrivedState.bottom) {
-        setTimeout(() => {
-          direction = 0
-          requestAnimationFrame(scrollFunc)
-        }, 2000)
-      } else {
-        newY += settings.scrollSpeed
-        y.value = newY
-        requestAnimationFrame(scrollFunc)
-      }
+let direction = 0 // 0: down, 1: up
+function scroller() {
+  if (arrivedState.top && arrivedState.bottom) arrivedState.bottom = false
+  if (!direction) {
+    if (!arrivedState.bottom) {
+      y.value++
     } else {
-      if (arrivedState.top) {
-        setTimeout(() => {
-          direction = 1
-          newY = y.value
-          requestAnimationFrame(scrollFunc)
-        }, 3500)
-      } else {
-        y.value -= 5
-        requestAnimationFrame(scrollFunc)
-      }
+      pause()
+      direction = 1
+      setTimeout(() => {
+        if (settings.autoScroll) resume()
+      }, 2000)
+    }
+  } else {
+    if (!arrivedState.top) {
+      y.value -= 0.1 * y.value
+    } else {
+      pause()
+      direction = 0
+      setTimeout(() => {
+        if (settings.autoScroll) resume()
+      }, 3000)
     }
   }
 }
 
-function toggleAutoScroll() {
-  settings.autoScroll = !settings.autoScroll
-  runAutoScroll()
-}
-
 function scrollToTop() {
+  pause()
   y.value = 0
   direction = 0
+  if (!settings.autoScroll) return
+  setTimeout(() => {
+    resume()
+  }, 3000)
+}
+
+function toggleAutoScroll() {
+  settings.autoScroll = !settings.autoScroll
+  settings.autoScroll ? resume() : pause()
 }
 
 function toggleGuesses(e: Event) {
   chatguessrApi.setGuessesOpen((e.target as HTMLInputElement).checked)
 }
 
-function setSwitchOn(state: boolean) {
-  switchOn.value = state
+function setSwitchState(state: boolean) {
+  switchState.value = state
 }
 
 function toMeter(distance: number) {
@@ -426,7 +430,7 @@ defineExpose({
   restoreMultiGuesses,
   showRoundResults,
   showGameResults,
-  setSwitchOn
+  setSwitchState
 })
 </script>
 
@@ -610,6 +614,7 @@ th.sortable:hover {
   outline: none;
   opacity: 0.2;
   transition: opacity 0.3s;
+  direction: rtl;
 }
 .scrollspeed-slider:hover {
   opacity: 1;

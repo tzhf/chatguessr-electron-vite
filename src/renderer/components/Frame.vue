@@ -83,9 +83,9 @@ import { rendererApi } from '../rendererApi'
 const { chatguessrApi } = window
 
 // probably not necessary
-defineOptions({
-  inheritAttrs: false
-})
+// defineOptions({
+//   inheritAttrs: false
+// })
 
 const scoreboard = ref<InstanceType<typeof Scoreboard> | null>(null)
 const settingsVisible = ref(false)
@@ -243,7 +243,7 @@ onBeforeUnmount(
 
 onBeforeUnmount(
   chatguessrApi.onGuessesOpenChanged((open) => {
-    scoreboard.value!.setSwitchOn(open)
+    scoreboard.value!.setSwitchState(open)
   })
 )
 
