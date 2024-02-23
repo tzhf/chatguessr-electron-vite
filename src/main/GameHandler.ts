@@ -221,6 +221,10 @@ export default class GameHandler {
       saveSettings(settings_)
     })
 
+    ipcMain.on('reconnect', () => {
+      this.#requestAuthentication()
+    })
+
     ipcMain.handle('get-banned-users', () => {
       return this.#db.getBannedUsers()
     })

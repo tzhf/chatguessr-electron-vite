@@ -401,19 +401,19 @@ class db {
     })
   }
 
-  setGuessStreak(guessId: string, streak: number, lastStreak: number | null = null) {
-    const updateGuess = this.#db.prepare(`
-      UPDATE guesses
-      SET streak = :streak, last_streak = :lastStreak
-      WHERE id = :id
-    `)
+  // setGuessStreak(guessId: string, streak: number, lastStreak: number | null = null) {
+  //   const updateGuess = this.#db.prepare(`
+  //     UPDATE guesses
+  //     SET streak = :streak, last_streak = :lastStreak
+  //     WHERE id = :id
+  //   `)
 
-    updateGuess.run({
-      id: guessId,
-      streak,
-      lastStreak
-    })
-  }
+  //   updateGuess.run({
+  //     id: guessId,
+  //     streak,
+  //     lastStreak
+  //   })
+  // }
 
   getUserStreak(userId: string): { id: string; count: number; lastLocation: LatLng } | undefined {
     const stmt = this.#db.prepare(`
@@ -476,13 +476,15 @@ class db {
     }
   }
 
-  resetUserStreak(userId: string): number | null {
-    const tx = this.#db.transaction(() => {
-      const streak = this.getUserStreak(userId)
-      this.#db.prepare('UPDATE users SET current_streak_id = NULL WHERE id = ?').run(userId)
-      return streak
-    })
-    return tx()?.count ?? null
+  resetUserStreak(userId: string) {
+    // In handleUserGuess() we need to get lastLocation from the previous streak in order to reset the streak if the player skipped a round
+    // so we don't need to return last streak from here anymore, it also saves a query in processMultiGuess() when streak is reseted
+    // const tx = this.#db.transaction(() => {
+    //   const streak = this.getUserStreak(userId)
+    this.#db.prepare('UPDATE users SET current_streak_id = NULL WHERE id = ?').run(userId)
+    // return streak
+    // })
+    // return tx()?.count ?? null
   }
 
   /**

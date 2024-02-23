@@ -153,14 +153,7 @@ export default class Game {
     await pMap(
       guesses,
       async (guess) => {
-        const correct = guess.country === this.#country
-
-        this.#db.setGuessStreak(
-          guess.id,
-          correct ? guess.streak + 1 : 0,
-          correct ? null : guess.streak
-        )
-        if (correct) {
+        if (guess.country === this.#country) {
           this.#db.addUserStreak(guess.player.userId, this.#roundId)
         } else {
           this.#db.resetUserStreak(guess.player.userId)
@@ -186,11 +179,12 @@ export default class Game {
     )
 
     const guessedCountry = await getCountryCode(location)
-    let lastStreak: number | null = null
-    if (guessedCountry === this.#country) {
+    const lastStreak = this.#db.getUserStreak(dbUser.id)
+    const correct = guessedCountry === this.#country
+    if (correct) {
       this.#db.addUserStreak(dbUser.id, this.#roundId)
     } else {
-      lastStreak = this.#db.resetUserStreak(dbUser.id)
+      this.#db.resetUserStreak(dbUser.id)
     }
 
     const distance = haversineDistance(location, this.location)
@@ -202,7 +196,7 @@ export default class Game {
       location,
       country: guessedCountry,
       streak: streak?.count ?? 0,
-      lastStreak,
+      lastStreak: lastStreak?.count && !correct ? lastStreak.count : null,
       distance,
       score
     })
@@ -226,48 +220,59 @@ export default class Game {
       throw Object.assign(new Error('Same guess'), { code: 'submittedPreviousGuess' })
     }
 
+    const distance = haversineDistance(location, this.location)
+    const score = calculateScore(distance, this.mapScale)
+
     const guessedCountry = await getCountryCode(location)
-    let streak = this.#db.getUserStreak(dbUser.id)
-    let lastStreak: number | null = null
+    const correct = guessedCountry === this.#country
+    const lastStreak = this.#db.getUserStreak(dbUser.id)
 
     // Reset streak if the player skipped a round
-    if (streak && this.lastLocation && !latLngEqual(streak.lastLocation, this.lastLocation)) {
+    if (
+      lastStreak &&
+      this.lastLocation &&
+      !latLngEqual(lastStreak.lastLocation, this.lastLocation)
+    ) {
       this.#db.resetUserStreak(dbUser.id)
     }
 
+    // let lastStreak: number | null = null
     if (!this.isMultiGuess) {
-      if (guessedCountry === this.#country) {
+      if (correct) {
         this.#db.addUserStreak(dbUser.id, this.#roundId)
       } else {
-        lastStreak = this.#db.resetUserStreak(dbUser.id)
+        this.#db.resetUserStreak(dbUser.id)
       }
     }
 
-    streak = this.#db.getUserStreak(dbUser.id)
-    const distance = haversineDistance(location, this.location)
-    const score = calculateScore(distance, this.mapScale)
+    let streak = this.#db.getUserStreak(dbUser.id)
+
+    // This might look weird but with this we no longer need to update guess streak in processMultiGuesses() which was slow
+    if (this.isMultiGuess) {
+      // lastStreak = streak && !correct ? streak.count : null
+      if (correct) {
+        streak ? streak.count++ : (streak = { count: 1 })
+      } else {
+        streak = null
+      }
+    }
+
+    const guess = {
+      location,
+      country: guessedCountry,
+      streak: streak?.count ?? 0,
+      lastStreak: lastStreak?.count && !correct ? lastStreak.count : null,
+      distance,
+      score
+    }
 
     // Modify guess or push it
     let modified = false
     if (this.isMultiGuess && existingGuess) {
-      this.#db.updateGuess(existingGuess.id, {
-        location,
-        country: guessedCountry,
-        streak: streak?.count ?? 0,
-        lastStreak,
-        distance,
-        score
-      })
+      this.#db.updateGuess(existingGuess.id, guess)
       modified = true
     } else {
-      this.#db.createGuess(this.#roundId, dbUser.id, {
-        location,
-        country: guessedCountry,
-        streak: streak?.count ?? 0,
-        lastStreak,
-        distance,
-        score
-      })
+      this.#db.createGuess(this.#roundId, dbUser.id, guess)
     }
 
     // TODO save previous guess? No, fetch previous guess from the DB
@@ -282,7 +287,7 @@ export default class Game {
       },
       position: location,
       streak: streak?.count ?? 0,
-      lastStreak,
+      lastStreak: lastStreak?.count && !correct ? lastStreak.count : null,
       distance,
       score,
       modified

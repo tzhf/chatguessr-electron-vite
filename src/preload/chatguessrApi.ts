@@ -108,6 +108,10 @@ export const chatguessrApi = {
     }
   },
 
+  reconnect(): void {
+    ipcRenderer.send('reconnect')
+  },
+
   replaceSession(): void {
     ipcRenderer.invoke('replace-session')
   },

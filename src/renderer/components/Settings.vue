@@ -8,7 +8,7 @@
             TWITCH CONNECT
           </button>
           <button :class="{ active: currentTab === 3 }" @click="currentTab = 3">BAN LIST</button>
-          <button class="btn close bg-danger" @click="close"></button>
+          <button class="btn close bg-danger" @click="emit('close')"></button>
         </div>
 
         <div v-show="currentTab === 1" class="modal-content">
@@ -130,23 +130,25 @@
         <div v-show="currentTab === 2" class="modal-content">
           <div class="flex flex-col flex-center gap-1 mx-1">
             <IconTwitch />
-            <span :class="[twitchConnectionState.state]">{{
-              twitchConnectionState.state === 'connected'
-                ? 'connected as ' + twitchConnectionState.botUsername
-                : twitchConnectionState.state === 'error'
-                  ? 'Error: ' + twitchConnectionState.error
-                  : twitchConnectionState.state
-            }}</span>
+            <span :class="[twitchConnectionState.state]"
+              >{{
+                twitchConnectionState.state === 'connected'
+                  ? 'connected as ' + twitchConnectionState.botUsername
+                  : twitchConnectionState.state === 'error'
+                    ? 'Error: ' + twitchConnectionState.error
+                    : twitchConnectionState.state
+              }}
+            </span>
             <button
               :class="['btn', twitchConnectionState.state]"
-              @click="chatguessrApi.replaceSession"
+              @click="chatguessrApi.replaceSession()"
             >
               {{
-                twitchConnectionState.state === 'connected'
-                  ? 'Change account'
+                twitchConnectionState.state === 'disconnected'
+                  ? 'Login'
                   : twitchConnectionState.state === 'connecting'
                     ? 'Connecting...'
-                    : 'Login'
+                    : 'Change account'
               }}
             </button>
           </div>
@@ -158,46 +160,54 @@
               }}</span>
             </div>
             <div class="form__group">
-              ChatGuessr server :<span :class="[socketConnectionState.state]">{{
-                socketConnectionState.state
-              }}</span>
+              ChatGuessr server :<span :class="[socketConnectionState.state]"
+                >{{ socketConnectionState.state }}
+                <button
+                  v-if="socketConnectionState.state === 'connecting'"
+                  :class="['btn', socketConnectionState.state]"
+                  @click="chatguessrApi.reconnect()"
+                >
+                  ⟳
+                </button>
+              </span>
             </div>
             <div class="form__group" data-tip="Your streamer account">
               Your streaming channel :
-              <form @submit.prevent="onChannelNameUpdate()">
-                <div class="flex gap-02">
-                  <input
-                    v-model="newChannelName"
-                    type="text"
-                    style="width: 240px"
-                    spellcheck="false"
-                    required
-                  />
-                  <button
-                    :disabled="newChannelName === settings.channelName"
-                    type="submit"
-                    class="btn bg-primary"
-                    style="width: 70px"
-                  >
-                    Update
-                  </button>
-                </div>
-              </form>
+
+              <div class="flex gap-02">
+                <input
+                  v-model="newChannelName"
+                  type="text"
+                  style="width: 240px"
+                  spellcheck="false"
+                  required
+                />
+                <button
+                  :disabled="newChannelName === settings.channelName"
+                  class="btn bg-primary"
+                  style="width: 90px"
+                  @click="onChannelNameUpdate()"
+                >
+                  Update
+                </button>
+              </div>
             </div>
             <div class="form__group">
               Your cg link :
               <div class="flex gap-02">
                 <input
-                  type="text"
                   :value="
                     twitchConnectionState.state === 'connected'
                       ? `chatguessr.com/map/${twitchConnectionState.botUsername}`
                       : ''
                   "
+                  type="text"
                   style="width: 240px"
                   disabled
                 />
-                <button class="btn bg-primary" style="width: 70px">Copy🖊️</button>
+                <button class="btn bg-primary" style="width: 90px" @click="copy(cgLink)">
+                  {{ copied ? 'Copied ✔️' : ' Copy 🖊️' }}
+                </button>
               </div>
             </div>
           </div>
@@ -233,8 +243,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, shallowRef } from 'vue'
+import { ref, reactive, watch } from 'vue'
+import { useClipboard } from '@vueuse/core'
 import IconTwitch from '@/assets/icons/twitch.svg'
+const { copy, copied } = useClipboard()
 
 const { chatguessrApi } = window
 const { socketConnectionState, twitchConnectionState } = defineProps<{
@@ -252,7 +264,14 @@ watch(settings, () => {
 const newChannelName = ref(settings.channelName)
 const onChannelNameUpdate = () => {
   settings.channelName = newChannelName.value
+  chatguessrApi.reconnect()
 }
+
+const cgLink = ref(
+  twitchConnectionState.state === 'connected'
+    ? `chatguessr.com/map/${twitchConnectionState.botUsername}`
+    : ''
+)
 
 const bannedUsers = reactive<{ username: string }[]>(await chatguessrApi.getBannedUsers())
 const newBannedUser = ref('')
@@ -290,12 +309,9 @@ const clearStats = () => {
   }
 }
 
-const currentVerion = shallowRef(await chatguessrApi.getCurrentVersion())
+const currentVerion = ref(await chatguessrApi.getCurrentVersion())
 
 const emit = defineEmits(['close'])
-const close = () => {
-  emit('close')
-}
 </script>
 <style scoped>
 textarea {
