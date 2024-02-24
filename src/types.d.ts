@@ -2,6 +2,8 @@ type Socket = import('socket.io-client').Socket
 type ChatUserstate = import('tmi.js').ChatUserstate
 
 interface UserData extends ChatUserstate {
+  'user-id': string
+  'display-name': string
   avatar?: string
 }
 

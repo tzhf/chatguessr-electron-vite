@@ -1,4 +1,3 @@
-// @ts-nocheck
 import pMap from 'p-map'
 
 import {
@@ -84,18 +83,19 @@ export default class Game {
     this.closeGuesses()
   }
 
-  #streamerHasGuessed(newSeed: Seed) {
-    return newSeed.player.guesses.length != this.seed.player.guesses.length
+  #streamerHasGuessed(seed: Seed) {
+    return seed.player.guesses.length != this.seed!.player.guesses.length
   }
 
-  #locHasChanged(newSeed: Seed) {
-    return !latLngEqual(newSeed.rounds.at(-1), this.getLocation())
+  #locHasChanged(seed: Seed) {
+    return !latLngEqual(seed.rounds.at(-1)!, this.getLocation())
   }
 
+  // @ts-ignore
   async refreshSeed() {
     const newSeed = await this.#getSeed()
-    // If a guess has been comitted, process streamer guess then return scores
-    if (this.#streamerHasGuessed(newSeed)) {
+    // If a guess has been committed, process streamer guess then return scores
+    if (newSeed && this.#streamerHasGuessed(newSeed)) {
       this.closeGuesses()
 
       this.seed = newSeed
@@ -104,8 +104,8 @@ export default class Game {
 
       const roundResults = this.getRoundResults()
 
-      if (this.seed.state !== 'finished') {
-        this.#roundId = this.#db.createRound(this.seed.token, this.seed.rounds.at(-1))
+      if (this.seed!.state !== 'finished') {
+        this.#roundId = this.#db.createRound(this.seed!.token, this.seed.rounds.at(-1)!)
         this.#getCountry()
       } else {
         this.#roundId = undefined
@@ -113,9 +113,9 @@ export default class Game {
 
       return { location, roundResults }
       // Else, if only the loc has changed, the location was skipped, replace current loc
-    } else if (this.#locHasChanged(newSeed)) {
+    } else if (newSeed && this.#locHasChanged(newSeed)) {
       this.seed = newSeed
-      this.#roundId = this.#db.createRound(this.seed.token, this.seed.rounds.at(-1))
+      this.#roundId = this.#db.createRound(this.seed!.token, this.seed.rounds.at(-1)!)
 
       this.#getCountry()
 
@@ -131,7 +131,7 @@ export default class Game {
     this.location = this.getLocation()
     this.#country = await getCountryCode(this.location)
 
-    this.#db.setRoundCountry(this.#roundId, this.#country)
+    this.#db.setRoundCountry(this.#roundId!, this.#country ?? null)
   }
 
   async #makeGuess() {
@@ -142,19 +142,19 @@ export default class Game {
     }
     await this.#processStreamerGuess()
 
-    this.lastLocation = { lat: this.location.lat, lng: this.location.lng }
+    this.lastLocation = { lat: this.location!.lat, lng: this.location!.lng }
   }
 
   /**
    * Update streaks for multi-guesses.
    */
   async #processMultiGuesses() {
-    const guesses = this.#db.getRoundResultsSimplified(this.#roundId)
+    const guesses = this.#db.getRoundResultsSimplified(this.#roundId!)
     await pMap(
       guesses,
       async (guess) => {
         if (guess.country === this.#country) {
-          this.#db.addUserStreak(guess.player.userId, this.#roundId)
+          this.#db.addUserStreak(guess.player.userId, this.#roundId!)
         } else {
           this.#db.resetUserStreak(guess.player.userId)
         }
@@ -164,37 +164,35 @@ export default class Game {
   }
 
   async #processStreamerGuess() {
-    const index = this.seed.state === 'finished' ? 1 : 2
-    const streamerGuess = this.seed.player.guesses[this.seed.round - index]
+    const index = this.seed!.state === 'finished' ? 1 : 2
+    const streamerGuess = this.seed!.player.guesses[this.seed!.round - index]
     const location = { lat: streamerGuess.lat, lng: streamerGuess.lng }
 
-    // TODO GET AVATAR FROM ENDPOINT
-    const avatar =
-      'https://static-cdn.jtvnw.net/jtv_user_pictures/90fe5728-5e40-4855-9849-0f11e92fb9c9-profile_image-300x300.png'
     const dbUser = this.#db.getOrCreateUser(
       'BROADCASTER',
       this.#settings.channelName,
-      '#FFF',
-      avatar
+      this.#settings.avatar,
+      '#FFF'
     )
+    if (!dbUser) return
 
     const guessedCountry = await getCountryCode(location)
     const lastStreak = this.#db.getUserStreak(dbUser.id)
     const correct = guessedCountry === this.#country
     if (correct) {
-      this.#db.addUserStreak(dbUser.id, this.#roundId)
+      this.#db.addUserStreak(dbUser.id, this.#roundId!)
     } else {
       this.#db.resetUserStreak(dbUser.id)
     }
 
-    const distance = haversineDistance(location, this.location)
-    const score = streamerGuess.timedOut ? 0 : calculateScore(distance, this.mapScale)
+    const distance = haversineDistance(location, this.location!)
+    const score = streamerGuess.timedOut ? 0 : calculateScore(distance, this.mapScale!)
 
     const streak = this.#db.getUserStreak(dbUser.id)
 
-    this.#db.createGuess(this.#roundId, dbUser.id, {
+    this.#db.createGuess(this.#roundId!, dbUser.id, {
       location,
-      country: guessedCountry,
+      country: guessedCountry ?? null,
       streak: streak?.count ?? 0,
       lastStreak: lastStreak?.count && !correct ? lastStreak.count : null,
       distance,
@@ -206,12 +204,13 @@ export default class Game {
     const dbUser = this.#db.getOrCreateUser(
       userstate['user-id'],
       userstate['display-name'],
-      userstate.color,
-      userstate.avatar
+      userstate.avatar,
+      userstate.color
     )
-    if (!dbUser) return
 
-    const existingGuess = this.#db.getUserGuess(this.#roundId, dbUser.id)
+    if (!dbUser) throw Object.assign(new Error('Something went wrong creating dbUser'))
+
+    const existingGuess = this.#db.getUserGuess(this.#roundId!, dbUser.id)
     if (existingGuess && !this.isMultiGuess) {
       throw Object.assign(new Error('User already guessed'), { code: 'alreadyGuessed' })
     }
@@ -220,8 +219,8 @@ export default class Game {
       throw Object.assign(new Error('Same guess'), { code: 'submittedPreviousGuess' })
     }
 
-    const distance = haversineDistance(location, this.location)
-    const score = calculateScore(distance, this.mapScale)
+    const distance = haversineDistance(location, this.location!)
+    const score = calculateScore(distance, this.mapScale!)
 
     const guessedCountry = await getCountryCode(location)
     const correct = guessedCountry === this.#country
@@ -236,30 +235,29 @@ export default class Game {
       this.#db.resetUserStreak(dbUser.id)
     }
 
-    // let lastStreak: number | null = null
     if (!this.isMultiGuess) {
       if (correct) {
-        this.#db.addUserStreak(dbUser.id, this.#roundId)
+        this.#db.addUserStreak(dbUser.id, this.#roundId!)
       } else {
         this.#db.resetUserStreak(dbUser.id)
       }
     }
 
-    let streak = this.#db.getUserStreak(dbUser.id)
+    let streak: { count: number } | undefined = this.#db.getUserStreak(dbUser.id)
 
+    // Here we mimic addUserStreak() without committing for multiGuesses() mode
     // This might look weird but with this we no longer need to update guess streak in processMultiGuesses() which was slow
     if (this.isMultiGuess) {
-      // lastStreak = streak && !correct ? streak.count : null
       if (correct) {
         streak ? streak.count++ : (streak = { count: 1 })
       } else {
-        streak = null
+        streak = undefined
       }
     }
 
     const guess = {
       location,
-      country: guessedCountry,
+      country: guessedCountry ?? null,
       streak: streak?.count ?? 0,
       lastStreak: lastStreak?.count && !correct ? lastStreak.count : null,
       distance,
@@ -272,7 +270,7 @@ export default class Game {
       this.#db.updateGuess(existingGuess.id, guess)
       modified = true
     } else {
-      this.#db.createGuess(this.#roundId, dbUser.id, guess)
+      this.#db.createGuess(this.#roundId!, dbUser.id, guess)
     }
 
     // TODO save previous guess? No, fetch previous guess from the DB
@@ -295,11 +293,11 @@ export default class Game {
   }
 
   getLocation(): Location_ {
-    return this.seed.rounds.at(-1)
+    return this.seed!.rounds.at(-1)!
   }
 
   getLocations(): Location_[] {
-    return this.seed.rounds.map((round) => ({
+    return this.seed!.rounds.map((round) => ({
       lat: round.lat,
       lng: round.lng,
       panoId: round.panoId,
@@ -321,44 +319,44 @@ export default class Game {
    * Get the participants for the current round, sorted by who guessed first.
    */
   getRoundParticipants() {
-    return this.#db.getRoundParticipants(this.#roundId)
+    return this.#db.getRoundParticipants(this.#roundId!)
   }
 
   /**
    * Get the scores for the current round, sorted by distance from closest to farthest away.
    */
   getRoundResults() {
-    return this.#db.getRoundResults(this.#roundId)
+    return this.#db.getRoundResults(this.#roundId!)
   }
 
   finishGame() {
-    return this.#db.finishGame(this.seed.token)
+    return this.#db.finishGame(this.seed!.token)
   }
 
   /**
    * Get the combined scores for the current game, sorted from highest to lowest score.
    */
   getGameResults() {
-    return this.#db.getGameResults(this.seed.token)
+    return this.#db.getGameResults(this.seed!.token)
   }
 
   get isFinished() {
-    return this.seed.state === 'finished'
+    return this.seed!.state === 'finished'
   }
 
   get mapName() {
-    return this.seed.mapName
+    return this.seed!.mapName
   }
 
   get mode() {
     return {
-      noMove: this.seed.forbidMoving,
-      noPan: this.seed.forbidRotating,
-      noZoom: this.seed.forbidZooming
+      noMove: this.seed!.forbidMoving,
+      noPan: this.seed!.forbidRotating,
+      noZoom: this.seed!.forbidZooming
     }
   }
 
   get round() {
-    return this.seed.round
+    return this.seed!.round
   }
 }

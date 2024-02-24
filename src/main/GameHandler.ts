@@ -4,7 +4,13 @@ import { io } from 'socket.io-client'
 import Game from './Game'
 import TwitchBackend from './utils/useTwitchJS'
 import { settings, saveSettings } from './utils/useSettings'
-import { isGameURL, makeLink, parseCoordinates, getRandomCoordsInLand } from './utils/gameHelper'
+import {
+  isGameURL,
+  makeLink,
+  parseCoordinates,
+  getRandomCoordsInLand,
+  getStreamerAvatar
+} from './utils/gameHelper'
 import { getEmoji, randomCountryFlag, selectFlag } from './lib/flags/flags'
 
 const SOCKET_SERVER_URL =
@@ -285,6 +291,11 @@ export default class GameHandler {
       })
     } else {
       throw new Error('unsupported provider')
+    }
+
+    const { avatar } = await getStreamerAvatar(settings.channelName)
+    if (avatar) {
+      settings.avatar = avatar
     }
 
     const emitConnectionState = () => {

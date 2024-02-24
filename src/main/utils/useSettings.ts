@@ -8,7 +8,7 @@ declare global {
 
 const defaultSettings = {
   channelName: '',
-  token: '',
+  avatar: '',
   cgCmd: '!cg',
   cgCmdCooldown: 30,
   cgMsg: `Two ways to play: Link your Twitch account, guess and plonk with spacebar | or paste the command into chat without editing: <your cg link>`,

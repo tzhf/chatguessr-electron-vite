@@ -27,8 +27,10 @@ export function getGameId(url: string): string | void {
   if (id.length == 16) return id
 }
 
-// Get GeoGuessr cookies
-const getCookies = async () => {
+/**
+ *  Get GeoGuessr cookies
+ */
+async function getCookies() {
   return session.defaultSession.cookies
     .get({ url: 'https://www.geoguessr.com' })
     .then((cookies) => {
@@ -117,7 +119,6 @@ export function haversineDistance(mk1: LatLng, mk2: LatLng): number {
  */
 export function calculateScore(distance: number, scale: number): number {
   if (distance * 1000 < 25) return 5000
-
   return Math.round(5000 * Math.pow(0.99866017, (distance * 1000) / scale))
 }
 
@@ -168,4 +169,9 @@ export async function getRandomCoordsInLand(bounds: Bounds | null = null): Promi
   const localResults = countryIso(lat, lng, true)
   if (!localResults.length) return await getRandomCoordsInLand(bounds)
   return { lat, lng }
+}
+
+export async function getStreamerAvatar(channel: string): Promise<{ avatar: string }> {
+  const { data } = await axios.get<{ avatar: string }>(`${CG_API_URL}/channel/${channel}`)
+  return data
 }

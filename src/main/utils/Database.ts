@@ -273,7 +273,7 @@ class db {
     return id
   }
 
-  setRoundCountry(roundId: string, country: string) {
+  setRoundCountry(roundId: string, country: string | null) {
     const stmt = this.#db.prepare(`UPDATE rounds SET country = :country WHERE id = :id`)
     stmt.run({
       id: roundId,
@@ -326,8 +326,8 @@ class db {
     const stmt = this.#db.prepare(`
       SELECT
         guesses.id,
-        users.color,
         users.avatar,
+        users.color,
         users.flag,
         guesses.location,
         guesses.country,
@@ -343,8 +343,8 @@ class db {
     const row = stmt.get(roundId, userId) as
       | {
           id: string
-          color: string
           avatar: string | null
+          color: string
           flag: string | null
           location: string
           country: string | null
@@ -494,8 +494,8 @@ class db {
     const stmt = this.#db.prepare(`
 			SELECT
 				users.username,
-				users.color,
 				users.avatar,
+				users.color,
 				users.flag
 			FROM guesses, users
 			WHERE round_id = ? AND users.id = guesses.user_id
@@ -506,8 +506,8 @@ class db {
 
     return records.map((record) => ({
       username: record.username,
-      color: record.color,
       avatar: record.avatar,
+      color: record.color,
       flag: record.flag
     })) as Player[]
   }
@@ -522,8 +522,8 @@ class db {
 				guesses.id,
 				guesses.user_id,
 				users.username,
-				users.color,
 				users.avatar,
+				users.color,
 				users.flag,
 				guesses.location,
 				guesses.streak,
@@ -546,8 +546,8 @@ class db {
       id: string
       user_id: string
       username: string
-      color: string
       avatar: string | null
+      color: string
       flag: string | null
       location: string
       streak: number
@@ -563,8 +563,8 @@ class db {
       player: {
         userId: record.user_id,
         username: record.username,
-        color: record.color,
         avatar: record.avatar,
+        color: record.color,
         flag: record.flag
       },
       streak: record.streak,
@@ -628,8 +628,8 @@ class db {
     const stmt = this.#db.prepare(`
 			SELECT
 				users.username,
-				users.color,
 				users.avatar,
+				users.color,
 				users.flag,
 				'[' || GROUP_CONCAT(COALESCE(guesses.location, 'null')) || ']' AS guesses,
 				'[' || GROUP_CONCAT(COALESCE(guesses.score, 'null')) || ']' AS scores,
@@ -660,8 +660,8 @@ class db {
 
     const records = stmt.all(gameId, gameId) as {
       username: string
-      color: string
       avatar: string | null
+      color: string
       flag: string | null
       streak: number
       guesses: string
@@ -674,8 +674,8 @@ class db {
     return records.map((record) => ({
       player: {
         username: record.username,
-        color: record.color,
         avatar: record.avatar,
+        color: record.color,
         flag: record.flag
       },
       streak: record.streak,
@@ -690,8 +690,8 @@ class db {
   #parseUser(record: Record<string, any>): {
     id: string
     username: string
-    color: string
     avatar: string | null
+    color: string
     flag: string | null
     previousGuess: LatLng
     resetAt: number
@@ -699,8 +699,8 @@ class db {
     return {
       id: record.id,
       username: record.username,
-      color: record.color,
       avatar: record.avatar,
+      color: record.color,
       flag: record.flag,
       previousGuess: record.previous_guess ? JSON.parse(record.previous_guess) : null,
       resetAt: record.reset_at * 1000
@@ -710,26 +710,25 @@ class db {
   getUser(id: string) {
     const user = this.#db
       .prepare(
-        'SELECT id, username, color, avatar, flag, previous_guess, reset_at FROM users WHERE id = ?'
+        'SELECT id, username, avatar, color, flag, previous_guess, reset_at FROM users WHERE id = ?'
       )
       .get(id)
 
     return user ? this.#parseUser(user) : undefined
   }
 
-  getOrCreateUser(id: string, username: string, color = '#FFF', avatar: string | undefined) {
+  getOrCreateUser(id: string, username: string, avatar: string | undefined, color = '#FFF') {
     const stmt = this.#db.prepare(`
-      INSERT INTO users(id, username, color, avatar)
-      VALUES (:id, :username, :color, :avatar)
+      INSERT INTO users(id, username, avatar, color)
+      VALUES (:id, :username, :avatar, :color)
       ON CONFLICT (id) DO
         UPDATE SET
           username = :username,
-          color = :color,
-          avatar = :avatar
+          avatar = :avatar,
+          color = :color
       RETURNING *
     `)
-
-    const user = stmt.get({ id, username, color, avatar })
+    const user = stmt.get({ id, username, avatar, color })
 
     return user ? this.#parseUser(user) : undefined
   }
