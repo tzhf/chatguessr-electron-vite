@@ -102,12 +102,6 @@
                     {{ row.player.username }}{{ row.modified ? '*' : '' }}
                   </span>
                 </div>
-
-                <!-- <div
-                  v-if="col.value === 'player'"
-                  class="flex gap-03"
-                  v-html="row.player.display"
-                ></div> -->
                 <div v-else>{{ row[col.value].display }}</div>
               </td>
             </tr>
@@ -151,7 +145,7 @@ onMounted(async () => {
 const settings = reactive(
   getLocalStorage('cg_scoreboard__settings', {
     autoScroll: false,
-    scrollSpeed: 30,
+    scrollSpeed: 60,
     streak: true,
     distance: true,
     score: true
@@ -452,32 +446,24 @@ defineExpose({
 .scoreboard-header {
   display: flex;
   justify-content: space-between;
-  /* grid-template-areas:
-    'settings title switch'
-    'hint hint hint';
-  grid-template-columns: 70px auto 70px; */
   align-items: center;
   margin-top: 8px;
 }
 .scoreboard-settings {
   width: 70px;
-  /* grid-area: settings; */
   display: flex;
   gap: 0.2rem;
 }
 
 .scoreboard-title {
-  /* grid-area: title; */
   font-size: 16px;
 }
 
 .scoreboard-hint {
-  /* grid-area: hint; */
   font-size: 11px;
 }
 
 .switch-container {
-  /* grid-area: switch; */
   position: relative;
   display: inline-block;
   width: 32px;

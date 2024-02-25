@@ -256,14 +256,14 @@ img[src$="#custom_marker"]{
 
 .username,
 .gm-style-iw-d .username {
-  padding: 3px;
+  padding: 3px 3px 3px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 14px;
   text-shadow:
     rgb(0 0 0) 1px 1px 0px,
-    rgb(255 255 255 / 69%) 1px 1px 3px;
+    rgb(255 255 255) 1px 1px 3px;
 }
 .gm-style-iw-d .username {
   font-size: 16px;
